@@ -625,7 +625,12 @@ const App = (() => {
       if (next) next.classList.add('focused');
     } else if (zone === 'channels') {
       document.querySelectorAll('.sidebar-btn.focused, .group-item.focused').forEach(e => e.classList.remove('focused'));
-      KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'));
+      if (typeof VirtualList !== 'undefined') {
+        VirtualList.setFocused(VirtualList.getFocused());
+      }
+      setTimeout(() => {
+        KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'));
+      }, 50);
     }
   }
 
