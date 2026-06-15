@@ -22,14 +22,25 @@ const Player = (() => {
   }
 
   // ── PLAY ─────────────────────────────────────────────
-  function play(channel) {
-    _current = channel;
+  function play(ch) {
+    if (!ch || !ch.url) return;
+    _safeStop();
+    _current = ch;
     _setState('BUFFERING');
 
+    App.showView('player');
+    const vl = document.getElementById('video-layer');
+    if (vl) {
+      vl.style.width  = '100%';
+      vl.style.height = '100%';
+    }
+    const errEl = document.getElementById('player-error');
+    if (errEl) errEl.classList.add('hidden');
+
+    // Retraso para que Tizen libere el pipeline anterior
     setTimeout(() => {
-      _safeStop();
       try {
-        let playUrl = channel.url;
+        let playUrl = _current.url;
         if (playUrl.includes('|')) playUrl = playUrl.split('|')[0];
 
         webapis.avplay.open(playUrl);
@@ -91,16 +102,13 @@ const Player = (() => {
 
   // ── SAFE STOP ────────────────────────────────────────
   function _safeStop() {
-    App.showView('player');
-    const vl = document.getElementById('video-layer');
-    if (vl) {
-      vl.style.width  = '100%';
-      vl.style.height = '100%';
-    }
-    const errEl = document.getElementById('player-error');
-    if (errEl) errEl.classList.add('hidden');
-
-    try { const s = webapis.avplay.getState();
+    try {
+      const vl = document.getElementById('video-layer');
+      if (vl) {
+        vl.style.width = '0px';
+        vl.style.height = '0px';
+      }
+      const s = webapis.avplay.getState();
       if (s !== 'NONE' && s !== 'IDLE') webapis.avplay.stop();
       if (s !== 'NONE') webapis.avplay.close();
     } catch(e) {}

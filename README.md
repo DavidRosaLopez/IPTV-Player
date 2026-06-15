@@ -13,7 +13,7 @@ Interfaz de guía de TV con soporte de listas M3U8, Xtream Codes, guía EPG, fav
 
 | Módulo | Descripción |
 |--------|-------------|
-| 📋 **M3U8** | Carga listas `.m3u8` por URL, parseadas en Web Worker (sin bloquear la UI) |
+| 📋 **M3U8** | Carga y parseo instantáneo de listas `.m3u8` por URL |
 | 🔑 **Xtream Codes** | Autenticación con servidor + usuario + contraseña, descarga paralela de canales y categorías |
 | 🎬 **Reproductor** | AVPlay nativo con soporte RAW / HD / FHD / UHD / 4K / 8K, buffer adaptativo por calidad |
 | 📅 **Guía EPG** | Cuadrícula horaria XMLTV estilo guía TV, navegable con el mando |
@@ -36,8 +36,7 @@ IPTV-App/
 └── js/
     ├── app.js              # Controlador principal y router de vistas
     ├── keyHandler.js       # Gestión del mando a distancia (Tizen TVInputDevice API)
-    ├── playlist.js         # Parser M3U8 + cliente Xtream Codes API
-    ├── m3u-worker.js       # Web Worker — parseo M3U8 off-thread
+    ├── playlist.js         # Parser M3U8 ultra-rápido + cliente Xtream Codes API
     ├── virtual-list.js     # Scroll virtual para listas de miles de canales
     ├── epg.js              # Carga XMLTV, caché 12h y renderizado de cuadrícula EPG
     ├── player.js           # Wrapper AVPlay con tuning por calidad (4K/8K)
@@ -50,11 +49,10 @@ IPTV-App/
 
 ## ⚡ Optimizaciones de rendimiento
 
-- **Web Worker** para parsear M3U8 — listas de +10.000 canales sin congelar la UI
-- **Scroll virtual** (`virtual-list.js`) — solo renderiza los cards visibles, ~30 nodos DOM activos independientemente del tamaño de la lista
+- **Parseo secuencial optimizado** para M3U8 capaz de procesar listas de +10.000 canales en milisegundos
+- **Scroll virtual** (`virtual-list.js`) con reciclaje interno del DOM vía `innerHTML` — solo renderiza las filas visibles
 - **AVPlay `prepareAsync()`** — preparación no bloqueante del stream
-- **Buffer adaptativo** según calidad detectada del canal:
-  - SD/RAW → 3s · HD → 4s · UHD/4K → 6s · 8K → 8s
+- **Aceleración por hardware nativa** asegurada al no requerir librerías extra como video.js o hls.js
 - **Caché EPG** de 12h en localStorage — no descarga la guía en cada arranque
 - **Descarga paralela** de streams y categorías en Xtream Codes (`Promise.all`)
 - **Búsqueda instantánea** con índice `_search` en minúsculas pre-construido al cargar
@@ -68,9 +66,8 @@ IPTV-App/
 | ▲ ▼ ◀ ▶ | Navegar entre grupos / canales |
 | **OK** | Reproducir canal seleccionado |
 | **BACK** | Volver / Cerrar búsqueda |
-| **INFO** | Mostrar/ocultar overlay de información |
-| 🟡 **Amarilla** | Añadir / quitar de favoritos |
-| 🔴 **Roja** | Abrir búsqueda |
+| 🟡 **Pulsación Larga OK** | Añadir / quitar de favoritos |
+| 🔍 **Buscador (Botón)** | Filtrado global de canales mediante teclado en pantalla |
 | 🟢 **Verde** | Abrir guía EPG |
 | **CH ▲▼** | Cambiar canal durante reproducción |
 
