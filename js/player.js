@@ -189,6 +189,37 @@ const Player = (() => {
     });
   }
 
+  // ── SEEK LOGIC ───────────────────────────────────────
+  let _seekTimer = null;
+  let _seekAccum = 0; // in milliseconds
+
+  function _handleSeek(deltaMs) {
+    _seekAccum += deltaMs;
+    showOSD();
+    
+    const badge = document.getElementById('osd-seek');
+    if (badge) {
+      badge.classList.remove('hidden');
+      badge.textContent = _seekAccum > 0 ? `+${_seekAccum/1000}s ⏵⏵` : `⏴⏴ ${_seekAccum/1000}s`;
+      // Restart animation
+      badge.style.animation = 'none';
+      badge.offsetHeight; 
+      badge.style.animation = null;
+    }
+
+    clearTimeout(_seekTimer);
+    _seekTimer = setTimeout(() => {
+      const jump = _seekAccum;
+      _seekAccum = 0;
+      if (badge) badge.classList.add('hidden');
+      
+      try {
+        if (jump > 0) webapis.avplay.jumpForward(jump);
+        else if (jump < 0) webapis.avplay.jumpBackward(Math.abs(jump));
+      } catch(e) {}
+    }, 600); // Wait 600ms for consecutive presses
+  }
+
   // ── OSD ──────────────────────────────────────────────
   let _osdTimer = null;
   function showOSD() {
