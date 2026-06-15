@@ -22,6 +22,7 @@ const VirtualList = (() => {
 
   function init({ containerId, items, onSelect, onHover, getFavBadge, getEpgNow }) {
     _container   = document.getElementById(containerId);
+    if (_container) _container.innerHTML = ''; // FIX OVERLAPPING
     _items       = items;
     _onSelect    = onSelect;
     _onHover     = onHover;

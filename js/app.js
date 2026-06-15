@@ -320,6 +320,11 @@ const App = (() => {
 
     KeyHandler.on('ENTER', () => {
       if (!_isView('channels')) return;
+      const searchBtn = document.getElementById('btn-open-search');
+      if (searchBtn && searchBtn.classList.contains('focused')) {
+        Search.open();
+        return true;
+      }
       if (_focusZone === 'channels') {
         const ch = VirtualList.getCurrentItem();
         if (ch) _playChannel(ch);
@@ -328,9 +333,13 @@ const App = (() => {
       if (_focusZone === 'groups') { _selectGroup(_groups[_groupIdx]); return true; }
     });
 
-    KeyHandler.on('YELLOW', () => { if (_isView('channels')) { _toggleFav(); return true; } });
-    KeyHandler.on('RED',    () => { if (_isView('channels')) { Search.open(); return true; } });
-    KeyHandler.on('GREEN',  () => { if (_isView('channels')) { showView('epg'); return true; } });
+    KeyHandler.on('LONG_OK', () => {
+      if (_isView('channels') && _focusZone === 'channels') {
+        const ch = VirtualList.getCurrentItem();
+        if (ch) { Favorites.toggle(ch); renderChannels(); }
+      }
+      return true;
+    });
     KeyHandler.on('BACK',   () => {
       if (_isView('channels')) {
         if (Search.isOpen()) { Search.close(); return true; }
@@ -401,15 +410,35 @@ const App = (() => {
 
   function _moveActive(dir) {
     if (_focusZone === 'groups') {
-      const els = document.querySelectorAll('.group-item');
-      els[_groupIdx]?.classList.remove('focused');
-      _groupIdx = Math.max(0, Math.min(_groups.length - 1, _groupIdx + (dir === 'up' ? -1 : 1)));
-      els[_groupIdx]?.classList.add('focused');
-      els[_groupIdx]?.scrollIntoView({ block: 'nearest' });
+      const items = document.querySelectorAll('.group-item');
+      if (!items.length) return;
+      let curr = Array.from(items).findIndex(e => e.classList.contains('focused'));
+      if (curr === -1) curr = 0;
+      const next = KeyHandler.navigate(items, curr, dir);
+      KeyHandler.setFocus(items[next]);
     } else {
-      VirtualList.move(dir);
-      const ch = VirtualList.getCurrentItem();
-      if (ch) _previewChannel(ch);
+      const searchBtn = document.getElementById('btn-open-search');
+      if (searchBtn && searchBtn.classList.contains('focused')) {
+        if (dir === 'down') {
+          VirtualList.setFocused(0);
+          KeyHandler.setFocus(document.querySelector('.channel-card.focused'));
+        } else if (dir === 'left') {
+          _setFocusZone('groups');
+        }
+        return;
+      }
+
+      const curIdx = VirtualList.getFocused();
+      if (dir === 'up' && curIdx < 3) {
+        // Mover el foco al botón de buscar
+        KeyHandler.setFocus(searchBtn);
+        // Ocultar preview de epg actual
+        _setText('preview-name', 'Buscar Canales');
+        _setText('preview-epg', '');
+      } else {
+        VirtualList.move(dir);
+        KeyHandler.setFocus(document.querySelector('.channel-card.focused'));
+      }
     }
   }
 

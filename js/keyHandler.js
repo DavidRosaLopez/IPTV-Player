@@ -6,7 +6,7 @@ const KeyHandler = (() => {
   // Key codes
   const KEYS = {
     UP: 38, DOWN: 40, LEFT: 37, RIGHT: 39,
-    ENTER: 13, BACK: 10009, RETURN: 88,
+    ENTER: 13, LONG_OK: 9999, BACK: 10009, RETURN: 88,
     INFO: 457,
     RED: 403, GREEN: 405, YELLOW: 404, BLUE: 406,
     PLAY: 415, PAUSE: 19, PLAY_PAUSE: 10252, STOP: 413,
@@ -36,11 +36,51 @@ const KeyHandler = (() => {
       });
     }
 
-    document.addEventListener('keydown', _handleKey);
+    document.addEventListener('keydown', _handleKeyDown);
+    document.addEventListener('keyup', _handleKeyUp);
   }
 
-  function _handleKey(e) {
+  let _okTimeout = null;
+  let _okLongPressed = false;
+
+  function _handleKeyDown(e) {
     const code = e.keyCode;
+    const activeTag = document.activeElement ? document.activeElement.tagName : '';
+    const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+    // Interceptar OK (Enter) para detectar pulsación larga
+    if (code === 13 && !isInput) {
+      if (!_okTimeout) {
+        _okLongPressed = false;
+        _okTimeout = setTimeout(() => {
+          _okLongPressed = true;
+          _dispatch(KEYS.LONG_OK, e);
+        }, 600); // 600ms para pulsación larga
+      }
+      return; // No procesar el short-click todavía
+    }
+
+    _dispatch(code, e);
+  }
+
+  function _handleKeyUp(e) {
+    if (e.keyCode === 13) {
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+      
+      if (!isInput) {
+        clearTimeout(_okTimeout);
+        _okTimeout = null;
+        if (!_okLongPressed) {
+          // Fue pulsación corta
+          _dispatch(13, e);
+        }
+        _okLongPressed = false;
+      }
+    }
+  }
+
+  function _dispatch(code, e) {
     let consumed = false;
 
     // Dispatch to registered listeners (most recently added first)

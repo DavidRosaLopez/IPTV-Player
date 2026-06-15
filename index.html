@@ -97,15 +97,17 @@
         <div class="sidebar-header"><span class="sidebar-logo">▶ IPTV</span></div>
         <ul class="group-list" id="group-list"></ul>
         <div class="sidebar-footer">
-          <button class="sidebar-btn" id="btn-open-search">🔍</button>
           <button class="sidebar-btn" id="btn-open-setup">⚙️</button>
         </div>
       </aside>
 
       <main class="channel-panel">
-        <div class="panel-header">
-          <h2 id="current-group-name">Todos los canales</h2>
-          <span id="channel-count" class="channel-count"></span>
+        <div class="panel-header" style="flex-direction: column; align-items: flex-start; gap: 15px;">
+          <button id="btn-open-search" class="header-search-btn focusable">🔍 Buscar Canal</button>
+          <div style="display: flex; align-items: baseline; gap: 15px;">
+            <h2 id="current-group-name">Todos los canales</h2>
+            <span id="channel-count" class="channel-count"></span>
+          </div>
         </div>
         <!-- VirtualList renders here -->
         <div class="channel-grid" id="channel-grid"></div>
@@ -121,9 +123,7 @@
         </div>
         <div class="key-hints">
           <span><span class="key">OK</span> Ver</span>
-          <span><span class="key">🟡</span> Favorito</span>
-          <span><span class="key">🔴</span> Buscar</span>
-          <span><span class="key">🟢</span> Guía EPG</span>
+          <span><span class="key">MANTENER OK</span> Favorito</span>
           <span><span class="key">◀</span> Grupos</span>
         </div>
       </div>
