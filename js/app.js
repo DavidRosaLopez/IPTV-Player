@@ -5,6 +5,7 @@
 const App = (() => {
   let _channels        = [];
   let _groups          = [];
+  let _groupCountsCache = null;
   let _sidebarFocusIdx = 2; // 0=search, 1=setup, 2+=groups
   let _currentGroup    = '__all__';
   let _currentList     = null;
@@ -423,6 +424,7 @@ const App = (() => {
   async function _afterLoad(list, fromCache = false) {
     Playlist.clearGroupCache();
     _groups = Playlist.getGroups(_channels);
+    _groupCountsCache = null;
     _currentGroup = '__all__';
     _groupIdx     = 0;
 
@@ -546,17 +548,21 @@ const App = (() => {
   }
 
   function _updateGroupCounts() {
+    if (!_groupCountsCache) {
+      _groupCountsCache = { '__all__': _channels.length };
+      for (const ch of _channels) {
+        _groupCountsCache[ch.group] = (_groupCountsCache[ch.group] || 0) + 1;
+      }
+    }
+    _groupCountsCache['__favs__'] = Favorites.getIds().length;
+
     const els = document.querySelectorAll('.group-item');
     if (!els.length || !_groups.length) return;
     els.forEach((el, i) => {
       const g = _groups[i];
       if (!g) return;
       const countEl = el.querySelector('.group-count');
-      if (!countEl) return;
-      const cnt = g.id === '__all__'  ? _channels.length :
-                  g.id === '__favs__' ? Favorites.getIds().length :
-                  _channels.filter(c => c.group === g.id).length;
-      countEl.textContent = cnt;
+      if (countEl) countEl.textContent = _groupCountsCache[g.id] || 0;
     });
   }
 
@@ -611,16 +617,32 @@ const App = (() => {
 
   function _moveActive(dir) {
     if (_focusZone === 'groups') {
-      if (dir === 'right') {
-        _setFocusZone('channels');
-        return;
-      }
       const els = _getSidebarFocusables();
       if (!els.length) return;
       els[_sidebarFocusIdx]?.classList.remove('focused');
 
-      if (dir === 'up')   _sidebarFocusIdx = Math.max(0, _sidebarFocusIdx - 1);
-      if (dir === 'down') _sidebarFocusIdx = Math.min(els.length - 1, _sidebarFocusIdx + 1);
+      if (dir === 'left') {
+        if (_sidebarFocusIdx === 1) _sidebarFocusIdx = 0;
+      } else if (dir === 'right') {
+        if (_sidebarFocusIdx === 0) {
+          _sidebarFocusIdx = 1;
+        } else {
+          _setFocusZone('channels');
+          return;
+        }
+      } else if (dir === 'up') {
+        if (_sidebarFocusIdx === 2) {
+          _sidebarFocusIdx = 0; // De primer grupo a lupa
+        } else if (_sidebarFocusIdx > 2) {
+          _sidebarFocusIdx--;
+        }
+      } else if (dir === 'down') {
+        if (_sidebarFocusIdx === 0 || _sidebarFocusIdx === 1) {
+          _sidebarFocusIdx = 2; // De iconos a primer grupo
+        } else {
+          _sidebarFocusIdx = Math.min(els.length - 1, _sidebarFocusIdx + 1);
+        }
+      }
 
       const next = els[_sidebarFocusIdx];
       if (next) {

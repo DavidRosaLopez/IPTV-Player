@@ -76,10 +76,14 @@ const Playlist = (() => {
   }
 
   // ── SEARCH INDEX ─────────────────────────────────────
-  // Pre-build lowercase name for instant search
+  function _normalize(str) {
+    return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  // Pre-build normalized name for instant search
   function _buildSearchIndex(channels) {
     for (const ch of channels) {
-      ch._search = (ch.name || '').toLowerCase();
+      ch._search = _normalize(ch.name);
     }
     return channels;
   }
@@ -105,7 +109,7 @@ const Playlist = (() => {
     const channels = (streams || []).map((s, i) => ({
       id:       i,
       name:     s.name,
-      _search:  (s.name || '').toLowerCase(),
+      _search:  _normalize(s.name),
       logo:     s.stream_icon || '',
       group:    catMap[s.category_id] || 'Sin categoría',
       epgId:    s.epg_channel_id || s.name,
@@ -154,8 +158,8 @@ const Playlist = (() => {
   // Fast search using pre-built index
   function search(channels, query) {
     if (!query) return channels;
-    const q = query.toLowerCase();
-    return channels.filter(c => c._search && c._search.includes(q));
+    const qTokens = _normalize(query).split(' ').filter(Boolean);
+    return channels.filter(c => qTokens.every(t => c._search.includes(t)));
   }
 
   return { loadM3U, parseM3UText, loadXtream, getGroups, clearGroupCache, filterByGroup, search };

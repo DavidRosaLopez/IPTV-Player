@@ -224,6 +224,16 @@ html, body {
 .saved-item-info { flex: 1; }
 .saved-item-name { font-size: 19px; font-weight: 600; }
 .saved-item-type { font-size: 14px; color: var(--text-sec); }
+.saved-item-edit {
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid rgba(128,120,255,0.3);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+}
+.saved-item-edit.focused { background: rgba(128,120,255,0.1); box-shadow: 0 0 0 2px var(--accent); }
 .saved-item-del {
   padding: 8px 14px;
   background: transparent;
