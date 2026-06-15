@@ -59,7 +59,7 @@ const EPG = (() => {
       const chunk = text.substring(chPos, endCh);
       const idMatch = chunk.match(/id=["']([^"']*)["']/);
       if (idMatch) {
-        const id = idMatch[1];
+        const id = _unescape(idMatch[1]);
         if (!validIds || validIds.has(id)) {
           const nameMatch = chunk.match(/<display-name[^>]*>([\s\S]*?)<\/display-name>/);
           const logoMatch = chunk.match(/<icon[^>]*src=["']([^"']*)["']/);
@@ -88,7 +88,7 @@ const EPG = (() => {
       const chIdMatch = firstLine.match(/channel=["']([^"']*)["']/);
       
       if (chIdMatch) {
-        const chId = chIdMatch[1];
+        const chId = _unescape(chIdMatch[1]);
         // FILTER: Skip instantly if channel is not in our loaded M3U
         if (!validIds || validIds.has(chId)) {
           const startMatch = firstLine.match(/start=["']([^"']*)["']/);
@@ -122,11 +122,14 @@ const EPG = (() => {
   }
 
   function _parseXMLTVDate(str) {
-    // Format: YYYYMMDDHHmmss +0200
     if (!str) return null;
     const s = str.trim();
+    // format: YYYYMMDDHHmmss +0200
+    const tzMatch = s.match(/([+-]\d{2})(\d{2})$/);
+    const tz = tzMatch ? `${tzMatch[1]}:${tzMatch[2]}` : 'Z';
+    
     const dt = new Date(
-      `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(8,10)}:${s.slice(10,12)}:${s.slice(12,14)}${s.slice(14).replace(' ','')}`
+      `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(8,10)}:${s.slice(10,12)}:${s.slice(12,14)}${tz}`
     );
     return isNaN(dt) ? null : dt;
   }

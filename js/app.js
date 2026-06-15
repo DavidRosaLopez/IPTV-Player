@@ -227,7 +227,7 @@ const App = (() => {
     const list = { id: _editingListId || _uid(), name, type: 'xtream', server, user, pass };
     _saveList(list);
     _editingListId = null;
-    document.getElementById('btn-add-xtream').textContent = 'Añadir y Cargar';
+    document.getElementById('btn-add-xtream').textContent = 'Añadir lista';
 
     const steps = [
       { id: 'auth',      label: 'Verificando credenciales' },
@@ -624,6 +624,13 @@ const App = (() => {
     });
 
     _updateGroupCounts();
+  }
+
+  function refreshUI() {
+    _updateGroupCounts();
+    if (typeof VirtualList !== 'undefined') {
+      VirtualList.refreshVisible();
+    }
   }
 
   function _moveActive(dir) {
