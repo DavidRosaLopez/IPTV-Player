@@ -152,17 +152,11 @@ const Player = (() => {
     });
 
     KeyHandler.on('LEFT', () => {
-      if (_isActive()) {
-        try { webapis.avplay.jumpBackward(30000); showOSD(); } catch(e) {}
-        return true;
-      }
+      if (_isActive()) { _handleSeek(-10000); return true; }
     });
 
     KeyHandler.on('RIGHT', () => {
-      if (_isActive()) {
-        try { webapis.avplay.jumpForward(30000); showOSD(); } catch(e) {}
-        return true;
-      }
+      if (_isActive()) { _handleSeek(10000); return true; }
     });
 
     KeyHandler.on('LONG_OK',()=> { 
@@ -224,10 +218,16 @@ const Player = (() => {
     if (typeof EPG !== 'undefined' && _current.epgId) {
       const nowP = EPG.getNow(_current.epgId);
       const nextP = EPG.getNext(_current.epgId);
-      nowEl.textContent = nowP ? `Ahora: ${nowP.title} (${_fmt(nowP.start)} - ${_fmt(nowP.end)})` : '';
-      nextEl.textContent = nextP ? `Después: ${nextP.title} (${_fmt(nextP.start)} - ${_fmt(nextP.end)})` : '';
+      
+      if (nowP) {
+        nowEl.textContent = `Ahora: ${nowP.title} (${_fmt(nowP.start)} - ${_fmt(nowP.end)})`;
+        nextEl.textContent = nextP ? `Después: ${nextP.title} (${_fmt(nextP.start)} - ${_fmt(nextP.end)})` : '';
+      } else {
+        nowEl.textContent = 'Sin información de programación';
+        nextEl.textContent = '';
+      }
     } else {
-      if (nowEl) nowEl.textContent = '';
+      if (nowEl) nowEl.textContent = 'Sin información de programación';
       if (nextEl) nextEl.textContent = '';
     }
 

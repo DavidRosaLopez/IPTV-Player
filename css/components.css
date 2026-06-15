@@ -87,6 +87,9 @@
 }
 .osd-channel { font-size: 42px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; }
 .osd-num { color: var(--accent); font-size: 32px; font-weight: 800; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 8px; }
+.osd-seek { background: var(--accent); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 26px; margin-left: 20px; animation: pop 0.2s; }
+.osd-seek.hidden { display: none; }
+@keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
 .osd-now { font-size: 26px; color: var(--text); margin-bottom: 5px; }
 .osd-next { font-size: 20px; color: var(--text-sec); }
 
