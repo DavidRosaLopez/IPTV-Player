@@ -9,12 +9,9 @@
  */
 const Player = (() => {
   let _current         = null;
-  let _overlayTimer    = null;
   let _clockTimer      = null;
   let _onChannelChange = null;
   let _state           = 'IDLE'; // IDLE | BUFFERING | PLAYING | ERROR
-
-  const OVERLAY_TIMEOUT = 5000;
 
   let _initialized = false;
   // ── INIT ─────────────────────────────────────────────
@@ -28,19 +25,8 @@ const Player = (() => {
 
   // ── PLAY ─────────────────────────────────────────────
   function play(channel) {
-    if (_current && _current.id === channel.id && (_state === 'PLAYING' || _state === 'BUFFERING')) {
-      _showOverlay(true);
-      _scheduleHideOverlay();
-      _updateOverlayInfo();
-      return;
-    }
-
     _current = channel;
     _setState('BUFFERING');
-
-    _showOverlay(true);
-    _scheduleHideOverlay();
-    _updateOverlayInfo();
 
     setTimeout(() => {
       _safeStop();
@@ -136,55 +122,6 @@ const Player = (() => {
     if (spinner) spinner.classList.toggle('hidden', s !== 'BUFFERING');
   }
 
-  // ── OVERLAY ──────────────────────────────────────────
-  function _showOverlay(show) {
-    document.getElementById('player-overlay')?.classList.toggle('hidden', !show);
-  }
-
-  function _scheduleHideOverlay() {
-    clearTimeout(_overlayTimer);
-    _overlayTimer = setTimeout(() => _showOverlay(false), OVERLAY_TIMEOUT);
-  }
-
-  function toggleOverlay() {
-    const el = document.getElementById('player-overlay');
-    if (!el) return;
-    if (el.classList.contains('hidden')) {
-      _showOverlay(true);
-      _scheduleHideOverlay();
-    } else {
-      // Si ya está visible, reiniciamos el temporizador en lugar de ocultarlo de golpe,
-      // para evitar parpadeos si el mando de la TV dispara eventos dobles
-      _scheduleHideOverlay();
-    }
-  }
-
-  function _updateOverlayInfo() {
-    if (!_current) return;
-    const safe = s => s ? String(s) : '';
-    _setText('overlay-ch-name', safe(_current.name));
-    _setText('overlay-ch-num',  '#' + ((_current.id || 0) + 1));
-    _setText('overlay-ch-fav',  Favorites.isFav(_current.id) ? '♥' : '');
-    const logoEl = document.getElementById('overlay-logo');
-    if (logoEl) logoEl.src = _current.logo || '';
-    const now  = EPG.getNow(_current.epgId);
-    const next = EPG.getNext(_current.epgId);
-    _setText('prog-now-title',  now  ? now.title  : 'Sin datos EPG');
-    _setText('prog-now-time',   now  ? _fmtRange(now.start, now.end) : '');
-    _setText('prog-next-title', next ? next.title : '—');
-    _setText('prog-next-time',  next ? _fmtRange(next.start, next.end) : '');
-    _updateProgress();
-  }
-
-  function _updateProgress() {
-    if (!_current) return;
-    const now  = EPG.getNow(_current.epgId);
-    const fill = document.getElementById('progress-fill');
-    if (!fill || !now?.start || !now?.end) return;
-    const pct = ((Date.now() - now.start.getTime()) / (now.end.getTime() - now.start.getTime())) * 100;
-    fill.style.width = Math.min(100, Math.max(0, pct)) + '%';
-  }
-
   // ── CLOCK ────────────────────────────────────────────
   function _startClock() {
     const update = () => _setText('overlay-time',
@@ -195,20 +132,12 @@ const Player = (() => {
 
   // ── KEY BINDINGS ─────────────────────────────────────
   function _bindKeys() {
-    KeyHandler.on('INFO', () => { if (_isActive()) { toggleOverlay(); return true; } });
-
     KeyHandler.on('CH_UP',   () => { if (_isActive()) { _onChannelChange?.('prev'); return true; } });
     KeyHandler.on('CH_DOWN', () => { if (_isActive()) { _onChannelChange?.('next'); return true; } });
 
-    KeyHandler.on('UP',   () => { if (_isActive()) { _showOverlay(true); _scheduleHideOverlay(); return true; } });
-    KeyHandler.on('DOWN', () => { if (_isActive()) { _showOverlay(true); _scheduleHideOverlay(); return true; } });
-    KeyHandler.on('ENTER',() => { if (_isActive()) { toggleOverlay(); return true; } });
     KeyHandler.on('LONG_OK',()=> { 
       if (_isActive() && _current) { 
         Favorites.toggle(_current.id); 
-        _updateOverlayInfo();
-        _showOverlay(true);
-        _scheduleHideOverlay();
         return true; 
       } 
     });
@@ -218,7 +147,6 @@ const Player = (() => {
         // Volver a la lista de canales y parar el video
         stop();
         App.showView('channels');
-        _showOverlay(false);
         return true;
       }
     });
@@ -251,6 +179,5 @@ const Player = (() => {
     const f = d => d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     return `${f(s)} – ${f(e)}`;
   }
-
-  return { init, play, stop, toggleOverlay, getCurrent, getState };
+  return { init, play, stop, getCurrent, getState };
 })();

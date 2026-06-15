@@ -29,7 +29,7 @@ const KeyHandler = (() => {
         'MediaRewind','MediaFastForward',
         'ColorF0Red','ColorF1Green','ColorF2Yellow','ColorF3Blue',
         'Info','ChannelUp','ChannelDown',
-        'Return','Exit'
+        'Return','Exit','Enter','Up','Down','Left','Right'
       ];
       toRegister.forEach(k => {
         try { tizen.tvinputdevice.registerKey(k); } catch(e) {}
@@ -48,16 +48,16 @@ const KeyHandler = (() => {
     const activeTag = document.activeElement ? document.activeElement.tagName : '';
     const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
 
-    // Interceptar OK (Enter) para detectar pulsación larga
     if (code === 13 && !isInput) {
-      e.preventDefault(); // Prevenir que el navegador dispare un 'click' nativo que rompa el LONG_OK
       if (!_okTimeout) {
         _okLongPressed = false;
         _okTimeout = setTimeout(() => {
           _okLongPressed = true;
-          _dispatch(KEYS.LONG_OK, e);
+          _dispatch(KEYS.LONG_OK, { preventDefault: () => {} });
         }, 600); // 600ms para pulsación larga
       }
+      // NOTA: Tizen SÍ necesita que no hagamos preventDefault siempre en keydown, 
+      // porque puede tragarse el evento completo. Lo quitamos.
       return; // No procesar el short-click todavía
     }
 

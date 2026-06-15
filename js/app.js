@@ -5,6 +5,7 @@
 const App = (() => {
   let _channels        = [];
   let _groups          = [];
+  let _sidebarFocusIdx = 2; // 0=search, 1=setup, 2+=groups
   let _currentGroup    = '__all__';
   let _currentList     = null;
   let _focusZone       = 'channels'; // 'groups' | 'channels'
@@ -67,6 +68,8 @@ const App = (() => {
     if (name === 'epg')      _renderEPGView();
     if (name === 'setup')    _initSetupView();
   }
+
+
 
   // ── SETUP ─────────────────────────────────────────────
   function _getSetupTabs() { return Array.from(document.querySelectorAll('#view-setup .tab-btn')); }
@@ -464,17 +467,28 @@ const App = (() => {
 
     KeyHandler.on('ENTER', () => {
       if (!_isView('channels')) return;
-      const searchBtn = document.getElementById('btn-open-search');
-      if (searchBtn && searchBtn.classList.contains('focused')) {
-        Search.open();
+      
+      if (_focusZone === 'groups') {
+        const els = _getSidebarFocusables();
+        const el = els[_sidebarFocusIdx];
+        if (!el) return;
+        if (el.id === 'btn-open-search') {
+          Search.open();
+        } else if (el.id === 'btn-open-setup') {
+          showView('setup');
+        } else {
+          // Es un grupo (índice 2 en adelante)
+          const gIdx = _sidebarFocusIdx - 2;
+          if (_groups[gIdx]) _selectGroup(_groups[gIdx]);
+        }
         return true;
       }
+      
       if (_focusZone === 'channels') {
         const ch = VirtualList.getCurrentItem();
         if (ch) _playChannel(ch);
         return true;
       }
-      if (_focusZone === 'groups') { _selectGroup(_groups[_groupIdx]); return true; }
     });
 
     KeyHandler.on('LONG_OK', () => {
@@ -546,10 +560,21 @@ const App = (() => {
     });
   }
 
+  function _getSidebarFocusables() {
+    const list = [];
+    const bs = document.getElementById('btn-open-search');
+    const bc = document.getElementById('btn-open-setup');
+    if (bs) list.push(bs);
+    if (bc) list.push(bc);
+    list.push(...Array.from(document.querySelectorAll('.group-item')));
+    return list;
+  }
+
   function _selectGroup(group) {
     if (!group) return;
     _currentGroup = group.id;
     _groupIdx     = _groups.findIndex(g => g.id === group.id);
+    _sidebarFocusIdx = _groupIdx + 2;
     _updateGroupClasses(); // Solo actualiza clases, no re-renderiza DOM
     renderChannels();
     _setFocusZone('channels');
@@ -590,17 +615,17 @@ const App = (() => {
         _setFocusZone('channels');
         return;
       }
-      const els = document.querySelectorAll('.group-item');
+      const els = _getSidebarFocusables();
       if (!els.length) return;
-      els[_groupIdx]?.classList.remove('focused');
+      els[_sidebarFocusIdx]?.classList.remove('focused');
 
-      if (dir === 'up')   _groupIdx = Math.max(0, _groupIdx - 1);
-      if (dir === 'down') _groupIdx = Math.min(_groups.length - 1, _groupIdx + 1);
+      if (dir === 'up')   _sidebarFocusIdx = Math.max(0, _sidebarFocusIdx - 1);
+      if (dir === 'down') _sidebarFocusIdx = Math.min(els.length - 1, _sidebarFocusIdx + 1);
 
-      const next = els[_groupIdx];
+      const next = els[_sidebarFocusIdx];
       if (next) {
         next.classList.add('focused');
-        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        next.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     } else {
       const curIdx = VirtualList.getFocused();
@@ -618,10 +643,15 @@ const App = (() => {
 
   function _setFocusZone(zone) {
     _focusZone = zone;
-    // Visual feedback on groups
-    document.querySelectorAll('.group-item').forEach((g, i) => {
-      g.classList.toggle('focused', zone === 'groups' && i === _groupIdx);
-    });
+    if (zone === 'groups') {
+      document.querySelector('.channel-card.focused')?.classList.remove('focused');
+      const els = _getSidebarFocusables();
+      const next = els[_sidebarFocusIdx];
+      if (next) next.classList.add('focused');
+    } else if (zone === 'channels') {
+      document.querySelectorAll('.sidebar-btn.focused, .group-item.focused').forEach(e => e.classList.remove('focused'));
+      KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'));
+    }
   }
 
 

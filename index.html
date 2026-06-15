@@ -134,20 +134,29 @@
     <div id="view-channels" class="view">
       <div class="channels-layout">
         <aside class="sidebar">
-          <div class="sidebar-header" style="display: flex; align-items: center; gap: 16px; padding: 24px 30px;">
-            <img src="img/logo.png" alt="IPTV Logo" class="sidebar-logo-img" style="height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" />
-            <span style="font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; white-space: nowrap;">IPTV Player</span>
+          <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 24px 30px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <img src="img/logo.png" alt="IPTV Logo" class="sidebar-logo-img" style="height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" />
+              <span style="font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; white-space: nowrap;">IPTV Player</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button class="sidebar-btn" id="btn-open-search" style="font-size: 20px; padding: 8px;">🔍</button>
+              <button class="sidebar-btn" id="btn-open-setup" style="font-size: 20px; padding: 8px;">⚙️</button>
+            </div>
           </div>
           <ul class="group-list" id="group-list"></ul>
-          <div class="sidebar-footer">
-            <button class="sidebar-btn" id="btn-open-setup">⚙️</button>
-          </div>
         </aside>
 
         <main class="channel-panel">
-          <div class="panel-header" style="display: flex; align-items: baseline; gap: 15px;">
-            <h2 id="current-group-name">Todos los canales</h2>
-            <span id="channel-count" class="channel-count"></span>
+          <div class="panel-header" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <h2 id="current-group-name">Todos los canales</h2>
+              <span id="channel-count" class="channel-count"></span>
+            </div>
+            <div id="search-bar" class="search-bar hidden">
+              <input type="text" id="search-input" class="search-input tv-input" placeholder="Buscar canal..." />
+              <span id="search-count" style="font-size: 14px; color: var(--text-sec); margin-left: 10px;"></span>
+            </div>
           </div>
           <!-- VirtualList renders here -->
           <div class="channel-grid" id="channel-grid"></div>
@@ -159,44 +168,6 @@
     <!-- ══ REPRODUCTOR ══ -->
     <div id="view-player" class="view" tabindex="-1">
       <!-- El video vive en #video-layer (fuera del flow de vistas) -->
-      <div id="player-overlay" class="player-overlay hidden">
-        <div class="overlay-top">
-          <div class="overlay-top-main">
-            <div class="overlay-channel">
-              <img id="overlay-logo" src="" alt="" class="overlay-logo" />
-              <div class="overlay-channel-info">
-                <span id="overlay-ch-num" class="ch-num"></span>
-                <div style="display:flex; align-items:center;">
-                  <span id="overlay-ch-name" class="ch-name"></span>
-                  <span id="overlay-ch-fav" class="ch-fav" style="color:var(--accent2); font-size:24px; margin-left:8px;"></span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="overlay-divider"></div>
-
-            <div class="overlay-program">
-              <div class="program-current">
-                <span class="prog-label">AHORA</span>
-                <span id="prog-now-title" class="prog-title"></span>
-                <span id="prog-now-time" class="prog-time"></span>
-              </div>
-              <div class="program-next">
-                <span class="prog-label">DESPUÉS</span>
-                <span id="prog-next-title" class="prog-title"></span>
-                <span id="prog-next-time" class="prog-time"></span>
-              </div>
-            </div>
-
-            <div class="overlay-divider"></div>
-
-            <div class="overlay-time" id="overlay-time"></div>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-          </div>
-        </div>
-      </div>
       <div id="buffer-spinner" class="buffer-spinner hidden">
         <div class="spinner"></div>
       </div>
