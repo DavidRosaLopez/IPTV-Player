@@ -87,9 +87,17 @@
 }
 .osd-channel { font-size: 42px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; }
 .osd-num { color: var(--accent); font-size: 32px; font-weight: 800; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 8px; }
-.osd-seek { background: var(--accent); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 26px; margin-left: 20px; animation: pop 0.2s; }
-.osd-seek.hidden { display: none; }
-@keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+
+/* Seek Feedback Overlay */
+.seek-feedback { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.7); color: #fff; padding: 25px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 130px; animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.seek-feedback.hidden { display: none; }
+.seek-feedback .material-symbols-rounded { font-size: 56px; margin-bottom: 8px; color: var(--accent); }
+.seek-feedback .seek-time { font-size: 28px; font-weight: 800; }
+.seek-left { left: 100px; }
+.seek-right { right: 100px; }
+@keyframes pop { 0% { transform: translateY(-50%) scale(0.8); opacity: 0; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
+
+#osd-fav-icon.hidden { display: none; }
 .osd-clock { position: absolute; top: 25px; right: 40px; font-size: 28px; font-weight: 600; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
 .osd-now { font-size: 26px; color: var(--text); margin-bottom: 5px; }
 .osd-next { font-size: 20px; color: var(--text-sec); }

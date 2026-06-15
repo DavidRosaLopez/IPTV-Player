@@ -171,11 +171,11 @@ const Player = (() => {
     });
 
     KeyHandler.on('LEFT', () => {
-      if (_isActive()) { _handleSeek(-10000); return true; }
+      if (_isActive()) { _handleSeek('left'); return true; }
     });
 
     KeyHandler.on('RIGHT', () => {
-      if (_isActive()) { _handleSeek(10000); return true; }
+      if (_isActive()) { _handleSeek('right'); return true; }
     });
 
     KeyHandler.on('LONG_OK',()=> { 
@@ -215,33 +215,59 @@ const Player = (() => {
 
   // ── SEEK LOGIC ───────────────────────────────────────
   let _seekTimer = null;
-  let _seekAccum = 0; // in milliseconds
+  let _seekAccumulator = 0;
+  let _seekLastTime = 0;
 
-  function _handleSeek(deltaMs) {
-    _seekAccum += deltaMs;
-    showOSD();
+  function _handleSeek(dir) {
+    if (!_current) return;
+    const now = Date.now();
+    if (now - _seekLastTime > 600) {
+      _seekAccumulator = 0;
+    }
+    _seekLastTime = now;
+
+    if (dir === 'left')  _seekAccumulator -= 10;
+    if (dir === 'right') _seekAccumulator += 10;
+
+    const elLeft = document.getElementById('seek-feedback-left');
+    const elRight = document.getElementById('seek-feedback-right');
     
-    const badge = document.getElementById('osd-seek');
-    if (badge) {
-      badge.classList.remove('hidden');
-      badge.textContent = _seekAccum > 0 ? `+${_seekAccum/1000}s ⏵⏵` : `⏴⏴ ${_seekAccum/1000}s`;
-      // Restart animation
-      badge.style.animation = 'none';
-      badge.offsetHeight; 
-      badge.style.animation = null;
+    if (elLeft) elLeft.classList.add('hidden');
+    if (elRight) elRight.classList.add('hidden');
+
+    const el = _seekAccumulator < 0 ? elLeft : elRight;
+    const icon = _seekAccumulator < 0 ? 'fast_rewind' : 'fast_forward';
+    const text = Math.abs(_seekAccumulator) + 's';
+
+    if (el) {
+      el.innerHTML = `<span class="material-symbols-rounded">${icon}</span><span class="seek-time">${text}</span>`;
+      el.classList.remove('hidden');
+      
+      // Reset animation to replay it
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = null;
     }
 
     clearTimeout(_seekTimer);
     _seekTimer = setTimeout(() => {
-      const jump = _seekAccum;
-      _seekAccum = 0;
-      if (badge) badge.classList.add('hidden');
+      if (elLeft) elLeft.classList.add('hidden');
+      if (elRight) elRight.classList.add('hidden');
       
-      try {
-        if (jump > 0) webapis.avplay.jumpForward(jump);
-        else if (jump < 0) webapis.avplay.jumpBackward(Math.abs(jump));
-      } catch(e) {}
-    }, 600); // Wait 600ms for consecutive presses
+      if (_seekAccumulator !== 0) {
+        try {
+          const jumpMs = _seekAccumulator * 1000;
+          if (jumpMs > 0) {
+            webapis.avplay.jumpForward(jumpMs);
+          } else {
+            webapis.avplay.jumpBackward(Math.abs(jumpMs));
+          }
+        } catch(e) {
+          console.error('AVPlay jump error', e);
+        }
+      }
+      _seekAccumulator = 0;
+    }, 600);
   }
 
   // ── OSD ──────────────────────────────────────────────

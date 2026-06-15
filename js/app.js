@@ -692,8 +692,6 @@ const App = (() => {
     }
   }
 
-
-
   function _toggleFav() {
     const ch = VirtualList.getCurrentItem();
     if (!ch) return;
@@ -705,6 +703,11 @@ const App = (() => {
   // ── PLAYER ──────────────────────────────────────
   function _playChannel(ch) {
     if (!ch) return;
+
+    if (typeof Search !== 'undefined' && Search.isOpen()) {
+      Search.close();
+    }
+
     Storage.setLastChannel(ch.id);
     showView('player');          // Activa view-player (fondo transparente)
     document.getElementById('view-player').focus(); // Importante para Tizen (capturar teclas y que no se las trague AVPlay)
@@ -714,11 +717,10 @@ const App = (() => {
   function _changeChannelRelative(dir) {
     const cur  = Player.getCurrent();
     if (!cur) return;
-    const items = VirtualList;
     const curIdx = VirtualList.getFocused();
     const nextIdx = dir === 'next' ? curIdx + 1 : curIdx - 1;
     const next = VirtualList.getItem(nextIdx);
-    if (next) { VirtualList.setFocused(nextIdx); Player.play(next); }
+    if (next) { VirtualList.setFocused(nextIdx); _playChannel(next); }
   }
 
   // ── EPG VIEW ──────────────────────────────────────────
@@ -749,7 +751,6 @@ const App = (() => {
   function showToast(msg, type = 'info') {
     const el = document.getElementById('toast');
     if (!el) return;
-    el.textContent = msg;
     el.className   = 'toast ' + type;
     clearTimeout(_toastTimer);
     _toastTimer = setTimeout(() => el.classList.add('hidden'), 3000);

@@ -148,6 +148,10 @@
 
     <!-- ══ REPRODUCTOR ══ -->
     <div id="view-player" class="view" tabindex="-1">
+      <!-- Indicadores de avance/retroceso -->
+      <div id="seek-feedback-left" class="seek-feedback seek-left hidden"></div>
+      <div id="seek-feedback-right" class="seek-feedback seek-right hidden"></div>
+
       <!-- OSD del reproductor -->
       <div id="player-osd" class="player-osd hidden">
         <div id="osd-clock" class="osd-clock"></div>
@@ -159,7 +163,6 @@
             <span id="osd-num" class="osd-num"></span> 
             <span id="osd-name" class="osd-name"></span>
             <span id="osd-fav-icon" class="material-symbols-rounded hidden" style="color: var(--accent2); margin-left: 15px; font-size: 32px; vertical-align: middle;">favorite</span>
-            <span id="osd-seek" class="osd-seek hidden"></span>
           </div>
           <div id="osd-now" class="osd-now"></div>
           <div id="osd-next" class="osd-next"></div>
