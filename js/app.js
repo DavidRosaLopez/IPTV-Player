@@ -167,11 +167,13 @@ const App = (() => {
     const url  = _val('m3u-url');
     const epg  = _val('m3u-epg');
     if (!url) { _setStatus('m3u-status', 'Introduce una URL', 'error'); return; }
+    
+    const list = { id: _uid(), name, type: 'm3u', url, epgUrl: epg };
+    _saveList(list);
+
     showLoading('Descargando lista...');
     try {
       const channels = await Playlist.loadM3U(url, pct => showLoading(`Cargando lista… ${pct}%`));
-      const list = { id: _uid(), name, type: 'm3u', url, epgUrl: epg };
-      _saveList(list);
       _channels = channels;
       hideLoading();
       await _afterLoad(list);
@@ -194,12 +196,19 @@ const App = (() => {
     const user   = _val('xt-user');
     const pass   = _val('xt-pass');
     if (!server || !user || !pass) { _setStatus('xt-status', 'Rellena todos los campos', 'error'); return; }
+    
+    const list = { id: _uid(), name, type: 'xtream', server, user, pass };
+    _saveList(list);
+
     showLoading('Conectando...');
     try {
       const { channels, epgUrl } = await Playlist.loadXtream(server, user, pass, pct => showLoading(`Cargando canales… ${pct}%`));
-      const list = { id: _uid(), name, type: 'xtream', server, user, pass, epgUrl };
-      _saveList(list);
       _channels = channels;
+      if (epgUrl) {
+        list.epgUrl = epgUrl;
+        const lists = Storage.getLists().map(l => l.id === list.id ? list : l);
+        Storage.saveLists(lists);
+      }
       hideLoading();
       await _afterLoad(list);
     } catch(e) { hideLoading(); _setStatus('xt-status', '✗ ' + e.message, 'error'); }
@@ -479,6 +488,14 @@ const App = (() => {
 
   function _saveList(list) {
     const lists = Storage.getLists();
+    
+    // Evitar guardar duplicados exactos
+    if (list.type === 'm3u') {
+      if (lists.find(l => l.url === list.url)) return;
+    } else {
+      if (lists.find(l => l.server === list.server && l.user === list.user)) return;
+    }
+    
     lists.push(list);
     Storage.saveLists(lists);
   }

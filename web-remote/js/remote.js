@@ -43,6 +43,25 @@ const Remote = (() => {
       e.preventDefault();
       _sendListToTV();
     });
+
+    // Restore last configuration
+    const lastConfig = localStorage.getItem('iptv_remote_config');
+    if (lastConfig) {
+      try {
+        const data = JSON.parse(lastConfig);
+        document.getElementById('list-name').value = data.name || '';
+        if (data.type === 'm3u') {
+          document.getElementById('m3u-url').value = data.url || '';
+          document.getElementById('m3u-epg').value = data.epgUrl || '';
+          document.querySelector('[data-type="m3u"]').click();
+        } else {
+          document.getElementById('xt-server').value = data.server || '';
+          document.getElementById('xt-user').value = data.user || '';
+          document.getElementById('xt-pass').value = data.pass || '';
+          document.querySelector('[data-type="xtream"]').click();
+        }
+      } catch(e) {}
+    }
   }
 
   function _connectToTV(pin) {
@@ -117,11 +136,11 @@ const Remote = (() => {
       list: listData
     };
 
+    // Save to local storage so it persists on reload
+    localStorage.setItem('iptv_remote_config', JSON.stringify(listData));
+
     conn.send(payload);
     _showToast('✅ Enviado a la TV');
-    
-    // Reset form after sending
-    document.getElementById('form-list').reset();
   }
 
   function _showError(msg) {
