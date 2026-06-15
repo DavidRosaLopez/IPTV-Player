@@ -62,10 +62,13 @@ html, body {
    SETUP VIEW
    ===================================================== */
 #view-setup {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: var(--bg);
+}
+#view-setup.active {
+  display: flex;
 }
 
 .setup-bg {
