@@ -16,20 +16,11 @@ const Player = (() => {
 
   const OVERLAY_TIMEOUT = 5000;
 
-  // ── Dimensiones del viewport CSS (lazy — calculado la primera vez que se usa) ──
-  // document.documentElement.clientWidth/Height es el estándar más fiable en Tizen:
-  // - Respeta <meta name="viewport" content="width=1920">
-  // - NO devuelve píxeles físicos del panel (que sería 3840 en 4K)
-  // - Es lo que setDisplayRect() espera (coordenadas CSS, no físicas)
-  let _SW = 0, _SH = 0;
-  function _screenW() {
-    if (!_SW) _SW = document.documentElement.clientWidth  || 1920;
-    return _SW;
-  }
-  function _screenH() {
-    if (!_SH) _SH = document.documentElement.clientHeight || 1080;
-    return _SH;
-  }
+  // ── Dimensiones del viewport CSS ──
+  // En Tizen, si el meta viewport y el body están en 1920x1080, setDisplayRect DEBE recibir 1920x1080
+  // independientemente de la resolución física (720p, 1080p, 4K), ya que Tizen escala automáticamente.
+  const _SW = 1920;
+  const _SH = 1080;
 
   // ── INIT ─────────────────────────────────────────────
   function init(onChannelChangeCb) {
@@ -115,14 +106,11 @@ const Player = (() => {
 
   // ── DISPLAY RECT HELPERS ──────────────────────────────
   function _applyFullscreenRect() {
-    const w = _screenW();
-    const h = _screenH();
     const vl = document.getElementById('video-layer');
     if (vl) {
-      // overflow:hidden garantiza que av-player (100%x100%) quede exactamente contenido
-      vl.style.cssText = `position:absolute;left:0;top:0;width:${w}px;height:${h}px;z-index:9999;pointer-events:none;overflow:hidden;`;
+      vl.style.cssText = `position:absolute;left:0;top:0;width:100%;height:100%;z-index:9999;pointer-events:none;`;
     }
-    try { webapis.avplay.setDisplayRect(0, 0, w, h); } catch(e) {}
+    try { webapis.avplay.setDisplayRect(0, 0, _SW, _SH); } catch(e) {}
   }
 
   // ── SAFE STOP ────────────────────────────────────────
