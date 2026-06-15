@@ -155,6 +155,7 @@ const Player = (() => {
     const safe = s => s ? String(s) : '';
     _setText('overlay-ch-name', safe(_current.name));
     _setText('overlay-ch-num',  '#' + ((_current.id || 0) + 1));
+    _setText('overlay-ch-fav',  Favorites.has(_current.id) ? '♥' : '');
     const logoEl = document.getElementById('overlay-logo');
     if (logoEl) logoEl.src = _current.logo || '';
     const now  = EPG.getNow(_current.epgId);
@@ -192,6 +193,7 @@ const Player = (() => {
 
     KeyHandler.on('UP',   () => { if (_isActive()) { _showOverlay(true); _scheduleHideOverlay(); return true; } });
     KeyHandler.on('DOWN', () => { if (_isActive()) { _showOverlay(true); _scheduleHideOverlay(); return true; } });
+    KeyHandler.on('ENTER',() => { if (_isActive()) { toggleOverlay(); return true; } });
 
     KeyHandler.on('BACK', () => {
       if (_isActive()) {

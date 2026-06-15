@@ -128,19 +128,27 @@ const App = (() => {
 
     // D-pad navigation for setup
     KeyHandler.on('RIGHT', () => {
-      if (_isView('setup') && _setupZone === 'tabs') {
+      if (!_isView('setup')) return;
+      if (_setupZone === 'tabs') {
         _setupTabIdx = Math.min(_getSetupTabs().length - 1, _setupTabIdx + 1);
         _getSetupTabs()[_setupTabIdx]?.click();
-        return true;
+      } else {
+        _setupContentIdx = Math.min(_getSetupContent().length - 1, _setupContentIdx + 1);
+        _updateSetupFocus();
       }
+      return true;
     });
 
     KeyHandler.on('LEFT', () => {
-      if (_isView('setup') && _setupZone === 'tabs') {
+      if (!_isView('setup')) return;
+      if (_setupZone === 'tabs') {
         _setupTabIdx = Math.max(0, _setupTabIdx - 1);
         _getSetupTabs()[_setupTabIdx]?.click();
-        return true;
+      } else {
+        _setupContentIdx = Math.max(0, _setupContentIdx - 1);
+        _updateSetupFocus();
       }
+      return true;
     });
 
     KeyHandler.on('DOWN', () => {

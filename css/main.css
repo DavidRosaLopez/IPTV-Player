@@ -562,38 +562,53 @@ html, body {
 /* Overlay */
 .player-overlay {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%, rgba(0,0,0,0.5) 100%);
+  top: 0; left: 0; right: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 40px 60px;
   transition: opacity 0.3s;
   z-index: 10;
 }
 .player-overlay.hidden { opacity: 0; pointer-events: none; }
 
-.overlay-top { display: flex; justify-content: space-between; align-items: center; }
-.overlay-channel { display: flex; align-items: center; gap: 20px; }
+.overlay-top {
+  display: flex;
+  flex-direction: column;
+  background: rgba(9, 11, 20, 0.85); /* Dark transparent background */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 24px 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.overlay-top-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.overlay-channel { display: flex; align-items: center; gap: 20px; flex: 1; }
 .overlay-logo { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: rgba(255,255,255,0.1); }
 .ch-num { font-size: 18px; color: var(--text-sec); }
-.ch-name { font-size: 36px; font-weight: 700; }
-.overlay-time { font-size: 32px; font-weight: 300; color: var(--text-sec); }
+.ch-name { font-size: 32px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
 
-.overlay-bottom { }
-.overlay-program { display: flex; gap: 60px; margin-bottom: 16px; }
-.program-current, .program-next { display: flex; flex-direction: column; gap: 4px; }
+.overlay-program { display: flex; gap: 40px; margin: 0; flex: 2; justify-content: center; }
+.program-current, .program-next { display: flex; flex-direction: column; gap: 4px; max-width: 350px; }
 .prog-label { font-size: 13px; color: var(--accent); font-weight: 600; letter-spacing: 2px; }
-.prog-title { font-size: 22px; font-weight: 600; }
+.prog-title { font-size: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prog-time { font-size: 15px; color: var(--text-sec); }
 .program-next .prog-label { color: var(--text-dim); }
 .program-next .prog-title { color: var(--text-sec); font-weight: 400; }
+
+.overlay-time { font-size: 32px; font-weight: 300; color: var(--text-sec); flex: 1; text-align: right; }
 
 .progress-bar {
   height: 4px;
   background: rgba(255,255,255,0.15);
   border-radius: 2px;
-  margin-bottom: 20px;
+  margin-top: 20px;
+  margin-bottom: 0;
 }
 .progress-fill {
   height: 100%;

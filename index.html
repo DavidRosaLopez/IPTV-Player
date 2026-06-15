@@ -166,27 +166,28 @@
       <!-- El video vive en #video-layer (fuera del flow de vistas) -->
       <div id="player-overlay" class="player-overlay hidden">
         <div class="overlay-top">
-          <div class="overlay-channel">
-            <img id="overlay-logo" src="" alt="" class="overlay-logo" />
-            <div class="overlay-channel-info">
-              <span id="overlay-ch-num" class="ch-num"></span>
-              <span id="overlay-ch-name" class="ch-name"></span>
+          <div class="overlay-top-main">
+            <div class="overlay-channel">
+              <img id="overlay-logo" src="" alt="" class="overlay-logo" />
+              <div class="overlay-channel-info">
+                <span id="overlay-ch-num" class="ch-num"></span>
+                <span id="overlay-ch-name" class="ch-name"></span>
+                <span id="overlay-ch-fav" class="ch-fav" style="color:var(--accent2); font-size:24px; vertical-align: middle; margin-left:8px;"></span>
+              </div>
             </div>
-          </div>
-          <div class="overlay-time" id="overlay-time"></div>
-        </div>
-        <div class="overlay-bottom">
-          <div class="overlay-program">
-            <div class="program-current">
-              <span class="prog-label">AHORA</span>
-              <span id="prog-now-title" class="prog-title"></span>
-              <span id="prog-now-time" class="prog-time"></span>
+            <div class="overlay-program">
+              <div class="program-current">
+                <span class="prog-label">AHORA</span>
+                <span id="prog-now-title" class="prog-title"></span>
+                <span id="prog-now-time" class="prog-time"></span>
+              </div>
+              <div class="program-next">
+                <span class="prog-label" style="color:var(--text-dim)">DESPUÉS</span>
+                <span id="prog-next-title" class="prog-title" style="color:var(--text-sec)"></span>
+                <span id="prog-next-time" class="prog-time"></span>
+              </div>
             </div>
-            <div class="program-next">
-              <span class="prog-label" style="color:var(--text-dim)">DESPUÉS</span>
-              <span id="prog-next-title" class="prog-title" style="color:var(--text-sec)"></span>
-              <span id="prog-next-time" class="prog-time"></span>
-            </div>
+            <div class="overlay-time" id="overlay-time"></div>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
