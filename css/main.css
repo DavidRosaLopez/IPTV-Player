@@ -22,7 +22,7 @@
   --focus-ring: 0 0 0 3px rgba(108,99,255,0.8), 0 0 20px rgba(108,99,255,0.4);
 
   /* Sizing */
-  --sidebar-w:  380px;
+  --sidebar-w:  440px;
   --info-w:     340px;
   --font:       'Inter', sans-serif;
 }

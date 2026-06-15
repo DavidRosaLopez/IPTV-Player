@@ -148,6 +148,18 @@
 
     <!-- ══ REPRODUCTOR ══ -->
     <div id="view-player" class="view" tabindex="-1">
+      <!-- OSD del reproductor -->
+      <div id="player-osd" class="player-osd hidden">
+        <div class="osd-left">
+          <img id="osd-logo" class="osd-logo" src="" onerror="this.style.display='none'" />
+        </div>
+        <div class="osd-content">
+          <div class="osd-channel"><span id="osd-num" class="osd-num"></span> <span id="osd-name" class="osd-name"></span></div>
+          <div id="osd-now" class="osd-now"></div>
+          <div id="osd-next" class="osd-next"></div>
+        </div>
+      </div>
+
       <!-- El video vive en #video-layer (fuera del flow de vistas) -->
       <div id="buffer-spinner" class="buffer-spinner hidden">
         <div class="spinner"></div>
@@ -189,6 +201,17 @@
       <div class="loading-content">
         <div class="spinner large"></div>
         <p id="loading-msg">Cargando...</p>
+      </div>
+    </div>
+
+    <!-- Exit Popup -->
+    <div id="exit-popup" class="exit-overlay hidden">
+      <div class="exit-card">
+        <h2 class="exit-title">¿Salir de la aplicación?</h2>
+        <div class="exit-actions">
+          <button id="btn-exit-cancel" class="exit-btn focused">Cancelar</button>
+          <button id="btn-exit-confirm" class="exit-btn exit-danger">Salir</button>
+        </div>
       </div>
     </div>
   </div>

@@ -29,6 +29,7 @@ const Player = (() => {
     _setState('BUFFERING');
 
     App.showView('player');
+    showOSD();
     const vl = document.getElementById('video-layer');
     if (vl) {
       vl.style.width  = '100%';
@@ -146,6 +147,24 @@ const Player = (() => {
     KeyHandler.on('CH_UP',   () => { if (_isActive()) { _onChannelChange?.('prev'); return true; } });
     KeyHandler.on('CH_DOWN', () => { if (_isActive()) { _onChannelChange?.('next'); return true; } });
 
+    KeyHandler.on('ENTER', () => { 
+      if (_isActive()) { showOSD(); return true; } 
+    });
+
+    KeyHandler.on('LEFT', () => {
+      if (_isActive()) {
+        try { webapis.avplay.jumpBackward(30000); showOSD(); } catch(e) {}
+        return true;
+      }
+    });
+
+    KeyHandler.on('RIGHT', () => {
+      if (_isActive()) {
+        try { webapis.avplay.jumpForward(30000); showOSD(); } catch(e) {}
+        return true;
+      }
+    });
+
     KeyHandler.on('LONG_OK',()=> { 
       if (_isActive() && _current) { 
         Favorites.toggle(_current.id); 
@@ -175,6 +194,51 @@ const Player = (() => {
       }
     });
   }
+
+  // ── OSD ──────────────────────────────────────────────
+  let _osdTimer = null;
+  function showOSD() {
+    if (!_current) return;
+    const osd = document.getElementById('player-osd');
+    if (!osd) return;
+
+    const logo = document.getElementById('osd-logo');
+    if (logo) {
+      if (_current.logo) { logo.src = _current.logo; logo.style.display = 'block'; }
+      else { logo.style.display = 'none'; }
+    }
+
+    const num = document.getElementById('osd-num');
+    if (num) {
+      const idx = (typeof VirtualList !== 'undefined') ? VirtualList.getFocused() + 1 : _current.num;
+      if (idx) { num.textContent = idx; num.style.display = 'inline-block'; }
+      else { num.style.display = 'none'; }
+    }
+
+    const name = document.getElementById('osd-name');
+    if (name) name.textContent = _current.name || '';
+
+    const nowEl = document.getElementById('osd-now');
+    const nextEl = document.getElementById('osd-next');
+    
+    if (typeof EPG !== 'undefined' && _current.epgId) {
+      const nowP = EPG.getNow(_current.epgId);
+      const nextP = EPG.getNext(_current.epgId);
+      nowEl.textContent = nowP ? `Ahora: ${nowP.title} (${_fmt(nowP.start)} - ${_fmt(nowP.end)})` : '';
+      nextEl.textContent = nextP ? `Después: ${nextP.title} (${_fmt(nextP.start)} - ${_fmt(nextP.end)})` : '';
+    } else {
+      if (nowEl) nowEl.textContent = '';
+      if (nextEl) nextEl.textContent = '';
+    }
+
+    osd.classList.remove('hidden');
+    clearTimeout(_osdTimer);
+    _osdTimer = setTimeout(() => {
+      osd.classList.add('hidden');
+    }, 3000);
+  }
+
+  function _fmt(d) { return d?.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) || ''; }
 
   // ── UTILS ────────────────────────────────────────────
   function stop()         { _safeStop(); _current = null; }

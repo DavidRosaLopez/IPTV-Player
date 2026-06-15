@@ -415,10 +415,20 @@ const App = (() => {
     if (_keysChannelsBound) return;
     _keysChannelsBound = true;
 
-    KeyHandler.on('LEFT',  () => { if (_isView('channels')) { _moveActive('left');  return true; } });
-    KeyHandler.on('RIGHT', () => { if (_isView('channels')) { _moveActive('right'); return true; } });
-    KeyHandler.on('UP',    () => { if (_isView('channels')) { _moveActive('up');    return true; } });
-    KeyHandler.on('DOWN',  () => { if (_isView('channels')) { _moveActive('down');  return true; } });
+    KeyHandler.on('LEFT',  () => { 
+      if (_isView('channels')) { 
+        if (_focusZone === 'exit') { _moveExit('left'); return true; }
+        _moveActive('left'); return true; 
+      } 
+    });
+    KeyHandler.on('RIGHT', () => { 
+      if (_isView('channels')) { 
+        if (_focusZone === 'exit') { _moveExit('right'); return true; }
+        _moveActive('right'); return true; 
+      } 
+    });
+    KeyHandler.on('UP',    () => { if (_isView('channels') && _focusZone !== 'exit') { _moveActive('up');    return true; } });
+    KeyHandler.on('DOWN',  () => { if (_isView('channels') && _focusZone !== 'exit') { _moveActive('down');  return true; } });
 
     KeyHandler.on('ENTER', () => {
       if (!_isView('channels')) return;
@@ -444,6 +454,15 @@ const App = (() => {
         if (ch) _playChannel(ch);
         return true;
       }
+
+      if (_focusZone === 'exit') {
+        if (_exitFocusIdx === 0) {
+          _hideExitPopup();
+        } else {
+          try { tizen?.application?.getCurrentApplication()?.exit(); } catch(e) {}
+        }
+        return true;
+      }
     });
 
     KeyHandler.on('LONG_OK', () => {
@@ -465,13 +484,45 @@ const App = (() => {
     KeyHandler.on('BACK', () => {
       if (_isView('channels')) {
         if (Search.isOpen()) { Search.close(); return true; }
-        try { tizen?.application?.getCurrentApplication()?.exit(); } catch(e) {}
+        if (_focusZone === 'exit') { _hideExitPopup(); return true; }
+        _showExitPopup();
         return true;
       }
     });
 
     _on('btn-open-search', () => Search.open());
     _on('btn-open-setup',  () => { showView('setup'); _initSetupView(); });
+  }
+
+  let _exitFocusIdx = 0; // 0 = Cancel, 1 = Exit
+  let _prevFocusZone = 'channels';
+
+  function _showExitPopup() {
+    _prevFocusZone = _focusZone;
+    _focusZone = 'exit';
+    _exitFocusIdx = 0;
+    const el = document.getElementById('exit-popup');
+    if (el) el.classList.remove('hidden');
+    _updateExitFocus();
+  }
+
+  function _hideExitPopup() {
+    _focusZone = _prevFocusZone;
+    const el = document.getElementById('exit-popup');
+    if (el) el.classList.add('hidden');
+  }
+
+  function _moveExit(dir) {
+    if (dir === 'left') _exitFocusIdx = 0;
+    else if (dir === 'right') _exitFocusIdx = 1;
+    _updateExitFocus();
+  }
+
+  function _updateExitFocus() {
+    const cancel = document.getElementById('btn-exit-cancel');
+    const confirm = document.getElementById('btn-exit-confirm');
+    if (cancel) cancel.classList.toggle('focused', _exitFocusIdx === 0);
+    if (confirm) confirm.classList.toggle('focused', _exitFocusIdx === 1);
   }
 
   function _renderGroups() {
@@ -600,7 +651,7 @@ const App = (() => {
       const next = els[_sidebarFocusIdx];
       if (next) {
         next.classList.add('focused');
-        next.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
       }
     } else {
       const curIdx = VirtualList.getFocused();
