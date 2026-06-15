@@ -50,6 +50,7 @@ const KeyHandler = (() => {
 
     // Interceptar OK (Enter) para detectar pulsación larga
     if (code === 13 && !isInput) {
+      e.preventDefault(); // Prevenir que el navegador dispare un 'click' nativo que rompa el LONG_OK
       if (!_okTimeout) {
         _okLongPressed = false;
         _okTimeout = setTimeout(() => {

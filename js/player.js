@@ -153,7 +153,9 @@ const Player = (() => {
       _showOverlay(true);
       _scheduleHideOverlay();
     } else {
-      _showOverlay(false);
+      // Si ya está visible, reiniciamos el temporizador en lugar de ocultarlo de golpe,
+      // para evitar parpadeos si el mando de la TV dispara eventos dobles
+      _scheduleHideOverlay();
     }
   }
 

@@ -577,7 +577,7 @@ const App = (() => {
       containerId:  'channel-grid',
       items,
       onSelect:     ch => _playChannel(ch),
-      getFavBadge:  id => favIds.has(id),
+      getFavBadge:  id => Favorites.isFav(id),
       getEpgNow:    epgId => EPG.getNow(epgId),
     });
 
