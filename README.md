@@ -1,80 +1,130 @@
-# IPTV Player para Samsung Smart TV (Tizen OS)
+# 📺 IPTV Player — Samsung Tizen TV
 
-Un reproductor de IPTV optimizado para televisores Samsung Smart TV con Tizen OS. Permite cargar listas M3U8 y acceder mediante la API de Xtream Codes, incluyendo soporte de guía de programación (EPG), canales favoritos, motor de búsqueda rápida y navegación fluida mediante el mando a distancia (D-Pad).
+Aplicación IPTV nativa para **Samsung Smart TV con Tizen 9** (probada en S91F OLED 4K 2025).  
+Interfaz de guía de TV con soporte de listas M3U8, Xtream Codes, guía EPG, favoritos y búsqueda.
 
----
-
-## 🚀 Características Principales
-
-- **Soporte de Múltiples Fuentes**: Carga y gestión de listas de reproducción M3U8 y conexiones mediante la API de Xtream Codes.
-- **Rendimiento Optimizado**: Uso de Web Workers (`js/m3u-worker.js`) para parsear listas masivas de canales (más de 10k canales) en segundo plano y una lista virtual (`js/virtual-list.js`) para evitar retrasos en el renderizado de la UI de la Smart TV.
-- **Guía de Programación (EPG)**: Carga y mapeo dinámico de guías en formato XMLTV en segundo plano. Muestra lo que se está emitiendo "Ahora" y lo que viene "Después".
-- **Canales Favoritos**: Añade o quita canales de tu lista de favoritos de forma rápida.
-- **Búsqueda Instantánea**: Filtrado rápido de canales mediante teclado en pantalla o teclado físico.
-- **Navegación Intuitiva**: Interfaz diseñada para una resolución de 1080p, completamente adaptada al uso del D-Pad y los botones de colores del mando a distancia de Samsung.
-- **Reproducción Integrada**: Uso del objeto nativo `avplayer` (`application/avplayer`) de Samsung Tizen para garantizar la mejor compatibilidad y decodificación de vídeo por hardware.
+![Samsung Tizen](https://img.shields.io/badge/Samsung-Tizen%209-1428A0?style=flat-square&logo=samsung)
+![Plataforma](https://img.shields.io/badge/Plataforma-Smart%20TV-black?style=flat-square)
+![Licencia](https://img.shields.io/badge/Licencia-MIT-green?style=flat-square)
 
 ---
 
-## 🛠️ Estructura del Proyecto
+## ✨ Funcionalidades
 
-La aplicación está construida sobre tecnologías web estándar (HTML5, CSS y JavaScript vainilla) e integrada con las APIs de Tizen:
-
-- `index.html`: Estructura base de la aplicación y definición de las vistas (Configuración, Canales, Reproductor y EPG).
-- `config.xml`: Archivo de configuración del Widget de Tizen (definición de ID de aplicación, versión, orientación horizontal, permisos de red y accesos al sistema de archivos).
-- `css/`:
-  - `main.css`: Estilos visuales globales de la interfaz adaptados a una pantalla de TV (1920x1080).
-  - `components.css`: Estilos para botones, inputs, modales y listas.
-- `js/`:
-  - [app.js](js/app.js): Controlador principal y enrutador de vistas (Setup, Canales, Reproductor y EPG).
-  - [playlist.js](js/playlist.js): Módulo encargado de parsear archivos M3U8 y comunicarse con la API de Xtream Codes.
-  - [m3u-worker.js](js/m3u-worker.js): Web Worker utilizado para el parseo asíncrono y de alto rendimiento de listas M3U8.
-  - [epg.js](js/epg.js): Gestor de la guía de programación XMLTV/EPG.
-  - [keyHandler.js](js/keyHandler.js): Mapeador de eventos y capturador de las teclas físicas del mando a distancia.
-  - [player.js](js/player.js): Módulo de control de la API de Samsung AVPlayer.
-  - [virtual-list.js](js/virtual-list.js): Renderizador virtual de lista de canales para soportar miles de elementos con memoria limitada.
-  - [favorites.js](js/favorites.js): Persistencia y gestión de la lista de canales favoritos.
-  - [storage.js](js/storage.js): Capa de abstracción para guardar datos y listas en el localStorage del televisor.
-  - [search.js](js/search.js): Lógica de búsqueda y filtrado interactivo.
+| Módulo | Descripción |
+|--------|-------------|
+| 📋 **M3U8** | Carga listas `.m3u8` por URL, parseadas en Web Worker (sin bloquear la UI) |
+| 🔑 **Xtream Codes** | Autenticación con servidor + usuario + contraseña, descarga paralela de canales y categorías |
+| 🎬 **Reproductor** | AVPlay nativo con soporte RAW / HD / FHD / UHD / 4K / 8K, buffer adaptativo por calidad |
+| 📅 **Guía EPG** | Cuadrícula horaria XMLTV estilo guía TV, navegable con el mando |
+| ⭐ **Favoritos** | Añadir/quitar con tecla amarilla, persistidos en `localStorage` |
+| 🔍 **Búsqueda** | Filtrado instantáneo con índice pre-construido y debounce de 120ms |
+| 🗂️ **Grupos** | Navegación por categorías (sidebar) + "Todos los canales" y "Favoritos" |
+| 🔄 **Multi-lista** | Guarda y alterna entre varias fuentes IPTV |
 
 ---
 
-## 🎮 Controles del Mando a Distancia (D-Pad)
+## 🏗️ Arquitectura
 
-El manejo de la aplicación está optimizado para mandos a distancia estándar de Samsung Smart TV:
-
-- **Cruceta (Arriba / Abajo)**: Desplazarse por la lista activa de canales o categorías.
-- **Cruceta (Izquierda / Derecha)**: Mover el foco entre la barra lateral de grupos y la cuadrícula de canales.
-- **ENTER / OK**: Reproducir el canal seleccionado o confirmar la selección de un grupo.
-- **Botón Amarillo**: Añadir o quitar el canal enfocado a/de **Favoritos**.
-- **Botón Rojo**: Abrir y cerrar la barra de búsqueda de canales.
-- **Botón Verde**: Abrir la Guía de Programación completa (EPG).
-- **Botón BACK / RETURN**:
-  - Cerrar menús de búsqueda o pantallas secundarias.
-  - En la vista principal, salir de la aplicación de Tizen.
-- **Teclas de Canal (▲ / ▼)** (durante la reproducción): Cambiar al canal siguiente o anterior.
-- **Botón INFO** (durante la reproducción): Mostrar u ocultar la barra de información del canal con la EPG.
+```
+IPTV-App/
+├── config.xml              # Manifest Tizen (privilegios, versión)
+├── index.html              # Punto de entrada y estructura HTML de todas las vistas
+├── css/
+│   ├── main.css            # Design system completo (dark mode, variables, todas las vistas)
+│   └── components.css      # Micro-animaciones y componentes extra
+└── js/
+    ├── app.js              # Controlador principal y router de vistas
+    ├── keyHandler.js       # Gestión del mando a distancia (Tizen TVInputDevice API)
+    ├── playlist.js         # Parser M3U8 + cliente Xtream Codes API
+    ├── m3u-worker.js       # Web Worker — parseo M3U8 off-thread
+    ├── virtual-list.js     # Scroll virtual para listas de miles de canales
+    ├── epg.js              # Carga XMLTV, caché 12h y renderizado de cuadrícula EPG
+    ├── player.js           # Wrapper AVPlay con tuning por calidad (4K/8K)
+    ├── favorites.js        # CRUD de favoritos con localStorage
+    ├── search.js           # Búsqueda debounced con índice pre-construido
+    └── storage.js          # Abstracción de localStorage
+```
 
 ---
 
-## 💻 Desarrollo e Instalación en Tizen OS
+## ⚡ Optimizaciones de rendimiento
 
-Para desplegar y probar este proyecto en un televisor Samsung Smart TV real o en el emulador:
+- **Web Worker** para parsear M3U8 — listas de +10.000 canales sin congelar la UI
+- **Scroll virtual** (`virtual-list.js`) — solo renderiza los cards visibles, ~30 nodos DOM activos independientemente del tamaño de la lista
+- **AVPlay `prepareAsync()`** — preparación no bloqueante del stream
+- **Buffer adaptativo** según calidad detectada del canal:
+  - SD/RAW → 3s · HD → 4s · UHD/4K → 6s · 8K → 8s
+- **Caché EPG** de 12h en localStorage — no descarga la guía en cada arranque
+- **Descarga paralela** de streams y categorías en Xtream Codes (`Promise.all`)
+- **Búsqueda instantánea** con índice `_search` en minúsculas pre-construido al cargar
 
-### Requisitos Previos
-1. Instalar [Tizen Studio](https://developer.tizen.org/development/tizen-studio/download) con la extensión **Samsung TV Extension**.
-2. Configurar la TV en **Modo Desarrollador** (Developer Mode) apuntando a la dirección IP de tu máquina de desarrollo.
+---
 
-### Despliegue
-1. Clona este repositorio:
-   ```bash
-   git clone https://github.com/drosalop/IPTV-App.git
+## 🎮 Controles del mando
+
+| Tecla | Acción |
+|-------|--------|
+| ▲ ▼ ◀ ▶ | Navegar entre grupos / canales |
+| **OK** | Reproducir canal seleccionado |
+| **BACK** | Volver / Cerrar búsqueda |
+| **INFO** | Mostrar/ocultar overlay de información |
+| 🟡 **Amarilla** | Añadir / quitar de favoritos |
+| 🔴 **Roja** | Abrir búsqueda |
+| 🟢 **Verde** | Abrir guía EPG |
+| **CH ▲▼** | Cambiar canal durante reproducción |
+
+---
+
+## 🛠️ Requisitos de desarrollo
+
+- [Tizen Studio](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html) con **TV 9.0 Extension** y **Samsung Certificate Extension**
+- O extensión **Tizen TV** para VSCode/Cursor
+
+### Probar en el TV (recomendado)
+
+1. **Activar Developer Mode** en el TV:  
+   `Smart Hub → Apps → pulsar 1 2 3 4 5 → Developer Mode ON → introducir IP del PC → Reiniciar`
+
+2. **Conectar desde VSCode** (`Ctrl+Shift+P`):
    ```
-2. Abre Tizen Studio e importa el proyecto como un **Tizen Web Project**.
-3. Asegúrate de generar y firmar la app con un **Certificate Profile** (de Samsung o Tizen) para poder instalarla.
-4. Haz clic derecho sobre el proyecto en Tizen Studio, selecciona **Run As** -> **Tizen Web Application** para instalar y ejecutar en tu TV conectada.
-5. Alternativamente, puedes generar el paquete `.wgt` y subirlo mediante la consola de comandos:
-   ```bash
-   tizen package -t wgt -o .
-   tizen install -n IPTV-App.wgt -t <TV_Device_ID>
+   Tizen: Connect Device → IP del TV, puerto 26101
    ```
+
+3. **Crear certificado** (primera vez):
+   ```
+   Tizen: Certificate Manager → Samsung → TV
+   ```
+
+4. **Ejecutar**:
+   ```
+   Tizen: Run on Device   (o F5)
+   ```
+
+---
+
+## 📦 Instalación local para UI preview
+
+```bash
+npx serve . -l 3000
+# Abre http://localhost:3000
+```
+> El reproductor AVPlay no funcionará en navegador (es API exclusiva de Tizen), pero toda la UI, navegación y EPG son completamente funcionales.
+
+---
+
+## 📡 Compatibilidad
+
+| TV / Tizen | Soporte |
+|------------|---------|
+| Tizen 9 (2025) | ✅ Completo |
+| Tizen 7–8 (2022–2024) | ✅ Completo |
+| Tizen 6 (2021) | ✅ Con pequeños ajustes |
+| Tizen 4–5 (2018–2020) | ⚠️ Sin `prepareAsync`, usar `prepare()` |
+| Tizen < 4 | ❌ No soportado |
+
+---
+
+## 📄 Licencia
+
+MIT © 2025 drosalop
