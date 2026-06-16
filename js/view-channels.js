@@ -39,8 +39,6 @@ const ViewChannels = (() => {
   function onShow(fromView) {
     initKeys();
     _updateCountriesList();
-    renderCountries();
-    _updateGroupCounts();
     
     // Si volvemos del reproductor, sincronizamos la vista (país, categoría y canal)
     if (fromView === 'player' && typeof Player !== 'undefined' && Player.getCurrent()) {
@@ -104,7 +102,28 @@ const ViewChannels = (() => {
     } else if (fromView === 'player') {
       _setFocusZone('channels');
     } else {
-      // Al entrar por primera vez u otra vista, el foco se sitúa en los países
+      // Al entrar por primera vez (o desde Configuración), no hay selección activa de país o categoría
+      Store.set('currentCountry', null);
+      Store.set('currentGroup', null);
+      _countryFocusIdx = 0;
+      
+      renderCountries();
+      
+      // Limpiamos los contenedores de grupos y canales en la UI
+      const groupList = document.getElementById('group-list');
+      if (groupList) groupList.innerHTML = '';
+      
+      const channelCount = document.getElementById('channel-count');
+      if (channelCount) channelCount.textContent = '0 canales';
+      
+      if (typeof VirtualList !== 'undefined') {
+        VirtualList.init({
+          containerId: 'channel-grid',
+          items: [],
+          onSelect: () => {}
+        });
+      }
+      
       _setFocusZone('countries');
     }
 
@@ -143,20 +162,24 @@ const ViewChannels = (() => {
     filteredCodes.unshift('ALL');
     Store.set('countries', filteredCodes);
 
-    let currentCountry = Store.get('currentCountry') || 'ALL';
-    if (!filteredCodes.includes(currentCountry)) {
-      Store.set('currentCountry', 'ALL');
-      _countryFocusIdx = 0;
-      if (typeof Playlist !== 'undefined') {
-        Playlist.clearGroupCache();
-        Store.set('groups', Playlist.getGroups(channels, 'ALL'));
+    let currentCountry = Store.get('currentCountry');
+    if (currentCountry) {
+      if (!filteredCodes.includes(currentCountry)) {
+        Store.set('currentCountry', 'ALL');
+        _countryFocusIdx = 0;
+        if (typeof Playlist !== 'undefined') {
+          Playlist.clearGroupCache();
+          Store.set('groups', Playlist.getGroups(channels, 'ALL'));
+        }
+        Store.set('currentGroup', '__all__');
+        Store.set('groupIdx', 0);
+        _sidebarFocusIdx = 2;
+      } else {
+        _countryFocusIdx = filteredCodes.indexOf(currentCountry);
+        if (_countryFocusIdx < 0) _countryFocusIdx = 0;
       }
-      Store.set('currentGroup', '__all__');
-      Store.set('groupIdx', 0);
-      _sidebarFocusIdx = 2;
     } else {
-      _countryFocusIdx = filteredCodes.indexOf(currentCountry);
-      if (_countryFocusIdx < 0) _countryFocusIdx = 0;
+      _countryFocusIdx = 0;
     }
   }
 
