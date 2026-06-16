@@ -432,18 +432,20 @@ const Player = (() => {
 
     // Fetch and display EPG info
     if (typeof EPG !== 'undefined') {
-      const simulatedData = EPG.getPrograms(_current);
-      _updateEPGDisplay(simulatedData);
+      _showEPGLoading();
 
       const targetCh = _current;
       EPG.fetchRealEpg(targetCh).then(listings => {
-        if (listings && _current && _current.id === targetCh.id) {
+        if (_current && _current.id === targetCh.id) {
           const realData = EPG.parseRealEpg(listings);
-          if (realData) {
-            _updateEPGDisplay(realData);
-          }
+          _updateEPGDisplay(realData);
         }
-      }).catch(err => console.error('Error loading real EPG:', err));
+      }).catch(err => {
+        console.error('Error loading real EPG:', err);
+        if (_current && _current.id === targetCh.id) {
+          _updateEPGDisplay(null);
+        }
+      });
     }
 
     _updateOSDClock();
@@ -454,6 +456,25 @@ const Player = (() => {
     _osdTimer = setTimeout(() => {
       osd.classList.add('hidden');
     }, 3000);
+  }
+
+  function _showEPGLoading() {
+    const curTitleEl = document.getElementById('osd-current-title');
+    const fillEl = document.getElementById('osd-progress-fill');
+    const currentMeta = document.querySelector('.osd-current-meta');
+    const nextTitleEl = document.getElementById('osd-next-title');
+    const nextMeta = document.querySelector('.osd-next-meta');
+    const nextWrap = document.querySelector('.osd-epg-next');
+    const epgWrap = document.querySelector('.osd-epg');
+
+    if (epgWrap) epgWrap.style.display = '';
+    if (curTitleEl) curTitleEl.textContent = 'Cargando programación...';
+    if (fillEl) fillEl.style.width = '0%';
+    if (currentMeta) currentMeta.style.display = 'none';
+
+    if (nextTitleEl) nextTitleEl.textContent = 'Cargando programación...';
+    if (nextMeta) nextMeta.style.display = 'none';
+    if (nextWrap) nextWrap.style.display = 'none';
   }
 
   function _updateEPGDisplay(epgData) {
