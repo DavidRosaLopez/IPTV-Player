@@ -34,15 +34,19 @@ IPTV-App/
 │   ├── main.css            # Design system completo (dark mode, variables, todas las vistas)
 │   └── components.css      # Micro-animaciones y componentes extra
 └── js/
-    ├── app.js              # Controlador principal y router de vistas
+    ├── app.js              # Orquestador general (comprobación de inicio y sincronización silenciosa)
+    ├── store.js            # Gestor central de estado (canales, grupos, índices)
+    ├── router.js           # Enrutador visual de vistas (setup, channels, player, toasts, loadings)
+    ├── view-setup.js       # Controlador aislado de la pantalla de inicio (Xtream, M3U, guardados)
+    ├── view-channels.js    # Controlador de la interfaz de canales (menú lateral, virtual-list, teclas)
     ├── keyHandler.js       # Gestión del mando a distancia (Tizen TVInputDevice API)
     ├── playlist.js         # Parser M3U8 ultra-rápido + cliente Xtream Codes API
     ├── virtual-list.js     # Scroll virtual para listas de miles de canales
     ├── epg.js              # Carga XMLTV, caché 12h y renderizado de cuadrícula EPG
-    ├── player.js           # Wrapper AVPlay con tuning por calidad (4K/8K)
+    ├── player.js           # Wrapper AVPlay con tuning por calidad (4K/8K, soporte PiP)
     ├── favorites.js        # CRUD de favoritos con localStorage
     ├── search.js           # Búsqueda debounced con índice pre-construido
-    └── storage.js          # Abstracción de localStorage
+    ├── storage.js          # Abstracción de localStorage
 ```
 
 ---
@@ -66,9 +70,8 @@ IPTV-App/
 | ▲ ▼ ◀ ▶ | Navegar entre grupos / canales |
 | **OK** | Reproducir canal seleccionado |
 | **BACK** | Volver / Cerrar búsqueda |
-| 🟡 **Pulsación Larga OK** | Añadir / quitar de favoritos |
+| **OK (pulsación larga)** | Añadir / quitar de favoritos |
 | 🔍 **Buscador (Botón)** | Filtrado global de canales mediante teclado en pantalla |
-| 🟢 **Verde** | Abrir guía EPG |
 | **CH ▲▼** | Cambiar canal durante reproducción |
 
 ---
@@ -107,18 +110,6 @@ npx serve . -l 3000
 # Abre http://localhost:3000
 ```
 > El reproductor AVPlay no funcionará en navegador (es API exclusiva de Tizen), pero toda la UI, navegación y EPG son completamente funcionales.
-
----
-
-## 📡 Compatibilidad
-
-| TV / Tizen | Soporte |
-|------------|---------|
-| Tizen 9 (2025) | ✅ Completo |
-| Tizen 7–8 (2022–2024) | ✅ Completo |
-| Tizen 6 (2021) | ✅ Con pequeños ajustes |
-| Tizen 4–5 (2018–2020) | ⚠️ Sin `prepareAsync`, usar `prepare()` |
-| Tizen < 4 | ❌ No soportado |
 
 ---
 
