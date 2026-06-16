@@ -54,7 +54,7 @@ const EPG = (() => {
       const start = parseEPGDate(item.start_timestamp, item.start);
       if (!start) continue;
       
-      let end = parseEPGDate(item.end_timestamp, item.end);
+      let end = parseEPGDate(item.stop_timestamp || item.end_timestamp, item.end || item.stop);
       if (!end || isNaN(end.getTime())) {
         end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hora de fallback
       }
