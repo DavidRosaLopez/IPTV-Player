@@ -91,63 +91,124 @@
 .osd-channel { font-size: 36px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 15px; }
 .osd-num { color: var(--accent); font-size: 26px; font-weight: 800; background: rgba(108,99,255,0.15); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--accent); }
 
-/* EPG OSD Styles */
+/* EPG OSD Styles (Premium TV Layout) */
 .osd-epg {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   font-family: var(--font);
+  margin-top: 10px;
 }
-.osd-epg-current, .osd-epg-next {
+
+.osd-epg-current {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.osd-epg-current-main {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  color: var(--text-sec);
+  gap: 12px;
 }
+
 .osd-epg-now-label {
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 18px;
-}
-.osd-epg-next-label {
-  font-weight: 700;
-  color: var(--accent2);
-  font-size: 18px;
-}
-.osd-epg-title-text {
-  font-weight: 600;
+  background: var(--accent);
   color: #fff;
-  font-size: 18px;
-  margin-right: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(108, 99, 255, 0.4);
 }
-.osd-current-meta, .osd-next-meta {
+
+.osd-epg-title-text {
+  font-weight: 700;
+  color: #fff;
+  font-size: 22px;
+  letter-spacing: -0.2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.osd-current-meta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
+  color: var(--text-sec);
+  font-size: 15px;
+  margin-left: 2px;
 }
+
 .osd-epg-time {
   font-weight: 600;
-  color: var(--accent);
-  background: rgba(108, 99, 255, 0.12);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
 }
+
 .osd-progress-bar {
-  width: 140px;
+  width: 280px;
   height: 6px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 3px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
 }
+
 .osd-progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
   border-radius: 3px;
+  box-shadow: 0 0 8px var(--accent);
 }
+
+.osd-epg-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.osd-epg-next-label {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+  flex-shrink: 0;
+}
+
+.osd-epg-next .osd-epg-title-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  max-width: 450px;
+  margin-right: 0;
+}
+
+.osd-next-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .osd-epg-sep {
-  color: var(--text-sec);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 14px;
   font-weight: 600;
 }
