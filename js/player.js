@@ -37,10 +37,6 @@ const Player = (() => {
 
     App.showView('player');
     showOSD();
-    
-    // Petición EPG instantánea específica para este canal
-    _fetchShortEpg(ch);
-
     const vl = document.getElementById('video-layer');
     if (vl) {
       vl.style.width  = '100%';
