@@ -763,7 +763,14 @@ const App = (() => {
     if (!ch) return;
     const added = Favorites.toggle(ch.id);
     showToast(added ? '♥ Añadido a favoritos' : '♡ Eliminado de favoritos', 'info');
-    renderChannels();
+    
+    // Optimización: en lugar de renderChannels() que destruye el DOM y reordena la lista instantáneamente 
+    // (haciendo que el usuario pierda el scroll), simplemente actualizamos los iconos visibles.
+    // La lista se reordenará la próxima vez que se cambie de grupo.
+    _updateGroupCounts();
+    if (typeof VirtualList !== 'undefined') {
+      VirtualList.refreshVisible();
+    }
   }
 
   // ── PLAYER ──────────────────────────────────────
