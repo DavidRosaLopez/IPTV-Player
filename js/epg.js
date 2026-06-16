@@ -24,13 +24,20 @@ const EPG = (() => {
   }
 
   function parseEPGDate(timestamp, dateStr) {
-    if (timestamp) {
-      const ts = parseInt(timestamp);
-      if (!isNaN(ts) && ts > 0) {
-        return new Date(ts * 1000);
-      }
-    }
     if (dateStr) {
+      // Parsear formato YYYY-MM-DD HH:MM:SS directamente en zona horaria local
+      const m = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
+      if (m) {
+        return new Date(
+          parseInt(m[1], 10),
+          parseInt(m[2], 10) - 1,
+          parseInt(m[3], 10),
+          parseInt(m[4], 10),
+          parseInt(m[5], 10),
+          parseInt(m[6], 10)
+        );
+      }
+      
       const formatted = dateStr.trim().replace(' ', 'T');
       const parsed = new Date(formatted);
       if (!isNaN(parsed.getTime())) {
@@ -39,6 +46,12 @@ const EPG = (() => {
       const parsedSlash = new Date(dateStr.replace(/-/g, '/'));
       if (!isNaN(parsedSlash.getTime())) {
         return parsedSlash;
+      }
+    }
+    if (timestamp) {
+      const ts = parseInt(timestamp);
+      if (!isNaN(ts) && ts > 0) {
+        return new Date(ts * 1000);
       }
     }
     return null;
