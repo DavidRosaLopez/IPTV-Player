@@ -415,18 +415,9 @@ const App = (() => {
     _currentGroup = '__all__';
     _groupIdx     = 0;
 
-    // Load EPG in background — don’t block channel list
-    if (list.epgUrl) {
-      if (!fromCache) showLoading('Cargando guía EPG…');
-      const validIds = new Set();
-      _channels.forEach(c => {
-        if (c.epgId) validIds.add(c.epgId);
-        else if (c.name) validIds.add(c.name);
-      });
-      EPG.load(list.epgUrl, validIds).then(() => hideLoading());
-    } else {
-      hideLoading();
-    }
+    // Hemos desactivado la carga pesada de EPG XMLTV al principio.
+    // Ahora cada canal obtendrá su guía corta bajo demanda al abrirlo.
+    hideLoading();
 
     Search.init(_channels);
     Player.init(_changeChannelRelative);

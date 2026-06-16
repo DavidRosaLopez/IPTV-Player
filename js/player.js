@@ -309,8 +309,6 @@ const Player = (() => {
       }
     });
 
-    KeyHandler.on('GREEN', () => { if (_isActive()) { App.showView('epg'); return true; } });
-
     KeyHandler.on('PLAY_PAUSE', () => {
       if (_isActive()) {
         try {
