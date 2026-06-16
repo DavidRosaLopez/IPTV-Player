@@ -166,7 +166,7 @@ const Player = (() => {
     clearTimeout(_previewTimer);
     _previewTimer = setTimeout(() => {
       _startPip(ch);
-    }, 700); // 700ms para que no cambie con cada tecla
+    }, 400); // Reducido a 400ms para que se sienta más rápido
   }
 
   function cancelPreview() {
@@ -194,6 +194,12 @@ const Player = (() => {
         if (url.includes('|')) url = url.split('|')[0];
         webapis.avplay.open(url);
         _applyDisplayRect(false); // Configurar coords nativas ocultas
+        
+        try {
+          // Para el PiP usamos un buffer muy corto para que empiece casi al instante
+          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', `STARTBITRATE=HIGHEST|BUFFERLENGTH=1`);
+        } catch(e) {}
+
         webapis.avplay.setListener({
           onbufferingstart:    () => _setState('BUFFERING'),
           onbufferingcomplete: () => {
