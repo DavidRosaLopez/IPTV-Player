@@ -115,7 +115,11 @@ const Player = (() => {
         if (makeVisible) vl.style.visibility='visible'; 
       }
       try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
-      try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
+      if (makeVisible) {
+        try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
+      } else {
+        try { webapis.avplay.setDisplayRect(0, 0, 0, 0); } catch(e) {}
+      }
     } else if (_mode === 'PIP') {
       if (vl) { 
         vl.style.left=PIP_X+'px'; vl.style.top=PIP_Y+'px'; vl.style.width=PIP_W+'px'; vl.style.height=PIP_H+'px'; 
@@ -123,7 +127,11 @@ const Player = (() => {
       }
       // FULL_SCREEN rellena el rect sin barras negras
       try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
-      try { webapis.avplay.setDisplayRect(PIP_X, PIP_Y, PIP_W, PIP_H); } catch(e) {}
+      if (makeVisible) {
+        try { webapis.avplay.setDisplayRect(PIP_X, PIP_Y, PIP_W, PIP_H); } catch(e) {}
+      } else {
+        try { webapis.avplay.setDisplayRect(0, 0, 0, 0); } catch(e) {}
+      }
     }
   }
 
