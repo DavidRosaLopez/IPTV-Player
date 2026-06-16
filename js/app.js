@@ -8,7 +8,30 @@ const App = (() => {
     KeyHandler.init();
     Favorites.init();
 
-    const lists = Storage.getLists();
+    // Pre-populate default lists if storage lists is empty
+    let lists = Storage.getLists();
+    if (!lists || lists.length === 0) {
+      lists = [
+        {
+          id: 'predef_1',
+          name: 'http://cf.futuremyprovt.com',
+          type: 'xtream',
+          server: 'http://cf.futuremyprovt.com',
+          user: 'f7f23dd33459',
+          pass: '604a8e6f2c'
+        },
+        {
+          id: 'predef_2',
+          name: 'http://cf.magicmagstreg.com',
+          type: 'xtream',
+          server: 'http://cf.magicmagstreg.com',
+          user: 'f7f23dd33459',
+          pass: '604a8e6f2c'
+        }
+      ];
+      Storage.saveLists(lists);
+    }
+
     const defaultListId = Storage.getDefaultList();
     
     let listToLoad = null;
@@ -25,12 +48,6 @@ const App = (() => {
     }
 
     Router.showView('setup');
-
-    const tabIdx = Array.from(document.querySelectorAll('.tab-btn')).findIndex(b => b.dataset.tab === 'xtream');
-    if (tabIdx >= 0 && typeof ViewSetup !== 'undefined') {
-      ViewSetup.autoFillXtream();
-    }
-    
     _startClock();
   }
 

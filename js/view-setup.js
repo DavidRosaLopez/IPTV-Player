@@ -351,24 +351,5 @@ const ViewSetup = (() => {
     });
   }
 
-  // Auto-fill Xtream
-  function autoFillXtream() {
-    _setupTabIdx = 0;
-    _switchTab('xtream');
-    _setupZone = 'content';
-    
-    const elName = document.getElementById('xt-name');
-    const elServer = document.getElementById('xt-server');
-    const elUser = document.getElementById('xt-user');
-    const elPass = document.getElementById('xt-pass');
-    
-    if (elName) elName.value = 'http://cf.futuremyprovt.com';
-    if (elServer) elServer.value = 'http://cf.futuremyprovt.com';
-    if (elUser) elUser.value = 'f7f23dd33459';
-    if (elPass) elPass.value = '604a8e6f2c';
-
-    _updateSetupFocus();
-  }
-
-  return { onShow, autoFillXtream };
+  return { onShow };
 })();
