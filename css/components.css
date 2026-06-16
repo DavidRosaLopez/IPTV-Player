@@ -152,11 +152,11 @@
   width: 480px;
   height: 270px;
   border-radius: 16px;
-  border: 2px solid rgba(255,255,255,0.15);
-  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.25);
+  overflow: visible; /* el video nativo no se puede clipar con CSS */
   box-shadow: 0 16px 48px rgba(0,0,0,0.7);
-  z-index: 60; /* encima del video-layer (z:50) */
-  background: #000;
+  z-index: 60;
+  background: transparent; /* CRÍTICO: no tapar el video nativo de AVPlay */
   transition: opacity 0.25s ease, transform 0.25s ease;
   pointer-events: none;
 }

@@ -306,10 +306,15 @@ const Player = (() => {
     });
 
     KeyHandler.on('BACK', () => {
-      if (_isActive()) {
-        // Volver a la lista → PiP (no parar el video)
-        shrinkToPip();
+      if (_isActive() && _current) {
+        // 1. Marcar modo PiP
+        _mode = 'PIP';
+        // 2. Mostrar view-channels PRIMERO (pip-box pasa a ser visible en DOM)
         App.showView('channels');
+        // 3. Mostrar el recuadro del PiP
+        _showPip(_current);
+        // 4. Calcular getBoundingClientRect DESPUÉS de que el DOM esté pintado
+        setTimeout(() => _applyDisplayRect(), 0);
         return true;
       }
     });
