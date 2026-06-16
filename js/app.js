@@ -679,6 +679,9 @@ const App = (() => {
 
       VirtualList.move(dir);
       KeyHandler.setFocus(document.querySelector('.channel-card.focused'));
+      // Preview del canal enfocado con delay para no saturar
+      const focused = VirtualList.getCurrentItem();
+      if (focused && typeof Player !== 'undefined') Player.schedulePreview(focused);
     }
   }
 
@@ -717,9 +720,19 @@ const App = (() => {
     }
 
     Storage.setLastChannel(ch.id);
-    showView('player');          // Activa view-player (fondo transparente)
-    document.getElementById('view-player').focus(); // Importante para Tizen (capturar teclas y que no se las trague AVPlay)
-    Player.play(ch, false);     // Reproduce en pantalla completa
+
+    // Si ya hay PiP con este canal: expandir sin recargar
+    if (typeof Player !== 'undefined' && Player.getMode() === 'PIP' &&
+        Player.getCurrent()?.id === ch.id) {
+      Player.expandToFullscreen();
+      showView('player');
+      document.getElementById('view-player').focus();
+      return;
+    }
+
+    showView('player');
+    document.getElementById('view-player').focus();
+    Player.play(ch);
   }
 
   function _changeChannelRelative(dir) {

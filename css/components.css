@@ -140,3 +140,60 @@
   border-color: #ff3c3c;
   color: #ff3c3c;
 }
+
+/* ── PiP (Picture-in-Picture) ───────────────────────── */
+/* Posición: esquina inferior-derecha de view-channels */
+/* El recuadro del video nativo (video-layer) se coloca 
+   exactamente sobre este elemento usando setDisplayRect */
+.pip-box {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 480px;
+  height: 270px;
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.15);
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+  z-index: 60; /* encima del video-layer (z:50) */
+  background: #000;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.pip-box.hidden { display: none; }
+.pip-box.pip-loading { opacity: 0.6; }
+
+/* Barra de info en la parte inferior del PiP */
+.pip-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  z-index: 2;
+}
+.pip-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 380px;
+}
+.pip-hint {
+  font-size: 20px;
+  color: rgba(255,255,255,0.5);
+  flex-shrink: 0;
+}
+
+/* Animación de entrada del PiP */
+@keyframes pipIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.pip-box:not(.hidden) {
+  animation: pipIn 0.3s ease forwards;
+}

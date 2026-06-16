@@ -11,6 +11,8 @@ const Player = (() => {
   let _current         = null;
   let _onChannelChange = null;
   let _state           = 'IDLE'; // IDLE | BUFFERING | PLAYING | ERROR
+  let _mode            = 'IDLE'; // IDLE | FULLSCREEN | PIP
+  let _previewTimer    = null;   // delay para preview al navegar
 
   let _initialized = false;
   // ── INIT ─────────────────────────────────────────────
@@ -21,14 +23,17 @@ const Player = (() => {
     _bindKeys();
   }
 
-  // ── PLAY ─────────────────────────────────────────────
+  // ── PLAY (pantalla completa) ──────────────────────────
   function play(ch) {
     if (!ch || !ch.url) return;
     if (_current && _current.id !== ch.id) _retryCount = 0;
+    clearTimeout(_previewTimer);
     
     _safeStop();
     _current = ch;
+    _mode = 'FULLSCREEN';
     _setState('BUFFERING');
+    _hidePip();
 
     App.showView('player');
     showOSD();
@@ -52,18 +57,8 @@ const Player = (() => {
 
         webapis.avplay.open(playUrl);
 
-        // ── CONFIGURACIÓN CRÍTICA PARA PANTALLA COMPLETA ──
-        const vl = document.getElementById('video-layer');
-        if (vl) {
-          vl.style.width = '1920px';
-          vl.style.height = '1080px';
-        }
-
-        // PLAYER_DISPLAY_MODE_FULL_SCREEN ignora el aspect ratio y fuerza que llene el rectángulo
-        try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
-        
-        // El rectángulo debe coincidir exactamente con la resolución CSS de la App (1920x1080)
-        try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
+        // ── CONFIGURACIÓN SEGÚN MODO ──
+        _applyDisplayRect();
 
         try {
           const name = (channel.name || '').toUpperCase();
@@ -104,6 +99,122 @@ const Player = (() => {
         console.error('AVPlay open error', e);
         _onError('OPEN_FAILED');
       }
+    }, 50);
+  }
+
+  // ── LAYOUT HELPERS ──────────────────────────────────
+  // Calcula las coordenadas absolutas del pip-box en pantalla
+  function _getPipRect() {
+    const pip = document.getElementById('pip-box');
+    if (!pip) return { x: 1400, y: 770, w: 480, h: 270 };
+    const r = pip.getBoundingClientRect();
+    // getBoundingClientRect devuelve coords CSS (1920-wide viewport)
+    return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) };
+  }
+
+  function _applyDisplayRect() {
+    const vl = document.getElementById('video-layer');
+    if (_mode === 'FULLSCREEN') {
+      if (vl) { vl.style.width = '1920px'; vl.style.height = '1080px'; }
+      try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
+      try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
+    } else if (_mode === 'PIP') {
+      const { x, y, w, h } = _getPipRect();
+      if (vl) { vl.style.width = '1920px'; vl.style.height = '1080px'; }
+      try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX'); } catch(e) {}
+      try { webapis.avplay.setDisplayRect(x, y, w, h); } catch(e) {}
+    }
+  }
+
+  function _showPip(ch) {
+    const box = document.getElementById('pip-box');
+    const nameEl = document.getElementById('pip-name');
+    if (!box) return;
+    if (nameEl) nameEl.textContent = ch.name || '';
+    box.classList.remove('hidden');
+  }
+
+  function _hidePip() {
+    document.getElementById('pip-box')?.classList.add('hidden');
+  }
+
+  // ── MODO PIP (volver desde pantalla completa a lista) ─
+  function shrinkToPip() {
+    if (!_current || _mode === 'PIP') return;
+    _mode = 'PIP';
+    _showPip(_current);
+    _applyDisplayRect();
+  }
+
+  // ── EXPANDIR PIP A PANTALLA COMPLETA ─────────────────
+  function expandToFullscreen() {
+    if (!_current || _mode === 'FULLSCREEN') return;
+    cancelPreview();
+    _mode = 'FULLSCREEN';
+    _hidePip();
+    _applyDisplayRect();
+  }
+
+  // ── PREVIEW RÁPIDO AL NAVEGAR LA LISTA ───────────────
+  // Llamado por app.js al mover el foco en la lista, con delay
+  let _previewCh = null;
+  function schedulePreview(ch) {
+    if (!ch || !ch.url) return;
+    // Si ya estamos en PiP con el mismo canal, nada que hacer
+    if (_mode === 'PIP' && _current && _current.id === ch.id) return;
+    clearTimeout(_previewTimer);
+    _previewTimer = setTimeout(() => {
+      _startPip(ch);
+    }, 700); // 700ms para que no cambie con cada tecla
+  }
+
+  function cancelPreview() {
+    clearTimeout(_previewTimer);
+  }
+
+  function _startPip(ch) {
+    if (!ch || !ch.url) return;
+    if (_mode === 'FULLSCREEN') return; // no interrumpir reproductor
+    if (_current && _current.id === ch.id && _mode === 'PIP') return;
+
+    _retryCount = 0;
+    _safeStop();
+    _current = ch;
+    _mode = 'PIP';
+    _setState('BUFFERING');
+    _showPip(ch);
+
+    const box = document.getElementById('pip-box');
+    if (box) box.classList.add('pip-loading');
+
+    const vl = document.getElementById('video-layer');
+    if (vl) { vl.style.width = '1920px'; vl.style.height = '1080px'; }
+
+    setTimeout(() => {
+      try {
+        let url = ch.url;
+        if (url.includes('|')) url = url.split('|')[0];
+        webapis.avplay.open(url);
+        _applyDisplayRect();
+        webapis.avplay.setListener({
+          onbufferingstart:    () => _setState('BUFFERING'),
+          onbufferingcomplete: () => {
+            _setState('PLAYING');
+            _retryCount = 0;
+            const b = document.getElementById('pip-box');
+            if (b) b.classList.remove('pip-loading');
+          },
+          oncurrentplaytime: () => {},
+          onevent:  () => {},
+          onerror:  () => _hidePip(),
+          ondrmevent: () => {},
+          onstreamcompleted: () => {},
+        });
+        webapis.avplay.prepareAsync(
+          () => { try { webapis.avplay.play(); } catch(e) {} },
+          () => { _hidePip(); }
+        );
+      } catch(e) { _hidePip(); }
     }, 50);
   }
 
@@ -180,8 +291,8 @@ const Player = (() => {
 
     KeyHandler.on('BACK', () => {
       if (_isActive()) {
-        // Volver a la lista de canales y parar el video
-        stop();
+        // Volver a la lista → PiP (no parar el video)
+        shrinkToPip();
         App.showView('channels');
         return true;
       }
@@ -401,12 +512,16 @@ const Player = (() => {
   // ── UTILS ────────────────────────────────────────────
   function stop() { 
     _safeStop(); 
-    _current = null; 
+    _current = null;
+    _mode = 'IDLE';
+    _hidePip();
+    clearTimeout(_previewTimer);
     clearTimeout(_osdTimer);
     clearInterval(_osdPollInterval);
   }
   function getCurrent()   { return _current; }
   function getState()     { return _state; }
+  function getMode()      { return _mode; }
   function _isActive()    { return document.getElementById('view-player')?.classList.contains('active'); }
-  return { init, play, stop, getCurrent, getState };
+  return { init, play, stop, getCurrent, getState, getMode, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview };
 })();
