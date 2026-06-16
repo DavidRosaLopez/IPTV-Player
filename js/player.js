@@ -333,16 +333,7 @@ const Player = (() => {
 
 
 
-    KeyHandler.on('PLAY_PAUSE', () => {
-      if (_isActive()) {
-        try {
-          const s = webapis.avplay.getState();
-          if (s === 'PLAYING') webapis.avplay.pause();
-          else webapis.avplay.play();
-        } catch(e) {}
-        return true;
-      }
-    });
+
   }
 
   // ── SEEK LOGIC ───────────────────────────────────────
