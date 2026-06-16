@@ -213,10 +213,6 @@ const Player = (() => {
         if (url.includes('|')) url = url.split('|')[0];
         webapis.avplay.open(url);
         _applyDisplayRect();
-        try {
-          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO',
-            'STARTBITRATE=LOWEST|MAXBITRATE=3000000|BUFFERLENGTH=3');
-        } catch(e) {}
         webapis.avplay.setListener({
           onbufferingstart:    () => _setState('BUFFERING'),
           onbufferingcomplete: () => {
