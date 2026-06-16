@@ -430,6 +430,22 @@ const Player = (() => {
       }
     }
 
+    // Fetch and display EPG info
+    if (typeof EPG !== 'undefined') {
+      const simulatedData = EPG.getPrograms(_current);
+      _updateEPGDisplay(simulatedData);
+
+      const targetCh = _current;
+      EPG.fetchRealEpg(targetCh).then(listings => {
+        if (listings && _current && _current.id === targetCh.id) {
+          const realData = EPG.parseRealEpg(listings);
+          if (realData) {
+            _updateEPGDisplay(realData);
+          }
+        }
+      }).catch(err => console.error('Error loading real EPG:', err));
+    }
+
     _updateOSDClock();
 
     osd.classList.remove('hidden');
@@ -438,6 +454,52 @@ const Player = (() => {
     _osdTimer = setTimeout(() => {
       osd.classList.add('hidden');
     }, 3000);
+  }
+
+  function _updateEPGDisplay(epgData) {
+    const curStartEl = document.getElementById('osd-current-start');
+    const curEndEl = document.getElementById('osd-current-end');
+    const curTitleEl = document.getElementById('osd-current-title');
+    const fillEl = document.getElementById('osd-progress-fill');
+    const nextStartEl = document.getElementById('osd-next-start');
+    const nextEndEl = document.getElementById('osd-next-end');
+    const nextTitleEl = document.getElementById('osd-next-title');
+    const currentMeta = document.querySelector('.osd-current-meta');
+    const nextMeta = document.querySelector('.osd-next-meta');
+    const nextWrap = document.querySelector('.osd-epg-next');
+    const epgWrap = document.querySelector('.osd-epg');
+
+    if (epgWrap) epgWrap.style.display = '';
+
+    if (epgData) {
+      const fmtTime = (d) => d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      
+      if (curStartEl) curStartEl.textContent = fmtTime(epgData.current.start);
+      if (curEndEl) curEndEl.textContent = fmtTime(epgData.current.end);
+      if (curTitleEl) curTitleEl.textContent = epgData.current.title;
+      if (fillEl) fillEl.style.width = `${epgData.current.progress}%`;
+      if (currentMeta) currentMeta.style.display = 'inline-flex';
+      
+      if (epgData.next) {
+        if (nextStartEl) nextStartEl.textContent = fmtTime(epgData.next.start);
+        if (nextEndEl) nextEndEl.textContent = fmtTime(epgData.next.end);
+        if (nextTitleEl) nextTitleEl.textContent = epgData.next.title;
+        if (nextMeta) nextMeta.style.display = 'inline-flex';
+        if (nextWrap) nextWrap.style.display = '';
+      } else {
+        if (nextTitleEl) nextTitleEl.textContent = 'Sin información de programa';
+        if (nextMeta) nextMeta.style.display = 'none';
+        if (nextWrap) nextWrap.style.display = 'none';
+      }
+    } else {
+      if (curTitleEl) curTitleEl.textContent = 'Sin información de programa';
+      if (fillEl) fillEl.style.width = '0%';
+      if (currentMeta) currentMeta.style.display = 'none';
+      
+      if (nextTitleEl) nextTitleEl.textContent = 'Sin información de programa';
+      if (nextMeta) nextMeta.style.display = 'none';
+      if (nextWrap) nextWrap.style.display = 'none';
+    }
   }
 
   function _updateOSDClock() {
@@ -456,8 +518,6 @@ const Player = (() => {
       }).join(''));
     } catch (e) { return atob(str); }
   }
-
-  function _fmt(d) { return d?.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) || ''; }
 
   // ── UTILS ────────────────────────────────────────────
   function stop() { 

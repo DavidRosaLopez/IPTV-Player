@@ -199,6 +199,29 @@
             <span id="osd-name" class="osd-name"></span>
             <span id="osd-fav-icon" class="material-symbols-rounded hidden" style="color: var(--accent2); margin-left: 15px; font-size: 32px; vertical-align: middle;">favorite</span>
           </div>
+          <!-- Guía EPG (Programa actual y siguiente) -->
+          <div class="osd-epg">
+            <div class="osd-epg-current">
+              <span class="osd-epg-now-label">Ahora:</span>
+              <span id="osd-current-title" class="osd-epg-title-text">Cargando guía...</span>
+              <div class="osd-current-meta">
+                <span id="osd-current-start" class="osd-epg-time">--:--</span>
+                <div class="osd-progress-bar">
+                  <div id="osd-progress-fill" class="osd-progress-fill" style="width: 0%;"></div>
+                </div>
+                <span id="osd-current-end" class="osd-epg-time">--:--</span>
+              </div>
+            </div>
+            <div class="osd-epg-next">
+              <span class="osd-epg-next-label">Siguiente:</span>
+              <span id="osd-next-title" class="osd-epg-title-text">Cargando siguiente...</span>
+              <div class="osd-next-meta">
+                <span id="osd-next-start" class="osd-epg-time">--:--</span>
+                <span class="osd-epg-sep">-</span>
+                <span id="osd-next-end" class="osd-epg-time">--:--</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -243,6 +266,7 @@
   <script src="js/storage.js" defer></script>
   <script src="js/keyHandler.js" defer></script>
   <script src="js/playlist.js" defer></script>
+  <script src="js/epg.js" defer></script>
   <script src="js/player.js" defer></script>
   <script src="js/favorites.js" defer></script>
   <script src="js/search.js" defer></script>

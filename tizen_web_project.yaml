@@ -30,6 +30,7 @@ files:
   - README.md
   - css/components.css
   - css/main.css
+  - img/logo.png
   - index.html
   - js/app.js
   - js/epg.js
@@ -40,9 +41,14 @@ files:
   - js/m3u-worker.js
   - js/player.js
   - js/playlist.js
+  - js/router.js
   - js/search.js
+  - js/setup-progress.js
   - js/storage.js
+  - js/store.js
   - js/sync.js
+  - js/view-channels.js
+  - js/view-setup.js
   - js/virtual-list.js
   - web-remote/css/style.css
   - web-remote/index.html
