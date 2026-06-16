@@ -18,6 +18,7 @@ const VirtualList = (() => {
   let _scrollTop   = 0;
   let _rafId       = null;
   let _domCache    = {};    // index → DOM element
+  let _colW        = 0;    // cacheado al inicializar, evita offsetWidth en cada tarjeta
 
   function init({ containerId, items, onSelect, getFavBadge, getEpgNow }) {
     _container   = document.getElementById(containerId);
@@ -29,6 +30,8 @@ const VirtualList = (() => {
     _focusedIdx  = 0;
     _scrollTop   = 0;
     _domCache    = {};
+    // Cachear ancho de columna UNA sola vez (offsetWidth fuerza reflow)
+    _colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
     _render();
 
     _container.addEventListener('scroll', _onScroll, { passive: true });
@@ -134,12 +137,11 @@ const VirtualList = (() => {
     const ch  = _items[i];
     const col = i % COLS;
     const row = Math.floor(i / COLS);
-    const colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
     const y   = PADDING + row * (ITEM_H + ITEM_GAP);
 
     const el = document.createElement('div');
     el.className   = 'channel-card' + (i === _focusedIdx ? ' focused' : '');
-    el.style.cssText = `position:absolute;top:${y}px;left:${PADDING + col*(colW+ITEM_GAP)}px;width:${colW}px;height:${ITEM_H}px;`;
+    el.style.cssText = `position:absolute;top:${y}px;left:${PADDING + col*(_colW+ITEM_GAP)}px;width:${_colW}px;height:${ITEM_H}px;`;
     el.dataset.idx = i;
 
     const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;

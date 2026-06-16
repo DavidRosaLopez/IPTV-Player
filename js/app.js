@@ -573,6 +573,7 @@ const App = (() => {
       el.classList.toggle('focused', i === _groupIdx);
       el.classList.toggle('active', _groups[i]?.id === _currentGroup);
     });
+    _sidebarFocusablesCache = null; // invalidar cache
   }
 
   function _updateGroupCounts() {
@@ -594,13 +595,16 @@ const App = (() => {
     });
   }
 
+  let _sidebarFocusablesCache = null;
   function _getSidebarFocusables() {
+    if (_sidebarFocusablesCache) return _sidebarFocusablesCache;
     const list = [];
     const bs = document.getElementById('btn-open-search');
     const bc = document.getElementById('btn-open-setup');
     if (bs) list.push(bs);
     if (bc) list.push(bc);
     list.push(...Array.from(document.querySelectorAll('.group-item')));
+    _sidebarFocusablesCache = list;
     return list;
   }
 
@@ -694,7 +698,8 @@ const App = (() => {
       }
 
       VirtualList.move(dir);
-      KeyHandler.setFocus(document.querySelector('.channel-card.focused'));
+      // skipScroll = true, VirtualList ya scrollea de forma más eficiente modificando scrollTop
+      KeyHandler.setFocus(document.querySelector('.channel-card.focused'), true);
       // Preview del canal enfocado con delay para no saturar
       const focused = VirtualList.getCurrentItem();
       if (focused && typeof Player !== 'undefined') Player.schedulePreview(focused);
@@ -714,7 +719,7 @@ const App = (() => {
         VirtualList.setFocused(VirtualList.getFocused());
       }
       setTimeout(() => {
-        KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'));
+        KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'), true);
       }, 50);
     }
   }

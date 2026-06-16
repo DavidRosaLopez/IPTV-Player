@@ -128,12 +128,14 @@ const KeyHandler = (() => {
   // Focus management helpers
   let _focusedEl = null;
 
-  function setFocus(el) {
+  function setFocus(el, skipScroll = false) {
     if (!el) return;
     if (_focusedEl) _focusedEl.classList.remove('focused');
     _focusedEl = el;
     el.classList.add('focused');
-    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (!skipScroll) {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
   }
 
   function getFocused() { return _focusedEl; }
