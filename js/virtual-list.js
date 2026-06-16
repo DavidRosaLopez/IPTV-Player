@@ -13,20 +13,18 @@ const VirtualList = (() => {
   let _items       = [];
   let _onSelect    = null;
   let _getFavBadge = null;
-  let _getEpgNow   = null;
   let _focusedIdx  = 0;
   let _scrollTop   = 0;
   let _rafId       = null;
   let _domCache    = {};    // index → DOM element
   let _colW        = 0;    // cacheado al inicializar, evita offsetWidth en cada tarjeta
 
-  function init({ containerId, items, onSelect, getFavBadge, getEpgNow }) {
+  function init({ containerId, items, onSelect, getFavBadge }) {
     _container   = document.getElementById(containerId);
     if (_container) _container.innerHTML = ''; // FIX OVERLAPPING
     _items       = items;
     _onSelect    = onSelect;
     _getFavBadge = getFavBadge;
-    _getEpgNow   = getEpgNow;
     _focusedIdx  = 0;
     _scrollTop   = 0;
     _domCache    = {};
@@ -119,7 +117,6 @@ const VirtualList = (() => {
       const el = _domCache[key];
       const ch = _items[i];
       const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
-      const now    = _getEpgNow   ? _getEpgNow(ch.epgId) : null;
 
       el.innerHTML =
         (isFav ? '<span class="fav-badge material-symbols-rounded">favorite</span>' : '') +
@@ -128,7 +125,6 @@ const VirtualList = (() => {
           : '') +
         `<div class="channel-info">` +
           `<div class="channel-name">${_safeStr(ch.name)}</div>` +
-          (now ? `<div class="channel-prog">${_safeStr(now.title)}</div>` : '') +
         `</div>`;
     }
   }
@@ -145,7 +141,6 @@ const VirtualList = (() => {
     el.dataset.idx = i;
 
     const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
-    const now    = _getEpgNow   ? _getEpgNow(ch.epgId) : null;
 
     // Use innerHTML once — fast
     el.innerHTML =
@@ -155,7 +150,6 @@ const VirtualList = (() => {
         : '') +
       `<div class="channel-info">` +
         `<div class="channel-name">${_safeStr(ch.name)}</div>` +
-        (now ? `<div class="channel-prog">${_safeStr(now.title)}</div>` : '') +
       `</div>`;
 
     el.addEventListener('click', () => { setFocused(i); _onSelect && _onSelect(ch); });

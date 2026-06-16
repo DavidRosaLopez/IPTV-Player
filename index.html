@@ -177,8 +177,6 @@
             <span id="osd-name" class="osd-name"></span>
             <span id="osd-fav-icon" class="material-symbols-rounded hidden" style="color: var(--accent2); margin-left: 15px; font-size: 32px; vertical-align: middle;">favorite</span>
           </div>
-          <div id="osd-now" class="osd-now"></div>
-          <div id="osd-next" class="osd-next"></div>
         </div>
       </div>
 
@@ -193,29 +191,6 @@
       </div>
     </div>
 
-    <!-- ══ EPG ══ -->
-    <div id="view-epg" class="view">
-      <div class="epg-layout">
-        <div class="epg-header">
-          <h2 class="epg-title"><span class="material-symbols-rounded" style="vertical-align: bottom; margin-right: 8px;">calendar_month</span>Guía de Programación</h2>
-          <div class="epg-time-nav">
-            <button class="epg-nav-btn" id="epg-prev"><span class="material-symbols-rounded">chevron_left</span> -3h</button>
-            <span id="epg-current-time" class="epg-current-time"></span>
-            <button class="epg-nav-btn" id="epg-next">+3h <span class="material-symbols-rounded">chevron_right</span></button>
-          </div>
-        </div>
-        <div class="epg-container">
-          <div class="epg-timeline" id="epg-timeline"></div>
-          <div class="epg-grid-wrap">
-            <div class="epg-channels-col" id="epg-channels-col"></div>
-            <div class="epg-grid" id="epg-grid"></div>
-          </div>
-        </div>
-        <div class="epg-detail" id="epg-detail">
-          <p class="epg-detail-empty">Selecciona un programa para ver detalles</p>
-        </div>
-      </div>
-    </div>
 
     <!-- Toast / Loading -->
     <div id="toast" class="toast hidden"></div>
@@ -244,7 +219,6 @@
   <script src="js/storage.js"></script>
   <script src="js/keyHandler.js"></script>
   <script src="js/playlist.js"></script>
-  <script src="js/epg.js"></script>
   <script src="js/player.js"></script>
   <script src="js/favorites.js"></script>
   <script src="js/search.js"></script>

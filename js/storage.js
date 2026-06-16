@@ -22,8 +22,7 @@ const Storage = (() => {
   const saveLists   = (lists) => set('lists', lists);
   const getFavs     = ()      => get('favorites', []);
   const saveFavs    = (favs)  => set('favorites', favs);
-  const getEpgCache = (url)   => get('epg_' + btoa(url).slice(0,20), null);
-  const setEpgCache = (url, data) => set('epg_' + btoa(url).slice(0,20), { ts: Date.now(), data });
+
   const getLastList = ()      => get('last_list', null);
   const setLastList = (id)    => set('last_list', id);
   const getLastChannel = ()   => get('last_channel', null);
@@ -40,5 +39,5 @@ const Storage = (() => {
   const setChannelCache = (listId, data) => set(_cacheKey(listId), { ts: Date.now(), data });
   const clearChannelCache = (listId) => del(_cacheKey(listId));
 
-  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getEpgCache, setEpgCache, getLastList, setLastList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache };
+  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache };
 })();

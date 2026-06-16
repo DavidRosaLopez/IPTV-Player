@@ -97,7 +97,6 @@ const App = (() => {
         }
       }
     }
-    if (name === 'epg')      _renderEPGView();
     if (name === 'setup')    _initSetupView();
   }
 
@@ -412,18 +411,7 @@ const App = (() => {
     _currentGroup = '__all__';
     _groupIdx     = 0;
 
-    // Load EPG in background — don’t block channel list
-    if (list.epgUrl) {
-      if (!fromCache) showLoading('Cargando guía EPG…');
-      const validIds = new Set();
-      _channels.forEach(c => {
-        if (c.epgId) validIds.add(c.epgId);
-        else if (c.name) validIds.add(c.name);
-      });
-      EPG.load(list.epgUrl, validIds).then(() => hideLoading());
-    } else {
-      hideLoading();
-    }
+    hideLoading();
 
     Search.init(_channels);
     Player.init(_changeChannelRelative);
@@ -674,8 +662,7 @@ const App = (() => {
       containerId:  'channel-grid',
       items,
       onSelect:     ch => _playChannel(ch),
-      getFavBadge:  id => Favorites.isFav(id),
-      getEpgNow:    epgId => EPG.getNow(epgId),
+      getFavBadge:  id => Favorites.isFav(id)
     });
 
     _updateGroupCounts();
@@ -804,22 +791,6 @@ const App = (() => {
     if (next) { VirtualList.setFocused(nextIdx); _playChannel(next); }
   }
 
-  // ── EPG VIEW ──────────────────────────────────────────
-  function _renderEPGView() {
-    const timeEl = document.getElementById('epg-current-time');
-    if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-    const subset = _channels.slice(0, 60);
-    EPG.render(subset, 'epg-grid', 'epg-channels-col', 'epg-timeline');
-
-    const prev = document.getElementById('epg-prev');
-    const next = document.getElementById('epg-next');
-    if (prev) prev.onclick = () => { EPG.shiftOffset(-3 * 3600000); _renderEPGView(); };
-    if (next) next.onclick = () => { EPG.shiftOffset( 3 * 3600000); _renderEPGView(); };
-
-    KeyHandler.on('BACK',  () => { if (_isView('epg')) { EPG.resetOffset(); showView('channels'); return true; } });
-    KeyHandler.on('GREEN', () => { if (_isView('epg')) { EPG.resetOffset(); showView('channels'); return true; } });
-  }
 
   // ── UTILS ─────────────────────────────────────────────
   function showLoading(msg) {

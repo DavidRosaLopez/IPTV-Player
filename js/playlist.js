@@ -41,15 +41,12 @@ const Playlist = (() => {
       _search:  _normalize(s.name),
       logo:     s.stream_icon || '',
       group:    catMap[s.category_id] || 'Sin categoría',
-      epgId:    s.epg_channel_id || s.name,
       url:      `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.m3u8`,
-      streamId: s.stream_id,
-      shortEpgUrl: `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&action=get_short_epg&stream_id=${s.stream_id}`
+      streamId: s.stream_id
     }));
 
     if (onProgress) onProgress(100);
-    const epgUrl = `${server}/xmltv.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-    return { channels, epgUrl, serverInfo: info.server_info };
+    return { channels, serverInfo: info.server_info };
   }
 
   async function _fetchJson(url, noCache = false) {

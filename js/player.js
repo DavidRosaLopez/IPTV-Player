@@ -296,7 +296,7 @@ const Player = (() => {
       }
     });
 
-    KeyHandler.on('GREEN', () => { if (_isActive()) { App.showView('epg'); return true; } });
+
 
     KeyHandler.on('PLAY_PAUSE', () => {
       if (_isActive()) {
@@ -369,7 +369,6 @@ const Player = (() => {
 
   // ── OSD ──────────────────────────────────────────────
   let _osdTimer = null;
-  let _osdPollInterval = null;
 
   function showOSD() {
     if (!_current) return;
@@ -401,101 +400,24 @@ const Player = (() => {
       }
     }
 
-    _updateEpgOSD();
+    _updateOSDClock();
 
     osd.classList.remove('hidden');
     clearTimeout(_osdTimer);
-    clearInterval(_osdPollInterval);
-
-    // Poll EPG in case it is still loading in background
-    _osdPollInterval = setInterval(_updateEpgOSD, 1000);
 
     _osdTimer = setTimeout(() => {
       osd.classList.add('hidden');
-      clearInterval(_osdPollInterval);
     }, 3000);
   }
 
-  function _updateEpgOSD() {
-    if (!_current) return;
-    const nowEl = document.getElementById('osd-now');
-    const nextEl = document.getElementById('osd-next');
+  function _updateOSDClock() {
     const clockEl = document.getElementById('osd-clock');
-
     if (clockEl) {
       clockEl.textContent = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     }
-    
-    let nowP = null;
-    let nextP = null;
-
-    // 1. Try global EPG if available
-    if (typeof EPG !== 'undefined' && _current.epgId) {
-      nowP = EPG.getNow(_current.epgId);
-      if (!nextP) nextP = EPG.getNext(_current.epgId);
-    }
-    
-    // 2. Try short EPG fallback
-    if (!nowP && _current._shortEpgData) {
-      nowP = _current._shortEpgData.nowP;
-      nextP = _current._shortEpgData.nextP;
-    }
-
-    if (nowP) {
-      if (nowEl) nowEl.textContent = `Ahora: ${nowP.title} (${_fmt(nowP.start)} - ${_fmt(nowP.end)})`;
-      if (nextEl) nextEl.textContent = nextP ? `Después: ${nextP.title} (${_fmt(nextP.start)} - ${_fmt(nextP.end)})` : '';
-    } else {
-      if (nowEl) nowEl.textContent = _current._shortEpgFetched ? 'Sin información de programación' : 'Buscando programación...';
-      if (nextEl) nextEl.textContent = '';
-    }
   }
 
-  async function _fetchShortEpg(ch) {
-    if (!ch) return;
-    if (!ch.shortEpgUrl) {
-      ch._shortEpgFetched = true;
-      if (_current && _current.id === ch.id && !_osdTimer?.hidden) _updateEpgOSD();
-      return;
-    }
-    
-    try {
-      const res = await fetch(ch.shortEpgUrl);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.epg_listings && data.epg_listings.length > 0) {
-        const now = Date.now();
-        let nowP = null;
-        let nextP = null;
 
-        for (const item of data.epg_listings) {
-          let startMs, endMs;
-          if (item.start_timestamp && item.stop_timestamp) {
-            startMs = parseInt(item.start_timestamp) * 1000;
-            endMs = parseInt(item.stop_timestamp) * 1000;
-          } else {
-            startMs = new Date(item.start.replace(' ', 'T')).getTime();
-            endMs = new Date(item.end.replace(' ', 'T')).getTime();
-          }
-
-          if (startMs <= now && endMs >= now) {
-            nowP = { title: _b64DecodeUnicode(item.title), start: new Date(startMs), end: new Date(endMs) };
-          } else if (startMs > now && !nextP) {
-            nextP = { title: _b64DecodeUnicode(item.title), start: new Date(startMs), end: new Date(endMs) };
-          }
-        }
-        
-        if (nowP) {
-          ch._shortEpgData = { nowP, nextP };
-        }
-      }
-    } catch (e) {} finally {
-      ch._shortEpgFetched = true;
-      if (_current && _current.id === ch.id) {
-        const osd = document.getElementById('player-osd');
-        if (osd && !osd.classList.contains('hidden')) _updateEpgOSD();
-      }
-    }
-  }
 
   function _b64DecodeUnicode(str) {
     try {
@@ -515,7 +437,6 @@ const Player = (() => {
     _hidePip();
     clearTimeout(_previewTimer);
     clearTimeout(_osdTimer);
-    clearInterval(_osdPollInterval);
   }
   function getCurrent()   { return _current; }
   function getState()     { return _state; }
