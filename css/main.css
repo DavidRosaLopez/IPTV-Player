@@ -481,13 +481,14 @@ html, body {
 }
 .group-item.active {
   background: var(--accent-dim);
-  border-left-color: var(--accent);
+  border-left-color: transparent;
   color: var(--accent);
   font-weight: 600;
 }
 .group-item.active.focused {
   background: rgba(108,99,255,0.25);
   color: #fff;
+  border-left-color: var(--accent);
 }
 .group-item > span:first-child {
   white-space: nowrap;

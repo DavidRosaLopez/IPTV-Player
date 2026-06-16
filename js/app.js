@@ -9,6 +9,10 @@ const App = (() => {
     KeyHandler.init();
     Favorites.init();
 
+    document.getElementById('btn-cancel-load')?.addEventListener('click', () => {
+      cancelLoad();
+    });
+
     // Pre-populate default lists if storage lists is empty
     let lists = Storage.getLists();
     if (!lists || lists.length === 0) {

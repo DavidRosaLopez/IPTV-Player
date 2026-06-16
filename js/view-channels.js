@@ -234,6 +234,7 @@ const ViewChannels = (() => {
   }
 
   function renderGroups() {
+    _sidebarFocusablesCache = null;
     const list = document.getElementById('group-list');
     if (!list) return;
     list.innerHTML = '';
@@ -252,7 +253,7 @@ const ViewChannels = (() => {
                   g.id === '__favs__' ? Favorites.getIds().length :
                   channels.filter(c => c.group === g.id && (currentCountry === 'ALL' || c.countryCode === currentCountry)).length;
       const li = document.createElement('li');
-      li.className = 'group-item' + (i === groupIdx ? ' focused' : '') + (g.id === currentGroup ? ' active' : '');
+      li.className = 'group-item' + (i === groupIdx && _focusZone === 'groups' ? ' focused' : '') + (g.id === currentGroup ? ' active' : '');
       li.dataset.idx = i;
       li.innerHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
       li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g); });
@@ -266,7 +267,7 @@ const ViewChannels = (() => {
     const groupIdx = Store.get('groupIdx');
     const els = document.querySelectorAll('.group-item');
     els.forEach((el, i) => {
-      el.classList.toggle('focused', i === groupIdx);
+      el.classList.toggle('focused', i === groupIdx && _focusZone === 'groups');
       el.classList.toggle('active', groups[i]?.id === currentGroup);
     });
     _sidebarFocusablesCache = null;
