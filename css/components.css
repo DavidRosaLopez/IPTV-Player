@@ -181,12 +181,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 380px;
-}
-.pip-hint {
-  font-size: 20px;
-  color: rgba(255,255,255,0.5);
-  flex-shrink: 0;
+  max-width: 440px;
 }
 
 /* Animación de entrada del PiP */
