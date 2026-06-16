@@ -49,8 +49,10 @@ html, body {
 .focusable:focus, [tabindex]:focus { outline: none; }
 .focused {
   box-shadow: var(--focus-ring);
+  /* transform:scale evita reflow si usamos will-change */
   transform: scale(1.04);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.1s, box-shadow 0.1s;
+  will-change: transform;
 }
 
 /* ── SCROLLBAR ── */
@@ -477,15 +479,17 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.15s;
+  /* transition solo en background y border-color, no en 'all' */
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
   position: relative;
+  will-change: background;
 }
 .channel-card:hover { background: var(--bg-hover); }
 .channel-card.focused {
   background: var(--accent-dim);
   border-color: var(--accent);
   box-shadow: var(--focus-ring);
-  transform: scale(1.02);
+  /* sin scale en tarjetas: evita reflow en cada tecla pulsada */
 }
 .channel-card.playing { border-color: var(--green); }
 .channel-card.playing::after {
