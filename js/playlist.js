@@ -247,18 +247,28 @@ const Playlist = (() => {
       mainGroupName = '<span class="material-symbols-rounded">live_tv</span> Series';
     }
 
-    const groups = [{ id: '__all__', name: mainGroupName },
-                    { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' }];
+    const staticGroups = [{ id: '__all__', name: mainGroupName },
+                          { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' }];
     
+    const dynamicGroups = [];
     const list = countryCode === 'ALL' ? channels : channels.filter(c => c.countryCode === countryCode);
     for (const ch of list) {
       if (!seen.has(ch.group)) {
         seen.add(ch.group);
-        groups.push({ id: ch.group, name: ch.group });
+        dynamicGroups.push({ id: ch.group, name: ch.group });
       }
     }
-    _groupCache[countryCode] = groups;
-    return groups;
+    
+    // Forzar "Últimos Estrenos" al principio de la lista dinámica
+    dynamicGroups.sort((a, b) => {
+      if (a.id === '✨ Últimos Estrenos') return -1;
+      if (b.id === '✨ Últimos Estrenos') return 1;
+      return 0;
+    });
+
+    const finalGroups = [...staticGroups, ...dynamicGroups];
+    _groupCache[countryCode] = finalGroups;
+    return finalGroups;
   }
 
   function clearGroupCache() { _groupCache = {}; }
