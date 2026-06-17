@@ -78,10 +78,6 @@ const App = (() => {
 
     const prevList = Store.get('currentList');
 
-    if (typeof Favorites !== 'undefined') {
-      Favorites.init();
-    }
-
     const cached = Storage.getChannelCache(list.id);
     if (cached) {
       const steps = [{ id: 'cache', label: 'Cargando de caché local' }];
@@ -177,6 +173,11 @@ const App = (() => {
     Store.set('groupCountsCache', null);
     Store.set('currentGroup', '__all__');
     Store.set('groupIdx', 0);
+
+    if (typeof Favorites !== 'undefined') {
+      Favorites.init();
+    }
+
 
     Router.hideLoading();
 
