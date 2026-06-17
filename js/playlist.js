@@ -88,14 +88,15 @@ const Playlist = (() => {
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     const channels = (streams || []).map((s, i) => {
-      const groupName = catMap[s.category_id] || 'Sin categoría';
+      const groupName = _cleanTvCategoryName(catMap[s.category_id]);
+      const cleanName = _cleanStreamName(s.name);
       return {
         id:          i,
-        name:        s.name,
+        name:        cleanName,
         _search:     _normalize(s.name),
         logo:        s.stream_icon || '',
         group:       groupName,
-        countryCode: detectCountry(s.name, groupName),
+        countryCode: detectCountry(s.name, catMap[s.category_id] || 'Sin categoría'),
         url:         `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.m3u8`,
         streamId:    s.stream_id
       };
@@ -114,6 +115,14 @@ const Playlist = (() => {
       if (e.name === 'AbortError') throw e;
       return null;
     }
+  }
+
+  function _cleanTvCategoryName(rawName) {
+    if (!rawName) return 'Sin categoría';
+    let n = rawName;
+    n = n.replace(/^(\[.*?\]|\{.*?\}|\|.*?\||[A-Z0-9]{2,6}\s*[-|:]\s*)\s*/i, '');
+    n = n.replace(/^(ESPA[ÑN]A|FRANCE|ITALY|GERMANY|NORDIC|LATINO|DEPORTES|SPORTS|VIP)\s*[-|:]\s*/i, '');
+    return n.trim() || rawName;
   }
 
   function _cleanVodCategoryName(rawName) {
@@ -191,15 +200,16 @@ const Playlist = (() => {
 
   function _cleanStreamName(n) {
     if (!n) return '';
-    let parts = n.split(' - ');
+    let res = n.replace(/^(\[.*?\]|\{.*?\}|\|.*?\||[A-Z0-9]{2,6}\s*[-|:]\s*)\s*/i, '');
+    let parts = res.split(' - ');
     while (parts.length > 1) {
-      if (!/[a-z]/.test(parts[0]) || parts[0].length <= 6) {
+      if (!/[a-z]/i.test(parts[0]) || parts[0].length <= 6) {
         parts.shift();
       } else {
         break;
       }
     }
-    let res = parts.join(' - ');
+    res = parts.join(' - ');
     res = res.replace(/\s*[\[\(\{][A-Z]{2,3}[\]\)\}]$/i, '');
     return res.trim() || n;
   }
