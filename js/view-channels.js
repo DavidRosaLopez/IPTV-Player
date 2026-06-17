@@ -147,6 +147,11 @@ const ViewChannels = (() => {
   function renderCountries() {
     const container = document.getElementById('country-filter');
     if (!container) return;
+    if (_currentTab !== 'tv') {
+      container.style.display = 'none';
+      return;
+    }
+    container.style.display = '';
     container.innerHTML = '';
     const codes = Store.get('countries') || ['ALL'];
     const currentCountry = Store.get('currentCountry') || 'ALL';
@@ -407,7 +412,12 @@ const ViewChannels = (() => {
           _setFocusZone('tabs');
         }
       } else if (dir === 'down') {
-        _setFocusZone('countries');
+        if (_currentTab === 'tv') {
+          _setFocusZone('countries');
+        } else {
+          _sidebarFocusIdx = 2;
+          _setFocusZone('groups');
+        }
       } else if (dir === 'up') {
         _sidebarFocusIdx = 0;
         _setFocusZone('groups'); // Setup / search buttons
@@ -447,14 +457,23 @@ const ViewChannels = (() => {
         }
       } else if (dir === 'up') {
         if (_sidebarFocusIdx === 2) {
-          _setFocusZone('countries');
+          if (_currentTab === 'tv') {
+            _setFocusZone('countries');
+          } else {
+            _setFocusZone('tabs');
+          }
           return;
         } else if (_sidebarFocusIdx > 2) {
           _sidebarFocusIdx--;
         }
       } else if (dir === 'down') {
         if (_sidebarFocusIdx === 0 || _sidebarFocusIdx === 1) {
-          _setFocusZone('countries');
+          if (_currentTab === 'tv') {
+            _setFocusZone('countries');
+          } else {
+            _sidebarFocusIdx = 2;
+            _setFocusZone('groups');
+          }
           return;
         } else {
           _sidebarFocusIdx = Math.min(els.length - 1, _sidebarFocusIdx + 1);
