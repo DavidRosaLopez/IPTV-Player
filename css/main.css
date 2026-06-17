@@ -1046,6 +1046,7 @@ html, body {
   display: flex;
   flex-direction: column;
   color: #fff;
+  min-width: 0;
 }
 .info-popup-right h2 {
   font-size: 56px;
@@ -1124,6 +1125,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 .info-seasons h3, .info-episodes h3 {
   font-size: 20px;
@@ -1137,6 +1139,7 @@ html, body {
   overflow-x: auto;
   padding: 4px;
   padding-bottom: 10px;
+  max-width: 100%;
 }
 .info-horizontal-list li {
   padding: 10px 24px;
