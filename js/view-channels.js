@@ -866,17 +866,23 @@ const ViewChannels = (() => {
     const groups = Playlist.getGroups(channels, currentCountry, _currentTab);
     Store.set('groups', groups);
 
-    let groupObj = groups.find(g => g.id === ch.group);
-    if (!groupObj) groupObj = groups.find(g => g.id === '__all__');
+    let targetGroupId = Store.get('currentGroup');
+    let filtered = targetGroupId ? Playlist.filterByGroup(channels, targetGroupId, favIds, currentCountry) : [];
     
-    let gIdx = groups.findIndex(g => g.id === (groupObj ? groupObj.id : '__all__'));
-    Store.set('currentGroup', groupObj ? groupObj.id : '__all__');
+    // Si el canal no está en el grupo actual (por ejemplo, si estábamos en una categoría y saltamos a otra), cambiamos el grupo
+    if (!targetGroupId || filtered.findIndex(c => c.id === ch.id) === -1) {
+      let groupObj = groups.find(g => g.id === ch.group);
+      if (!groupObj) groupObj = groups.find(g => g.id === '__all__');
+      targetGroupId = groupObj ? groupObj.id : '__all__';
+      filtered = Playlist.filterByGroup(channels, targetGroupId, favIds, currentCountry);
+    }
+    
+    let gIdx = groups.findIndex(g => g.id === targetGroupId);
+    Store.set('currentGroup', targetGroupId);
     Store.set('groupIdx', gIdx >= 0 ? gIdx : 0);
     _sidebarFocusIdx = (gIdx >= 0 ? gIdx : 0) + 2;
 
     renderGroups();
-
-    let filtered = Playlist.filterByGroup(channels, Store.get('currentGroup'), favIds, currentCountry);
     let chIdx = filtered.findIndex(c => c.id === ch.id);
     
     if (chIdx < 0) {
