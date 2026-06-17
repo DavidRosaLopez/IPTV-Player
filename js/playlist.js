@@ -319,7 +319,8 @@ const Playlist = (() => {
   // ── GROUPS (cached by country) ─────────────────────────
   let _groupCache = {};
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
-    if (_groupCache[countryCode]) return _groupCache[countryCode];
+    const cacheKey = `${countryCode}_${tabId}`;
+    if (_groupCache[cacheKey]) return _groupCache[cacheKey];
     const seen = new Set();
     
     let mainGroupName = '<span class="material-symbols-rounded">tv</span> Canales';
@@ -389,7 +390,7 @@ const Playlist = (() => {
     });
 
     const finalGroups = [...staticGroups, ...dynamicGroups];
-    _groupCache[countryCode] = finalGroups;
+    _groupCache[cacheKey] = finalGroups;
     return finalGroups;
   }
 

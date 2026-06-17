@@ -106,7 +106,7 @@ const ViewChannels = (() => {
         _countryFocusIdx = 0;
         if (typeof Playlist !== 'undefined') {
           Playlist.clearGroupCache();
-          Store.set('groups', Playlist.getGroups(channels, 'ALL'));
+          Store.set('groups', Playlist.getGroups(channels, 'ALL', _currentTab));
         }
         Store.set('currentGroup', '__all__');
         Store.set('groupIdx', 0);
