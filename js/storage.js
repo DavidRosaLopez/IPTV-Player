@@ -67,18 +67,16 @@ const Storage = (() => {
     });
   }
 
-  const _cacheKey = (listId) => 'ch_cache_' + listId;
-  
-  const getChannelCache = async (listId) => {
+  const _getFromDB = async (key, ttl) => {
     try {
       const db = await _getDB();
       return new Promise((resolve) => {
         const tx = db.transaction(STORE_NAME, 'readonly');
         const store = tx.objectStore(STORE_NAME);
-        const req = store.get(_cacheKey(listId));
+        const req = store.get(key);
         req.onsuccess = () => {
           const v = req.result;
-          if (!v || (Date.now() - v.ts) > CHANNEL_TTL) resolve(null);
+          if (!v || (Date.now() - v.ts) > ttl) resolve(null);
           else resolve(v.data);
         };
         req.onerror = () => resolve(null);
@@ -86,32 +84,44 @@ const Storage = (() => {
     } catch { return null; }
   };
 
-  const setChannelCache = async (listId, data) => {
+  const _setToDB = async (key, data) => {
     try {
       const db = await _getDB();
       return new Promise((resolve) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
-        const req = store.put({ ts: Date.now(), data }, _cacheKey(listId));
+        const req = store.put({ ts: Date.now(), data }, key);
         req.onsuccess = () => resolve(true);
         req.onerror = () => resolve(false);
       });
     } catch { return false; }
   };
 
-  const clearChannelCache = async (listId) => {
+  const _delFromDB = async (key) => {
     try {
       const db = await _getDB();
       return new Promise((resolve) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
-        const req = store.delete(_cacheKey(listId));
+        const req = store.delete(key);
         req.onsuccess = () => resolve(true);
         req.onerror = () => resolve(false);
       });
     } catch { return false; }
   };
 
-  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getDefaultList, setDefaultList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache, getVisibleCountries, setVisibleCountries };
+  const getChannelCache = (listId) => _getFromDB('ch_cache_' + listId, CHANNEL_TTL);
+  const setChannelCache = (listId, data) => _setToDB('ch_cache_' + listId, data);
+  const clearChannelCache = (listId) => _delFromDB('ch_cache_' + listId);
+
+  const getVodCache = (listId) => _getFromDB('vod_cache_' + listId, CHANNEL_TTL);
+  const setVodCache = (listId, data) => _setToDB('vod_cache_' + listId, data);
+  const clearVodCache = (listId) => _delFromDB('vod_cache_' + listId);
+
+  const getSeriesCache = (listId) => _getFromDB('series_cache_' + listId, CHANNEL_TTL);
+  const setSeriesCache = (listId, data) => _setToDB('series_cache_' + listId, data);
+  const clearSeriesCache = (listId) => _delFromDB('series_cache_' + listId);
+
+  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getDefaultList, setDefaultList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache, getVodCache, setVodCache, clearVodCache, getSeriesCache, setSeriesCache, clearSeriesCache, getVisibleCountries, setVisibleCountries };
 })();
 

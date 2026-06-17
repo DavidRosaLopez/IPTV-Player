@@ -3,11 +3,12 @@
  * Only renders visible rows — handles 10,000+ channels smoothly
  */
 const VirtualList = (() => {
-  const COLS        = 3;
-  const ITEM_H      = 74;   // px — card height + gap
-  const ITEM_GAP    = 12;
-  const PADDING     = 16;
-  const BUFFER_ROWS = 4;    // extra rows above/below viewport
+  let COLS        = 3;
+  let ITEM_H      = 74;   // px — card height + gap
+  let ITEM_GAP    = 12;
+  let PADDING     = 16;
+  let BUFFER_ROWS = 4;    // extra rows above/below viewport
+  let _layout     = 'tv';
 
   let _container   = null;
   let _items       = [];
@@ -24,7 +25,18 @@ const VirtualList = (() => {
   let _scrolling   = false;
   let _scrollTimeout = null;
 
-  function init({ containerId, items, onSelect, getFavBadge }) {
+  function init({ containerId, items, onSelect, getFavBadge, layout = 'tv' }) {
+    _layout = layout;
+    if (_layout === 'poster') {
+      COLS = 6;
+      ITEM_H = 260;
+      ITEM_GAP = 16;
+    } else {
+      COLS = 3;
+      ITEM_H = 74;
+      ITEM_GAP = 12;
+    }
+
     _container   = document.getElementById(containerId);
     if (_container) _container.innerHTML = ''; // FIX OVERLAPPING
     _items       = items;
@@ -35,8 +47,10 @@ const VirtualList = (() => {
     _domCache    = {};
     _pool        = [];
     // Cachear propiedades geométricas UNA sola vez (fuerzan reflow)
-    _colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
-    _vH   = _container.offsetHeight || 900;
+    if (_container) {
+      _colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
+      _vH   = _container.offsetHeight || 900;
+    }
     _render();
 
     if (!_eventsBound) {
@@ -183,7 +197,7 @@ const VirtualList = (() => {
     const row = Math.floor(i / COLS);
     const y   = PADDING + row * (ITEM_H + ITEM_GAP);
 
-    el.className   = 'channel-card' + (i === _focusedIdx ? ' focused' : '');
+    el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx ? ' focused' : '');
     el.style.cssText = `position:absolute;top:${y}px;left:${PADDING + col*(_colW+ITEM_GAP)}px;width:${_colW}px;height:${ITEM_H}px;`;
     el.dataset.idx = i;
 

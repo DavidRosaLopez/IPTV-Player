@@ -113,13 +113,85 @@ const Playlist = (() => {
     } catch { return null; }
   }
 
+  async function loadVod(server, user, pass, onProgress, signal) {
+    const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+    
+    if (onProgress) onProgress(10);
+    const [streams, cats] = await Promise.all([
+      _fetchJson(`${base}&action=get_vod_streams`, false, signal),
+      _fetchJson(`${base}&action=get_vod_categories`, false, signal)
+    ]);
+    if (onProgress) onProgress(80);
+
+    const catMap = {};
+    (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
+
+    const movies = (streams || []).map((s, i) => {
+      const groupName = catMap[s.category_id] || 'Sin categoría';
+      return {
+        id:          `vod_${s.stream_id}`,
+        name:        s.name,
+        _search:     _normalize(s.name),
+        logo:        s.stream_icon || '',
+        group:       groupName,
+        countryCode: 'VOD',
+        url:         `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
+        streamId:    s.stream_id,
+        type:        'vod'
+      };
+    });
+
+    if (onProgress) onProgress(100);
+    return movies;
+  }
+
+  async function loadSeries(server, user, pass, onProgress, signal) {
+    const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+    
+    if (onProgress) onProgress(10);
+    const [seriesList, cats] = await Promise.all([
+      _fetchJson(`${base}&action=get_series`, false, signal),
+      _fetchJson(`${base}&action=get_series_categories`, false, signal)
+    ]);
+    if (onProgress) onProgress(80);
+
+    const catMap = {};
+    (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
+
+    const series = (seriesList || []).map((s, i) => {
+      const groupName = catMap[s.category_id] || 'Sin categoría';
+      return {
+        id:          `series_${s.series_id}`,
+        name:        s.name,
+        _search:     _normalize(s.name),
+        logo:        s.cover || s.stream_icon || '',
+        group:       groupName,
+        countryCode: 'SERIES',
+        // url is not available until we fetch series info, so this is just the entry
+        streamId:    s.series_id,
+        type:        'series'
+      };
+    });
+
+    if (onProgress) onProgress(100);
+    return series;
+  }
+
 
   // ── GROUPS (cached by country) ─────────────────────────
   let _groupCache = {};
-  function getGroups(channels, countryCode = 'ALL') {
+  function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
     if (_groupCache[countryCode]) return _groupCache[countryCode];
     const seen = new Set();
-    const groups = [{ id: '__all__', name: '<span class="material-symbols-rounded">tv</span> Todos los canales' },
+    
+    let mainGroupName = '<span class="material-symbols-rounded">tv</span> Canales';
+    if (tabId === 'vod') {
+      mainGroupName = '<span class="material-symbols-rounded">movie</span> Películas';
+    } else if (tabId === 'series') {
+      mainGroupName = '<span class="material-symbols-rounded">live_tv</span> Series';
+    }
+
+    const groups = [{ id: '__all__', name: mainGroupName },
                     { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' }];
     
     const list = countryCode === 'ALL' ? channels : channels.filter(c => c.countryCode === countryCode);
@@ -152,5 +224,5 @@ const Playlist = (() => {
     return channels.filter(c => qTokens.every(t => c._search.includes(t)));
   }
 
-  return { loadXtream, search, filterByGroup, getGroups, clearGroupCache };
+  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache };
 })();

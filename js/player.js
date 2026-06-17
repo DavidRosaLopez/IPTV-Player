@@ -53,7 +53,11 @@ const Player = (() => {
     _hidePip();
 
     Router.showView('player');
-    if (typeof PlayerOSD !== 'undefined') PlayerOSD.show(_current);
+    if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+      if (typeof VodOSD !== 'undefined') VodOSD.show(_current);
+    } else {
+      if (typeof PlayerOSD !== 'undefined') PlayerOSD.show(_current);
+    }
     const vl = document.getElementById('video-layer');
     if (vl) {
       vl.style.width  = '100%';
@@ -111,7 +115,17 @@ const Player = (() => {
 
         webapis.avplay.prepareAsync(
           () => {
-            try { webapis.avplay.play(); } catch(e) { _onError(e); }
+            try { 
+              webapis.avplay.play(); 
+              if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+                 const saved = Store.get('progress_' + _current.id);
+                 if (saved && saved > 10000) {
+                   setTimeout(() => {
+                     try { webapis.avplay.jumpForward(saved); } catch(e){}
+                   }, 200);
+                 }
+              }
+            } catch(e) { _onError(e); }
           },
           (err) => _onError(err)
         );
@@ -177,6 +191,10 @@ const Player = (() => {
   let _previewCh = null;
   function schedulePreview(ch) {
     if (!ch || !ch.url) return;
+    if (ch.type === 'vod' || ch.type === 'series') {
+      cancelPreview();
+      return;
+    }
     // Si ya estamos en PiP con el mismo canal, nada que hacer
     if (_mode === 'PIP' && _current && _current.id === ch.id) return;
     clearTimeout(_previewTimer);
@@ -315,25 +333,57 @@ const Player = (() => {
 
     KeyHandler.on('ENTER', () => { 
       if (_isActive()) { 
-        if (typeof PlayerOSD !== 'undefined') PlayerOSD.show(_current); 
+        if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+          if (typeof VodOSD !== 'undefined') {
+            if (VodOSD.isVisible()) VodOSD.handleKey('ENTER');
+            else VodOSD.show(_current);
+          }
+        } else {
+          if (typeof PlayerOSD !== 'undefined') PlayerOSD.show(_current); 
+        }
         return true; 
       } 
     });
 
     KeyHandler.on('LEFT', () => {
-      if (_isActive()) { _handleSeek('left'); return true; }
+      if (_isActive()) { 
+        if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+          if (typeof VodOSD !== 'undefined') {
+            if (VodOSD.isVisible()) VodOSD.handleKey('LEFT');
+            else { VodOSD.show(_current); seek(-10); }
+          }
+        } else {
+          _handleSeek('left'); 
+        }
+        return true; 
+      }
     });
 
     KeyHandler.on('RIGHT', () => {
-      if (_isActive()) { _handleSeek('right'); return true; }
+      if (_isActive()) { 
+        if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+          if (typeof VodOSD !== 'undefined') {
+            if (VodOSD.isVisible()) VodOSD.handleKey('RIGHT');
+            else { VodOSD.show(_current); seek(10); }
+          }
+        } else {
+          _handleSeek('right'); 
+        }
+        return true; 
+      }
     });
 
     KeyHandler.on('BACK', () => {
       if (_isActive() && _current) {
-        _mode = 'PIP';
-        Router.showView('channels');
-        _showPip(_current);
-        _applyDisplayRect(); // coords fijas → no necesita esperar al DOM
+        if (_current.type === 'vod' || _current.type === 'series') {
+          stop();
+          Router.showView('channels');
+        } else {
+          _mode = 'PIP';
+          Router.showView('channels');
+          _showPip(_current);
+          _applyDisplayRect();
+        }
         return true;
       }
     });
@@ -411,17 +461,42 @@ const Player = (() => {
 
   // ── UTILS ────────────────────────────────────────────
   function stop() { 
+    if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+      const ms = getCurrentTime();
+      if (ms > 10000) Store.set('progress_' + _current.id, ms);
+    }
     _safeStop(); 
     _current = null;
     _mode = 'IDLE';
     _hidePip();
     clearTimeout(_previewTimer);
     if (typeof PlayerOSD !== 'undefined') PlayerOSD.hide();
+    if (typeof VodOSD !== 'undefined') VodOSD.hide();
+  }
+  function getCurrentTime() {
+    try { return webapis.avplay.getCurrentTime(); } catch(e) { return 0; }
+  }
+  function getDuration() {
+    try { return webapis.avplay.getDuration(); } catch(e) { return 0; }
+  }
+  function togglePlayPause() {
+    if (_state === 'PLAYING') {
+      try { webapis.avplay.pause(); _setState('PAUSED'); } catch(e) {}
+    } else if (_state === 'PAUSED') {
+      try { webapis.avplay.play(); _setState('PLAYING'); } catch(e) {}
+    }
+  }
+  function seek(seconds) {
+    try {
+      const ms = seconds * 1000;
+      if (ms > 0) webapis.avplay.jumpForward(ms);
+      else webapis.avplay.jumpBackward(Math.abs(ms));
+    } catch(e) {}
   }
   function getCurrent()   { return _current; }
   function getState()     { return _state; }
   function getMode()      { return _mode; }
   function reapplyPip()   { if (_mode === 'PIP') _applyDisplayRect(); }
   function _isActive()    { return document.getElementById('view-player')?.classList.contains('active'); }
-  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview };
+  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek };
 })();

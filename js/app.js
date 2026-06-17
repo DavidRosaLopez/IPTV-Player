@@ -93,7 +93,7 @@ const App = (() => {
     const steps = [
       { id: 'connect',   label: 'Conectando al servidor' },
       { id: 'download',  label: 'Descargando lista' },
-      { id: 'parse',     label: 'Procesando canales' },
+      { id: 'parse',     label: 'Procesando lista' },
     ];
     SetupProgress.show('Cargando Lista', list.name, steps);
 

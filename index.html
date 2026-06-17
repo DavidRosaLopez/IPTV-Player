@@ -146,6 +146,11 @@
               <button class="sidebar-btn" id="btn-open-setup"><span class="material-symbols-rounded">settings</span></button>
             </div>
           </div>
+          <div class="sidebar-tabs" id="content-tabs">
+            <button class="sidebar-tab-btn active focused" data-type="tv"><span class="material-symbols-rounded">tv</span> TV</button>
+            <button class="sidebar-tab-btn" data-type="vod"><span class="material-symbols-rounded">movie</span> Películas</button>
+            <button class="sidebar-tab-btn" data-type="series"><span class="material-symbols-rounded">live_tv</span> Series</button>
+          </div>
           <div id="country-filter" class="country-filter"></div>
           <ul class="group-list" id="group-list"></ul>
         </aside>
@@ -227,6 +232,28 @@
         </div>
       </div>
 
+      <!-- VOD / Series OSD (Netflix style) -->
+      <div id="vod-osd" class="vod-osd hidden">
+        <div class="vod-osd-top">
+          <div class="vod-back">
+            <span class="material-symbols-rounded">arrow_back</span>
+            <span>Atrás</span>
+          </div>
+          <h2 id="vod-title" class="vod-title">Cargando...</h2>
+        </div>
+        
+        <div class="vod-osd-bottom">
+          <div class="vod-progress-row">
+            <span id="vod-time-current" class="vod-time">00:00:00</span>
+            <div class="vod-progress-bar-container">
+              <div id="vod-progress-fill" class="vod-progress-fill" style="width: 0%;"></div>
+              <div id="vod-progress-thumb" class="vod-progress-thumb" style="left: 0%;"></div>
+            </div>
+            <span id="vod-time-total" class="vod-time">--:--:--</span>
+          </div>
+        </div>
+      </div>
+
       <!-- El video vive en #video-layer (fuera del flow de vistas) -->
       <div id="buffer-spinner" class="buffer-spinner hidden">
         <div class="spinner"></div>
@@ -238,6 +265,25 @@
       </div>
     </div>
 
+
+    <!-- Setup Progress Popup -->
+    <div id="setup-progress" class="setup-progress hidden">
+      <div class="sp-card">
+        <div class="spinner large sp-spinner"></div>
+        <div class="sp-body">
+          <h2 id="sp-title" class="sp-title">Cargando...</h2>
+          <p id="sp-sub" class="sp-sub"></p>
+          <div class="sp-bar-wrap">
+            <div class="sp-bar"><div id="sp-fill" class="sp-fill"></div></div>
+            <span id="sp-pct" class="sp-pct">0%</span>
+          </div>
+          <ul id="sp-steps" class="sp-steps"></ul>
+          <div style="margin-top: 20px; text-align: right;">
+            <button id="btn-cancel-load" class="btn-secondary focused">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast / Loading -->
     <div id="toast" class="toast hidden"></div>
@@ -271,6 +317,7 @@
   <script src="js/playlist.js" defer></script>
   <script src="js/epg.js" defer></script>
   <script src="js/player-osd.js" defer></script>
+  <script src="js/vod-osd.js" defer></script>
   <script src="js/player.js" defer></script>
   <script src="js/favorites.js" defer></script>
   <script src="js/search.js" defer></script>
