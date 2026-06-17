@@ -376,6 +376,11 @@ const ViewChannels = (() => {
     if (!ch) return;
     Storage.setLastChannel(ch.id);
 
+    if (ch.type === 'vod' || ch.type === 'series') {
+      if (typeof InfoPopup !== 'undefined') InfoPopup.show(ch);
+      return;
+    }
+
     if (typeof Player !== 'undefined' && Player.getMode() === 'PIP' && Player.getCurrent()?.id === ch.id) {
       Player.expandToFullscreen();
       Router.showView('player');
@@ -545,6 +550,7 @@ const ViewChannels = (() => {
     _keysBound = true;
 
     KeyHandler.on('LEFT',  () => { 
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('LEFT'); }
       if (Router.isView('channels')) { 
         if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
         if (_focusZone === 'exit') { _moveExit('left'); return true; }
@@ -552,6 +558,7 @@ const ViewChannels = (() => {
       } 
     });
     KeyHandler.on('RIGHT', () => { 
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('RIGHT'); }
       if (Router.isView('channels')) { 
         if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
         if (_focusZone === 'exit') { _moveExit('right'); return true; }
@@ -559,12 +566,14 @@ const ViewChannels = (() => {
       } 
     });
     KeyHandler.on('UP',    () => { 
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('UP'); }
       if (Router.isView('channels') && _focusZone !== 'exit') { 
         if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
         _moveActive('up'); return true; 
       } 
     });
     KeyHandler.on('DOWN',  () => { 
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('DOWN'); }
       if (Router.isView('channels') && _focusZone !== 'exit') { 
         if (document.activeElement && document.activeElement.tagName === 'INPUT') {
           document.activeElement.blur();
@@ -576,6 +585,7 @@ const ViewChannels = (() => {
     });
 
     KeyHandler.on('ENTER', () => {
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('ENTER'); }
       if (!Router.isView('channels')) return;
       if (_focusZone === 'tabs') {
         const tabs = document.querySelectorAll('.sidebar-tab-btn');
@@ -630,6 +640,7 @@ const ViewChannels = (() => {
     });
 
     KeyHandler.on('LONG_OK', () => {
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return true; }
       if (Router.isView('channels') && _focusZone === 'channels') {
         const ch = VirtualList.getCurrentItem();
         if (ch) { 
@@ -647,6 +658,7 @@ const ViewChannels = (() => {
     });
 
     KeyHandler.on('BACK', () => {
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('BACK'); }
       if (Router.isView('channels')) {
         if (Search.isOpen()) { Search.close(); return true; }
         if (_focusZone === 'exit') { _hideExitPopup(); return true; }

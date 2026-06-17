@@ -300,7 +300,45 @@
         </div>
       </div>
     </div>
-  </div>
+      <!-- Info Popup -->
+      <div id="info-popup" class="info-popup hidden" tabindex="-1">
+        <div class="info-popup-bg" id="info-popup-bg"></div>
+        <div class="info-popup-content">
+          <div class="info-popup-left">
+            <img id="info-poster" src="" alt="Poster" onerror="this.style.opacity=0" />
+          </div>
+          <div class="info-popup-right">
+            <h2 id="info-title">Título</h2>
+            <div class="info-meta">
+              <span id="info-year" class="info-meta-item"></span>
+              <span id="info-duration" class="info-meta-item"></span>
+              <span id="info-rating" class="info-meta-item"></span>
+              <span id="info-genre" class="info-meta-item"></span>
+            </div>
+            <p id="info-plot" class="info-plot"></p>
+            <div class="info-cast-container">
+              <p><strong>Director:</strong> <span id="info-director"></span></p>
+              <p><strong>Reparto:</strong> <span id="info-cast"></span></p>
+            </div>
+            
+            <div class="info-actions" id="info-actions">
+              <button id="btn-info-play" class="info-btn info-btn-main"><span class="material-symbols-rounded">play_arrow</span> Reproducir</button>
+              <button id="btn-info-fav" class="info-btn"><span class="material-symbols-rounded" id="info-fav-icon">favorite_border</span> Favorito</button>
+            </div>
+
+            <div id="info-series-container" class="info-series-container hidden">
+              <div class="info-seasons">
+                <ul id="info-seasons-list" class="info-horizontal-list"></ul>
+              </div>
+              <div class="info-episodes">
+                <ul id="info-episodes-list" class="info-vertical-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
 
   <script src="js/config.js" defer></script>
   <script src="js/lib/peerjs.min.js" defer></script>
@@ -315,6 +353,7 @@
   <script src="js/player-osd.js" defer></script>
   <script src="js/vod-osd.js" defer></script>
   <script src="js/player.js" defer></script>
+  <script src="js/info-popup.js" defer></script>
   <script src="js/favorites.js" defer></script>
   <script src="js/search.js" defer></script>
   <script src="js/virtual-list.js" defer></script>

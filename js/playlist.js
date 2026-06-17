@@ -177,6 +177,15 @@ const Playlist = (() => {
     return series;
   }
 
+  async function getVodInfo(server, user, pass, vod_id, signal) {
+    const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+    return await _fetchJson(`${base}&action=get_vod_info&vod_id=${vod_id}`, true, signal);
+  }
+
+  async function getSeriesInfo(server, user, pass, series_id, signal) {
+    const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+    return await _fetchJson(`${base}&action=get_series_info&series_id=${series_id}`, true, signal);
+  }
 
   // ── GROUPS (cached by country) ─────────────────────────
   let _groupCache = {};
@@ -224,5 +233,5 @@ const Playlist = (() => {
     return channels.filter(c => qTokens.every(t => c._search.includes(t)));
   }
 
-  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache };
+  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo };
 })();
