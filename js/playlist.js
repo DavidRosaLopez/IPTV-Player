@@ -164,6 +164,9 @@ const Playlist = (() => {
     if (n.match(/PARAMOUNT/)) return '⛰️ Paramount+';
     if (n.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
     
+    // Novedades
+    if (n.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
+    
     // Calidad
     if (n.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR|VISION/)) return '💎 Series en 4K / UHD';
     
@@ -290,11 +293,51 @@ const Playlist = (() => {
       }
     }
     
-    // Forzar "Últimos Estrenos" al principio de la lista dinámica
+    const seriesOrder = [
+      '✨ Últimos Estrenos',
+      '🟥 Netflix',
+      '🟣 HBO Max',
+      '🟦 Amazon Prime',
+      '✨ Disney+',
+      '🍏 Apple TV+',
+      'Ⓜ️ Movistar+',
+      '⛰️ Paramount+',
+      '📺 Nacionales / Otras Apps',
+      '🇹🇷 Telenovelas y Turcas',
+      '🦄 Infantil y Animación',
+      '🌍 Documentales',
+      '🎌 Anime',
+      '💎 Series en 4K / UHD',
+      '📺 Series Generales'
+    ];
+
+    const vodOrder = [
+      '✨ Últimos Estrenos',
+      '💎 Calidad 4K / UHD',
+      '🍿 Originales (Plataformas)',
+      '🦄 Infantil y Animación',
+      '💥 Acción y Aventuras',
+      '😂 Comedia',
+      '👻 Terror y Suspense',
+      '🌍 Documentales',
+      '📺 Clásicos y Colecciones',
+      '🎄 Especial Navidad',
+      '⚽ Deportes en Diferido',
+      '➕ Otras'
+    ];
+
+    let orderList = [];
+    if (tabId === 'series') orderList = seriesOrder;
+    else if (tabId === 'vod') orderList = vodOrder;
+
     dynamicGroups.sort((a, b) => {
-      if (a.id === '✨ Últimos Estrenos') return -1;
-      if (b.id === '✨ Últimos Estrenos') return 1;
-      return 0;
+      let idxA = orderList.indexOf(a.id);
+      let idxB = orderList.indexOf(b.id);
+      if (idxA === -1) idxA = 999;
+      if (idxB === -1) idxB = 999;
+      
+      if (idxA !== idxB) return idxA - idxB;
+      return a.id.localeCompare(b.id);
     });
 
     const finalGroups = [...staticGroups, ...dynamicGroups];
