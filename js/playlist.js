@@ -116,6 +116,36 @@ const Playlist = (() => {
     }
   }
 
+  function _cleanCategoryName(rawName) {
+    if (!rawName) return '➕ Otras';
+    let n = rawName.toUpperCase();
+    
+    // Eliminar prefijo de país
+    n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '').trim();
+
+    // 1. Novedades y Calidad Premium
+    if (n.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
+    if (n.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR|VISION/)) return '💎 Calidad 4K / UHD';
+    
+    // 2. Plataformas (Netflix, HBO, Disney...)
+    if (n.match(/NETFLIX|PRIME|AMAZON|DISNEY|APPLE|HBO|PARAMOUNT|SHOWTIME/)) return '🍿 Originales (Plataformas)';
+    
+    // 3. Géneros Principales (Simplificados)
+    if (n.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
+    if (n.match(/ACCION|ACTION|GUERRE|CRIME|AÇÃO/)) return '💥 Acción y Aventuras';
+    if (n.match(/COMEDIA|COMEDY/)) return '😂 Comedia';
+    if (n.match(/TERROR|HORROR|SUSPENSE|THRILLER/)) return '👻 Terror y Suspense';
+    if (n.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
+    
+    // 4. Colecciones y Deportes
+    if (n.match(/CLASICO|OLD|ANTIGUA|SAGA/)) return '📺 Clásicos y Colecciones';
+    if (n.match(/NAVIDAD|CHRISTMAS/)) return '🎄 Especial Navidad';
+    if (n.match(/LALIGA|MOTOGP|FORMULA|F1|FOOTBALL|RUGBY|GOLF|MOTO|SPORT/)) return '⚽ Deportes en Diferido';
+
+    // Todo lo demás
+    return '➕ Otras';
+  }
+
   async function loadVod(server, user, pass, onProgress, signal) {
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
     
@@ -130,14 +160,14 @@ const Playlist = (() => {
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     const movies = (streams || []).map((s, i) => {
-      const groupName = catMap[s.category_id] || 'Sin categoría';
+      const groupName = _cleanCategoryName(catMap[s.category_id]);
       return {
         id:          `vod_${s.stream_id}`,
         name:        s.name,
         _search:     _normalize(s.name),
         logo:        s.stream_icon || '',
         group:       groupName,
-        countryCode: 'VOD',
+        countryCode: detectCountry(s.name, catMap[s.category_id]),
         url:         `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
         streamId:    s.stream_id,
         type:        'vod'
@@ -162,14 +192,14 @@ const Playlist = (() => {
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     const series = (seriesList || []).map((s, i) => {
-      const groupName = catMap[s.category_id] || 'Sin categoría';
+      const groupName = _cleanCategoryName(catMap[s.category_id]);
       return {
         id:          `series_${s.series_id}`,
         name:        s.name,
         _search:     _normalize(s.name),
         logo:        s.cover || s.stream_icon || '',
         group:       groupName,
-        countryCode: 'SERIES',
+        countryCode: detectCountry(s.name, catMap[s.category_id]),
         // url is not available until we fetch series info, so this is just the entry
         streamId:    s.series_id,
         type:        'series'
