@@ -1145,6 +1145,8 @@ html, body {
   font-size: 20px;
   border: 2px solid transparent;
   transition: all 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .info-horizontal-list li.active {
   background: rgba(255,255,255,0.15);
