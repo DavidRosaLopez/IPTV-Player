@@ -484,6 +484,8 @@ const ViewChannels = (() => {
     } else if (zone === 'channels') {
       if (typeof VirtualList !== 'undefined') {
         VirtualList.setFocused(VirtualList.getFocused());
+        const ch = VirtualList.getCurrentItem();
+        if (ch && typeof Player !== 'undefined') Player.schedulePreview(ch);
       }
       setTimeout(() => {
         KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'), true);

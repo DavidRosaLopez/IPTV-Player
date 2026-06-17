@@ -54,7 +54,7 @@ html, body {
 
 /* ── FOCUS ── */
 .focusable:focus, [tabindex]:focus, button:focus, input:focus { outline: none; }
-.focused, button:focus, input:focus {
+.focused:not(.channel-card), button:focus, input:focus {
   box-shadow: var(--focus-ring);
   /* transform:scale evita reflow si usamos will-change */
   transform: scale(1.04) translate3d(0,0,0);
