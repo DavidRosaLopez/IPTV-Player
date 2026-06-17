@@ -1153,6 +1153,7 @@ html, body {
   border-color: var(--accent);
   background: rgba(255,255,255,0.25);
   box-shadow: inset 0 0 10px rgba(108,99,255,0.4);
+  transform: none;
 }
 .info-vertical-list {
   display: flex;
@@ -1178,6 +1179,7 @@ html, body {
   border-color: var(--accent);
   background: rgba(108,99,255,0.25);
   box-shadow: inset 0 0 10px rgba(108,99,255,0.4);
+  transform: none;
 }
 .info-ep-img {
   width: 120px;
@@ -1193,3 +1195,8 @@ html, body {
 .info-btn-fav.focused { background: rgba(255, 71, 87, 0.15); border-color: #ff4757; box-shadow: 0 0 30px rgba(255, 71, 87, 0.4); }
 .info-btn-fav.active-fav { color: #fff; background: #ff4757; border-color: #ff4757; }
 .info-btn-fav.active-fav.focused { background: #ff6b81; box-shadow: 0 0 30px rgba(255, 71, 87, 0.6); border-color: #fff; }
+
+/* Spinner Loader */
+.app-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; width: 100%; height: 60%; color: var(--text-sec); font-size: 26px; }
+.spinner { width: 70px; height: 70px; border: 6px solid rgba(108,99,255, 0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }

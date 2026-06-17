@@ -729,6 +729,14 @@ const ViewChannels = (() => {
     document.getElementById('group-list').innerHTML = '';
     VirtualList.update([]);
 
+    const grid = document.getElementById('channel-grid');
+    const loader = document.getElementById('tab-loader');
+    if (grid) grid.classList.add('hidden');
+    if (loader) {
+      loader.classList.remove('hidden');
+      document.getElementById('tab-loader-msg').textContent = tabId === 'tv' ? 'Cargando TV...' : (tabId === 'vod' ? 'Cargando Películas...' : 'Cargando Series...');
+    }
+
     let data = [];
     if (tabId === 'tv') {
       data = Store.get('channels') || [];
@@ -784,6 +792,11 @@ const ViewChannels = (() => {
   }
 
   function _renderData(data) {
+    const grid = document.getElementById('channel-grid');
+    const loader = document.getElementById('tab-loader');
+    if (loader) loader.classList.add('hidden');
+    if (grid) grid.classList.remove('hidden');
+
     const currentCountry = Store.get('currentCountry');
     const groups = Playlist.getGroups(data, currentCountry, _currentTab);
     Store.set('groups', groups);
