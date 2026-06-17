@@ -71,7 +71,10 @@ const ViewChannels = (() => {
       if (groupName) groupName.textContent = _currentTab === 'tv' ? 'TV' : (_currentTab === 'vod' ? 'Películas' : 'Series');
       
       const channelCount = document.getElementById('channel-count');
-      if (channelCount) channelCount.textContent = '';
+      if (channelCount) {
+        channelCount.textContent = '';
+        channelCount.style.display = 'none';
+      }
       
       if (typeof VirtualList !== 'undefined') {
         VirtualList.init({
@@ -351,7 +354,9 @@ const ViewChannels = (() => {
     if (cnt) {
       if (!currentGroup) {
         cnt.textContent = '';
+        cnt.style.display = 'none';
       } else {
+        cnt.style.display = '';
         cnt.textContent = items.length + (_currentTab === 'tv' ? ' canales' : (_currentTab === 'vod' ? ' películas' : ' series'));
       }
     }
@@ -693,7 +698,10 @@ const ViewChannels = (() => {
     }
 
     const channelCount = document.getElementById('channel-count');
-    if (channelCount) channelCount.textContent = 'Cargando...';
+    if (channelCount) {
+      channelCount.style.display = '';
+      channelCount.textContent = 'Cargando...';
+    }
     document.getElementById('group-list').innerHTML = '';
     VirtualList.update([]);
 
