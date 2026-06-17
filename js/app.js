@@ -65,7 +65,7 @@ const App = (() => {
 
     const prevList = Store.get('currentList');
 
-    const cached = Storage.getChannelCache(list.id);
+    const cached = await Storage.getChannelCache(list.id);
     if (cached) {
       const steps = [{ id: 'cache', label: 'Cargando de caché local' }];
       SetupProgress.show('Cargando Lista', list.name, steps);
@@ -124,7 +124,7 @@ const App = (() => {
       Store.set('currentList', list);
       Storage.setLastList(list.id);
       Store.set('channels', loadedChannels);
-      Storage.setChannelCache(list.id, loadedChannels);
+      await Storage.setChannelCache(list.id, loadedChannels);
 
       await new Promise(r => setTimeout(r, 400));
       SetupProgress.hide();
@@ -224,7 +224,7 @@ const App = (() => {
       
       if (newChannels.length > 0) {
         Store.set('channels', newChannels);
-        Storage.setChannelCache(list.id, newChannels);
+        await Storage.setChannelCache(list.id, newChannels);
         localStorage.setItem(`sync_${list.id}`, Date.now().toString());
         
         Playlist.clearGroupCache();

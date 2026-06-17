@@ -48,16 +48,69 @@ const Storage = (() => {
   const getVisibleCountries = ()      => get('visible_countries', null);
   const setVisibleCountries = (list)  => set('visible_countries', list);
 
-  // ── Channel cache (TTL: 6 hours) ──────────────────────
+  // ── IndexedDB for large data (Channel cache) ────────────
   const CHANNEL_TTL = 6 * 3600 * 1000;
+  const DB_NAME = 'IPTV_DB';
+  const STORE_NAME = 'cache';
+  
+  function _getDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
   const _cacheKey = (listId) => 'ch_cache_' + listId;
-  const getChannelCache = (listId) => {
-    const v = get(_cacheKey(listId), null);
-    if (!v || (Date.now() - v.ts) > CHANNEL_TTL) return null;
-    return v.data;
+  
+  const getChannelCache = async (listId) => {
+    try {
+      const db = await _getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get(_cacheKey(listId));
+        req.onsuccess = () => {
+          const v = req.result;
+          if (!v || (Date.now() - v.ts) > CHANNEL_TTL) resolve(null);
+          else resolve(v.data);
+        };
+        req.onerror = () => resolve(null);
+      });
+    } catch { return null; }
   };
-  const setChannelCache = (listId, data) => set(_cacheKey(listId), { ts: Date.now(), data });
-  const clearChannelCache = (listId) => del(_cacheKey(listId));
+
+  const setChannelCache = async (listId, data) => {
+    try {
+      const db = await _getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put({ ts: Date.now(), data }, _cacheKey(listId));
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      });
+    } catch { return false; }
+  };
+
+  const clearChannelCache = async (listId) => {
+    try {
+      const db = await _getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.delete(_cacheKey(listId));
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      });
+    } catch { return false; }
+  };
 
   return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getDefaultList, setDefaultList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache, getVisibleCountries, setVisibleCountries };
 })();
