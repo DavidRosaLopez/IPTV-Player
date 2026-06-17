@@ -733,23 +733,31 @@ const ViewChannels = (() => {
     const loader = document.getElementById('tab-loader');
     if (grid) grid.classList.add('hidden');
     if (loader) {
-      loader.classList.remove('hidden');
-      document.getElementById('tab-loader-msg').textContent = tabId === 'tv' ? 'Cargando TV...' : (tabId === 'vod' ? 'Cargando Películas...' : 'Cargando Series...');
+      if (tabId === 'tv') {
+        loader.classList.add('hidden');
+      } else {
+        loader.classList.remove('hidden');
+        document.getElementById('tab-loader-msg').textContent = tabId === 'vod' ? 'Cargando películas...' : 'Cargando series...';
+      }
     }
     
     // Forzar renderizado del DOM antes de bloquear con IndexedDB/Parsing
     await new Promise(r => setTimeout(r, 10));
+    if (_currentTab !== tabId) return; // Guard contra cambio rápido de pestaña
 
     let data = [];
     if (tabId === 'tv') {
       data = Store.get('channels') || [];
     } else if (tabId === 'vod') {
       let cached = await Storage.getVodCache(list.id);
+      if (_currentTab !== tabId) return;
+
       if (!cached || cached.length === 0) {
         const steps = [{ id: 'vod', label: 'Descargando Películas...' }];
         SetupProgress.show('Películas', list.name, steps);
         try {
           cached = await Playlist.loadVod(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
+          if (_currentTab !== tabId) return;
           await Storage.setVodCache(list.id, cached);
         } catch (e) {
           if (e.name === 'AbortError') return; // Cancelado
@@ -761,11 +769,14 @@ const ViewChannels = (() => {
       data = cached;
     } else if (tabId === 'series') {
       let cached = await Storage.getSeriesCache(list.id);
+      if (_currentTab !== tabId) return;
+
       if (!cached || cached.length === 0) {
         const steps = [{ id: 'series', label: 'Descargando Series...' }];
         SetupProgress.show('Series', list.name, steps);
         try {
           cached = await Playlist.loadSeries(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
+          if (_currentTab !== tabId) return;
           await Storage.setSeriesCache(list.id, cached);
         } catch (e) {
           if (e.name === 'AbortError') return; // Cancelado
