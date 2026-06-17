@@ -159,7 +159,14 @@ const Playlist = (() => {
     const catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    const movies = (streams || []).map((s, i) => {
+    // Ordenar de más reciente a más antiguo
+    const sortedStreams = (streams || []).sort((a, b) => {
+      const addedA = parseInt(a.added || '0', 10);
+      const addedB = parseInt(b.added || '0', 10);
+      return addedB - addedA;
+    });
+
+    const movies = sortedStreams.map((s, i) => {
       const groupName = _cleanCategoryName(catMap[s.category_id]);
       return {
         id:          `vod_${s.stream_id}`,
@@ -191,7 +198,14 @@ const Playlist = (() => {
     const catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    const series = (seriesList || []).map((s, i) => {
+    // Ordenar de más reciente a más antiguo
+    const sortedSeries = (seriesList || []).sort((a, b) => {
+      const addedA = parseInt(a.added || a.last_modified || '0', 10);
+      const addedB = parseInt(b.added || b.last_modified || '0', 10);
+      return addedB - addedA;
+    });
+
+    const series = sortedSeries.map((s, i) => {
       const groupName = _cleanCategoryName(catMap[s.category_id]);
       return {
         id:          `series_${s.series_id}`,
