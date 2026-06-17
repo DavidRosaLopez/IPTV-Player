@@ -13,3 +13,6 @@ Thumbs.db
 .vscode/
 *.swp
 Debug/projects/IPTV-Player
+
+# Config
+js/config.js

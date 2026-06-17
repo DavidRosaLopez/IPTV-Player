@@ -16,25 +16,12 @@ const App = (() => {
     // Pre-populate default lists if storage lists is empty
     let lists = Storage.getLists();
     if (!lists || lists.length === 0) {
-      lists = [
-        {
-          id: 'predef_1',
-          name: 'http://cf.futuremyprovt.com',
-          type: 'xtream',
-          server: 'http://cf.futuremyprovt.com',
-          user: 'f7f23dd33459',
-          pass: '604a8e6f2c'
-        },
-        {
-          id: 'predef_2',
-          name: 'http://cf.magicmagstreg.com',
-          type: 'xtream',
-          server: 'http://cf.magicmagstreg.com',
-          user: 'f7f23dd33459',
-          pass: '604a8e6f2c'
-        }
-      ];
-      Storage.saveLists(lists);
+      if (typeof Config !== 'undefined' && Config.defaultLists) {
+        lists = Config.defaultLists;
+        Storage.saveLists(lists);
+      } else {
+        lists = [];
+      }
     }
 
     const defaultListId = Storage.getDefaultList();
