@@ -34,11 +34,19 @@ const Storage = (() => {
   const setLastList = (id)    => set('last_list', id);
   const getDefaultList = ()   => get('default_list', null);
   const setDefaultList = (id) => set('default_list', id);
-  const getLastChannel = ()   => get('last_channel', null);
-  const setLastChannel = (id) => set('last_channel', id);
+  const _getCurrentListId = () => {
+    if (typeof Store !== 'undefined') {
+      const list = Store.get('currentList');
+      if (list && list.id) return list.id;
+    }
+    return 'default';
+  };
 
-  const getVisibleCountries = ()      => get('visible_countries', null);
-  const setVisibleCountries = (list)  => set('visible_countries', list);
+  const getLastChannel = ()   => get('last_channel_' + _getCurrentListId(), null);
+  const setLastChannel = (id) => set('last_channel_' + _getCurrentListId(), id);
+
+  const getVisibleCountries = ()      => get('visible_countries_' + _getCurrentListId(), null);
+  const setVisibleCountries = (list)  => set('visible_countries_' + _getCurrentListId(), list);
 
   // ── Channel cache (TTL: 6 hours) ──────────────────────
   const CHANNEL_TTL = 6 * 3600 * 1000;
