@@ -24,7 +24,13 @@ const App = (() => {
       }
     }
 
-    const defaultListId = Storage.getDefaultList();
+    let defaultListId = Storage.getDefaultList();
+
+    // Auto-marcar la primera lista como predeterminada si no hay ninguna
+    if (!defaultListId && lists && lists.length > 0) {
+      defaultListId = lists[0].id;
+      Storage.setDefaultList(defaultListId);
+    }
     
     let listToLoad = null;
     if (defaultListId) {

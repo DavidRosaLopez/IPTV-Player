@@ -325,7 +325,23 @@ const ViewSetup = (() => {
       Sync.init(handleRemoteList);
     }
 
-    _setupZone = 'tabs';
+    const tabs = Array.from(_getSetupTabs());
+    const lists = Storage.getLists();
+
+    if (lists.length > 0) {
+      const savedTabIdx = tabs.findIndex(t => t.dataset.tab === 'saved');
+      if (savedTabIdx >= 0) {
+        _setupTabIdx = savedTabIdx;
+        _switchTab('saved');
+        _setupZone = 'content';
+        _setupContentIdx = 0;
+      }
+    } else {
+      _setupZone = 'tabs';
+      _setupTabIdx = 0;
+      if (tabs.length > 0) _switchTab(tabs[0].dataset.tab);
+    }
+
     _updateSetupFocus();
 
     if (_setupEventsBound) return;
