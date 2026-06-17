@@ -698,6 +698,7 @@ const ViewChannels = (() => {
     const signal = _tabAbortController.signal;
 
     _currentTab = tabId;
+    Store.set('currentTab', _currentTab);
     Playlist.clearGroupCache();
 
     // Resetear filtro de país al cambiar de pestaña
