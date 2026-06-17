@@ -55,7 +55,11 @@ const ViewChannels = (() => {
     if (fromView === 'player' && typeof Player !== 'undefined' && Player.getCurrent()) {
       syncWithChannel(Player.getCurrent());
     } else if (fromView === 'player') {
-      _setFocusZone('channels');
+      if (typeof InfoPopup !== 'undefined' && InfoPopup.isSuspended()) {
+        InfoPopup.resume();
+      } else {
+        _setFocusZone('channels');
+      }
     } else {
       // Al entrar por primera vez (o desde Configuración), preseleccionar "Todos" y "Canales"
       Store.set('currentCountry', null); // Forzar que _selectCountry haga el render completo

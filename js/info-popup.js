@@ -49,8 +49,27 @@ const InfoPopup = (() => {
     _updateFavIcon();
   }
 
+  let _isSuspended = false;
+
+  function suspend() {
+    _isVisible = false;
+    _isSuspended = true;
+    document.getElementById('info-popup').classList.add('hidden');
+  }
+
+  function resume() {
+    _isVisible = true;
+    _isSuspended = false;
+    document.getElementById('info-popup').classList.remove('hidden');
+    _updateFocus();
+  }
+
+  function isSuspended() { return _isSuspended; }
+  function isVisible() { return _isVisible; }
+
   function hide() {
     _isVisible = false;
+    _isSuspended = false;
     _current = null;
     _data = null;
     document.getElementById('info-popup').classList.add('hidden');
@@ -287,7 +306,7 @@ const InfoPopup = (() => {
 
   function _executeAction() {
     if (_actionIdx === 0 && _current.type === 'vod') {
-      hide();
+      suspend();
       Player.play(_current);
     } else if (_actionIdx === 1) {
       _toggleFav();
@@ -309,7 +328,7 @@ const InfoPopup = (() => {
       type: 'series'
     };
 
-    hide();
+    suspend();
     Player.play(playCh);
   }
 
@@ -331,5 +350,5 @@ const InfoPopup = (() => {
     });
   });
 
-  return { show, hide, isVisible: () => _isVisible, handleKey };
+  return { show, hide, handleKey, isVisible: () => _isVisible, suspend, resume, isSuspended: () => _isSuspended };
 })();
