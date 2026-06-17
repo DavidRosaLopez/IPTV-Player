@@ -38,6 +38,7 @@ const ViewChannels = (() => {
   let _currentTab = 'tv';
   let _tabFocusIdx = 0;
   const TABS = ['tv', 'vod', 'series'];
+  let _tabAbortController = null;
 
   function onShow(fromView) {
     if (fromView !== 'player') {
@@ -83,8 +84,7 @@ const ViewChannels = (() => {
           onSelect: () => {}
         });
       }
-      
-      _setFocusZone('countries');
+      _setFocusZone('tabs');
     }
 
     // Si el reproductor tiene canal en PiP, reafirmar su posición
@@ -690,6 +690,13 @@ const ViewChannels = (() => {
   
   async function _switchTab(tabId) {
     if (_currentTab === tabId) return;
+    
+    if (_tabAbortController) {
+      _tabAbortController.abort();
+    }
+    _tabAbortController = new AbortController();
+    const signal = _tabAbortController.signal;
+
     _currentTab = tabId;
     Playlist.clearGroupCache();
 
@@ -727,13 +734,14 @@ const ViewChannels = (() => {
       data = Store.get('channels') || [];
     } else if (tabId === 'vod') {
       let cached = await Storage.getVodCache(list.id);
-      if (!cached) {
+      if (!cached || cached.length === 0) {
         const steps = [{ id: 'vod', label: 'Descargando Películas...' }];
         SetupProgress.show('Películas', list.name, steps);
         try {
-          cached = await Playlist.loadVod(list.server, list.user, list.pass, (p) => SetupProgress.progress(p));
+          cached = await Playlist.loadVod(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
           await Storage.setVodCache(list.id, cached);
         } catch (e) {
+          if (e.name === 'AbortError') return; // Cancelado
           Router.showToast('Error cargando películas', 'error');
           cached = [];
         }
@@ -742,13 +750,14 @@ const ViewChannels = (() => {
       data = cached;
     } else if (tabId === 'series') {
       let cached = await Storage.getSeriesCache(list.id);
-      if (!cached) {
+      if (!cached || cached.length === 0) {
         const steps = [{ id: 'series', label: 'Descargando Series...' }];
         SetupProgress.show('Series', list.name, steps);
         try {
-          cached = await Playlist.loadSeries(list.server, list.user, list.pass, (p) => SetupProgress.progress(p));
+          cached = await Playlist.loadSeries(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
           await Storage.setSeriesCache(list.id, cached);
         } catch (e) {
+          if (e.name === 'AbortError') return; // Cancelado
           Router.showToast('Error cargando series', 'error');
           cached = [];
         }

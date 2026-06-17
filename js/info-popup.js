@@ -263,11 +263,24 @@ const InfoPopup = (() => {
   function _updateFavIcon() {
     const isFav = Favorites.getIds().includes(_current.id);
     document.getElementById('info-fav-icon').textContent = isFav ? 'favorite' : 'favorite_border';
+    if (isFav) {
+      document.getElementById('btn-info-fav').classList.add('active-fav');
+    } else {
+      document.getElementById('btn-info-fav').classList.remove('active-fav');
+    }
   }
 
   function _toggleFav() {
     Favorites.toggle(_current.id);
+    const isFav = Favorites.getIds().includes(_current.id);
     _updateFavIcon();
+    
+    if (typeof Router !== 'undefined') {
+      Router.showToast(isFav ? 'Añadido a Favoritos' : 'Eliminado de Favoritos', isFav ? 'success' : 'info');
+    }
+    if (typeof ViewChannels !== 'undefined') {
+      ViewChannels.refreshUI();
+    }
   }
 
   function _executeAction() {
@@ -276,8 +289,6 @@ const InfoPopup = (() => {
       Player.play(_current);
     } else if (_actionIdx === 1) {
       _toggleFav();
-      // Force UI refresh on view-channels if fav changed
-      if (typeof refreshUI !== 'undefined') refreshUI();
     }
   }
 
@@ -299,6 +310,18 @@ const InfoPopup = (() => {
     hide();
     Player.play(playCh);
   }
+
+  document.getElementById('btn-info-play')?.addEventListener('click', () => {
+    if (!_isVisible) return;
+    _actionIdx = 0;
+    _executeAction();
+  });
+  
+  document.getElementById('btn-info-fav')?.addEventListener('click', () => {
+    if (!_isVisible) return;
+    _actionIdx = 1;
+    _executeAction();
+  });
 
   return { show, hide, handleKey, isVisible: () => _isVisible };
 })();

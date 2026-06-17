@@ -110,7 +110,10 @@ const Playlist = (() => {
       const res = await fetch(url, { cache: noCache ? 'no-store' : 'force-cache', signal });
       if (!res.ok) return null;
       return await res.json();
-    } catch { return null; }
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      return null;
+    }
   }
 
   async function loadVod(server, user, pass, onProgress, signal) {
