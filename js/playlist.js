@@ -9,6 +9,13 @@ const Playlist = (() => {
     return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
+  function _toArray(obj) {
+    if (!obj) return [];
+    if (Array.isArray(obj)) return obj;
+    if (typeof obj === 'object') return Object.values(obj);
+    return [];
+  }
+
   // Pre-build normalized name for instant search
   function _buildSearchIndex(channels) {
     for (const ch of channels) {
@@ -85,9 +92,9 @@ const Playlist = (() => {
     if (onProgress) onProgress(80);
 
     const catMap = {};
-    (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
+    _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    const channels = (streams || []).map((s, i) => {
+    const channels = _toArray(streams).map((s, i) => {
       const groupName = _cleanTvCategoryName(catMap[s.category_id]);
       const cleanName = _cleanStreamName(s.name);
       return {
@@ -190,10 +197,13 @@ const Playlist = (() => {
   }
 
   function _extractYear(item) {
-    if (item.releaseDate && item.releaseDate.match(/^(19|20)\d{2}/)) return parseInt(item.releaseDate.substring(0, 4));
-    if (item.release_date && item.release_date.match(/^(19|20)\d{2}/)) return parseInt(item.release_date.substring(0, 4));
+    const d1 = String(item.releaseDate || '');
+    if (d1.match(/^(19|20)\d{2}/)) return parseInt(d1.substring(0, 4));
     
-    const m = (item.name || '').match(/\b(19\d{2}|20\d{2})\b/);
+    const d2 = String(item.release_date || '');
+    if (d2.match(/^(19|20)\d{2}/)) return parseInt(d2.substring(0, 4));
+    
+    const m = String(item.name || '').match(/\b(19\d{2}|20\d{2})\b/);
     if (m) return parseInt(m[1], 10);
     return 0;
   }
@@ -214,10 +224,16 @@ const Playlist = (() => {
     return res.trim() || n;
   }
 
+  const _fetchPromises = { vod: null, series: null };
+
   async function loadVod(server, user, pass, onProgress, signal) {
-    const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-    
-    if (onProgress) onProgress(10);
+    if (_fetchPromises.vod) return _fetchPromises.vod;
+
+    _fetchPromises.vod = (async () => {
+      try {
+        const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+        
+        if (onProgress) onProgress(10);
     const [streams, cats] = await Promise.all([
       _fetchJson(`${base}&action=get_vod_streams`, false, signal),
       _fetchJson(`${base}&action=get_vod_categories`, false, signal)
@@ -225,10 +241,10 @@ const Playlist = (() => {
     if (onProgress) onProgress(80);
 
     const catMap = {};
-    (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
+    _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     // Optimización de rendimiento: Precalcular claves de ordenación (Schwartzian transform)
-    const streamsWithKeys = (streams || []).map(s => ({
+    const streamsWithKeys = _toArray(streams).map(s => ({
       ...s,
       _year: _extractYear(s),
       _added: parseInt(s.added || '0', 10)
@@ -256,14 +272,24 @@ const Playlist = (() => {
       };
     });
 
-    if (onProgress) onProgress(100);
-    return movies;
+      if (onProgress) onProgress(100);
+      return movies;
+      } catch (e) {
+        _fetchPromises.vod = null;
+        throw e;
+      }
+    })();
+    return _fetchPromises.vod;
   }
 
   async function loadSeries(server, user, pass, onProgress, signal) {
-    const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-    
-    if (onProgress) onProgress(10);
+    if (_fetchPromises.series) return _fetchPromises.series;
+
+    _fetchPromises.series = (async () => {
+      try {
+        const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+        
+        if (onProgress) onProgress(10);
     const [seriesList, cats] = await Promise.all([
       _fetchJson(`${base}&action=get_series`, false, signal),
       _fetchJson(`${base}&action=get_series_categories`, false, signal)
@@ -271,10 +297,10 @@ const Playlist = (() => {
     if (onProgress) onProgress(80);
 
     const catMap = {};
-    (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
+    _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     // Optimización de rendimiento: Precalcular claves de ordenación
-    const seriesWithKeys = (seriesList || []).map(s => ({
+    const seriesWithKeys = _toArray(seriesList).map(s => ({
       ...s,
       _year: _extractYear(s),
       _added: parseInt(s.added || s.last_modified || '0', 10)
@@ -302,8 +328,14 @@ const Playlist = (() => {
       };
     });
 
-    if (onProgress) onProgress(100);
-    return series;
+      if (onProgress) onProgress(100);
+      return series;
+      } catch (e) {
+        _fetchPromises.series = null;
+        throw e;
+      }
+    })();
+    return _fetchPromises.series;
   }
 
   const _infoCache = { vod: {}, series: {} };

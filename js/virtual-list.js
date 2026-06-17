@@ -29,7 +29,7 @@ const VirtualList = (() => {
     _layout = layout;
     if (_layout === 'poster') {
       COLS = 6;
-      ITEM_H = 340;
+      ITEM_H = 416;
       ITEM_GAP = 16;
     } else {
       COLS = 3;

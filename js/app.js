@@ -200,6 +200,26 @@ const App = (() => {
       }
     }
 
+    // Background prefetch for VOD and Series
+    if (list && list.type === 'xtream') {
+      setTimeout(async () => {
+        try {
+          let vodCached = await Storage.getVodCache(list.id);
+          if (!vodCached || vodCached.length === 0) {
+            const vData = await Playlist.loadVod(list.server, list.user, list.pass, null, null);
+            if (vData && vData.length > 0) await Storage.setVodCache(list.id, vData);
+          }
+          let serCached = await Storage.getSeriesCache(list.id);
+          if (!serCached || serCached.length === 0) {
+            const sData = await Playlist.loadSeries(list.server, list.user, list.pass, null, null);
+            if (sData && sData.length > 0) await Storage.setSeriesCache(list.id, sData);
+          }
+        } catch(e) {
+          console.error("Prefetch error", e);
+        }
+      }, 3000);
+    }
+
     // Comprobar actualización silenciosa
     if (fromCache && _shouldCheckUpdate(list.id)) {
       _backgroundSync(list);

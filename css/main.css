@@ -844,6 +844,7 @@ html, body {
   align-items: stretch;
   justify-content: flex-start;
   background: rgba(255,255,255,0.02);
+  gap: 0;
 }
 .channel-card.poster .channel-logo {
   width: 100%;
