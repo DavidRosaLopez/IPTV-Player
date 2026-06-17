@@ -180,6 +180,15 @@ const Playlist = (() => {
     return '📺 Series Generales';
   }
 
+  function _extractYear(item) {
+    if (item.releaseDate && item.releaseDate.match(/^(19|20)\d{2}/)) return parseInt(item.releaseDate.substring(0, 4));
+    if (item.release_date && item.release_date.match(/^(19|20)\d{2}/)) return parseInt(item.release_date.substring(0, 4));
+    
+    const m = (item.name || '').match(/\b(19\d{2}|20\d{2})\b/);
+    if (m) return parseInt(m[1], 10);
+    return 0;
+  }
+
   async function loadVod(server, user, pass, onProgress, signal) {
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
     
@@ -193,8 +202,12 @@ const Playlist = (() => {
     const catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    // Ordenar de más reciente a más antiguo
+    // Ordenar de más reciente a más antiguo (primero por año, luego por timestamp)
     const sortedStreams = (streams || []).sort((a, b) => {
+      const yearA = _extractYear(a);
+      const yearB = _extractYear(b);
+      if (yearA !== yearB) return yearB - yearA;
+
       const addedA = parseInt(a.added || '0', 10);
       const addedB = parseInt(b.added || '0', 10);
       return addedB - addedA;
@@ -232,8 +245,12 @@ const Playlist = (() => {
     const catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    // Ordenar de más reciente a más antiguo
+    // Ordenar de más reciente a más antiguo (primero por año, luego por timestamp)
     const sortedSeries = (seriesList || []).sort((a, b) => {
+      const yearA = _extractYear(a);
+      const yearB = _extractYear(b);
+      if (yearA !== yearB) return yearB - yearA;
+
       const addedA = parseInt(a.added || a.last_modified || '0', 10);
       const addedB = parseInt(b.added || b.last_modified || '0', 10);
       return addedB - addedA;
