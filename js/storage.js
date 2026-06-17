@@ -50,7 +50,7 @@ const Storage = (() => {
 
   // ── IndexedDB for large data (Channel cache) ────────────
   const CHANNEL_TTL = 6 * 3600 * 1000;
-  const DB_NAME = 'IPTV_DB_V10';
+  const DB_NAME = 'IPTV_DB_V11';
   const STORE_NAME = 'cache';
   
   function _getDB() {

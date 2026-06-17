@@ -227,18 +227,20 @@ const Playlist = (() => {
     const catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    // Ordenar de más reciente a más antiguo (primero por año, luego por timestamp)
-    const sortedStreams = (streams || []).sort((a, b) => {
-      const yearA = _extractYear(a);
-      const yearB = _extractYear(b);
-      if (yearA !== yearB) return yearB - yearA;
+    // Optimización de rendimiento: Precalcular claves de ordenación (Schwartzian transform)
+    const streamsWithKeys = (streams || []).map(s => ({
+      ...s,
+      _year: _extractYear(s),
+      _added: parseInt(s.added || '0', 10)
+    }));
 
-      const addedA = parseInt(a.added || '0', 10);
-      const addedB = parseInt(b.added || '0', 10);
-      return addedB - addedA;
+    // Ordenar de más reciente a más antiguo
+    streamsWithKeys.sort((a, b) => {
+      if (a._year !== b._year) return b._year - a._year;
+      return b._added - a._added;
     });
 
-    const movies = sortedStreams.map((s, i) => {
+    const movies = streamsWithKeys.map((s, i) => {
       const groupName = _cleanVodCategoryName(catMap[s.category_id]);
       const cleanName = _cleanStreamName(s.name);
       return {
@@ -271,18 +273,20 @@ const Playlist = (() => {
     const catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name; });
 
-    // Ordenar de más reciente a más antiguo (primero por año, luego por timestamp)
-    const sortedSeries = (seriesList || []).sort((a, b) => {
-      const yearA = _extractYear(a);
-      const yearB = _extractYear(b);
-      if (yearA !== yearB) return yearB - yearA;
+    // Optimización de rendimiento: Precalcular claves de ordenación
+    const seriesWithKeys = (seriesList || []).map(s => ({
+      ...s,
+      _year: _extractYear(s),
+      _added: parseInt(s.added || s.last_modified || '0', 10)
+    }));
 
-      const addedA = parseInt(a.added || a.last_modified || '0', 10);
-      const addedB = parseInt(b.added || b.last_modified || '0', 10);
-      return addedB - addedA;
+    // Ordenar de más reciente a más antiguo
+    seriesWithKeys.sort((a, b) => {
+      if (a._year !== b._year) return b._year - a._year;
+      return b._added - a._added;
     });
 
-    const series = sortedSeries.map((s, i) => {
+    const series = seriesWithKeys.map((s, i) => {
       const groupName = _cleanSeriesCategoryName(catMap[s.category_id]);
       const cleanName = _cleanStreamName(s.name);
       return {
