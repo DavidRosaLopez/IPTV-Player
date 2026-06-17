@@ -847,14 +847,14 @@ html, body {
 }
 .channel-card.poster .channel-logo {
   width: 100%;
-  height: calc(100% - 56px);
+  height: calc(100% - 44px);
   object-fit: cover;
   border-radius: 0;
   margin: 0;
 }
 .channel-card.poster .channel-info {
-  height: 56px;
-  padding: 6px 12px;
+  height: 44px;
+  padding: 4px 12px 0 12px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
