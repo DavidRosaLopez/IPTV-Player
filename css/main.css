@@ -1196,7 +1196,7 @@ html, body {
 }
 .info-ep-details { flex: 1; }
 .info-ep-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-.info-ep-desc { font-size: 16px; color: var(--text-dim); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
 
 
 .info-btn-fav { color: #ff4757; border-color: transparent; }

@@ -306,14 +306,22 @@ const Playlist = (() => {
     return series;
   }
 
+  const _infoCache = { vod: {}, series: {} };
+
   async function getVodInfo(server, user, pass, vod_id, signal) {
+    if (_infoCache.vod[vod_id]) return _infoCache.vod[vod_id];
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-    return await _fetchJson(`${base}&action=get_vod_info&vod_id=${vod_id}`, true, signal);
+    const data = await _fetchJson(`${base}&action=get_vod_info&vod_id=${vod_id}`, true, signal);
+    if (data) _infoCache.vod[vod_id] = data;
+    return data;
   }
 
   async function getSeriesInfo(server, user, pass, series_id, signal) {
+    if (_infoCache.series[series_id]) return _infoCache.series[series_id];
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-    return await _fetchJson(`${base}&action=get_series_info&series_id=${series_id}`, true, signal);
+    const data = await _fetchJson(`${base}&action=get_series_info&series_id=${series_id}`, true, signal);
+    if (data) _infoCache.series[series_id] = data;
+    return data;
   }
 
   // ── GROUPS (cached by country) ─────────────────────────
