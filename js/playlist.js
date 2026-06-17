@@ -356,6 +356,7 @@ const Playlist = (() => {
       '🦄 Infantil y Animación',
       '🌍 Documentales',
       '🎌 Anime',
+      '🎭 Reality Shows',
       '💎 Series en 4K / UHD',
       '📺 Series Generales'
     ];

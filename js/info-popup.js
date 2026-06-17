@@ -159,11 +159,13 @@ const InfoPopup = (() => {
       const li = document.createElement('li');
       const info = ep.info || {};
       const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" onerror="this.style.display='none'">` : '';
+      let cleanTitle = ep.title || ('Episodio ' + ep.episode_num);
+      cleanTitle = cleanTitle.replace(/^(?:S\d+\s*E\d+|T\d+\s*E\d+|\d+x\d+)\s*[-:]?\s*/i, '');
+      
       li.innerHTML = `
         ${img}
         <div class="info-ep-details">
-          <div class="info-ep-title">${ep.episode_num}. ${ep.title || 'Episodio ' + ep.episode_num}</div>
-          <div class="info-ep-desc">${info.plot || ''}</div>
+          <div class="info-ep-title">${ep.episode_num}. ${cleanTitle}</div>
         </div>
       `;
       list.appendChild(li);
