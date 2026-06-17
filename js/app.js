@@ -138,7 +138,7 @@ const App = (() => {
           Storage.setLastList(prevList.id);
         }
       } else {
-        Router.showToast('Error cargando lista', 'error');
+        Router.showToast('Error cargando lista: ' + (e.message || ''), 'error');
       }
       Router.showView('setup');
     } finally {

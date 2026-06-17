@@ -582,5 +582,58 @@ const ViewChannels = (() => {
     if (next) { VirtualList.setFocused(nextIdx); _playChannel(next); }
   }
 
+  function syncWithChannel(ch) {
+    if (!ch) return;
+    _updateCountriesList();
+    renderCountries(); // Asegurarnos de que estén renderizados
+    const channels = Store.get('channels') || [];
+    const favIds = new Set(Favorites.getIds());
+
+    const country = ch.countryCode || 'ALL';
+    const codes = Store.get('countries') || ['ALL'];
+    let cIdx = codes.indexOf(country);
+    if (cIdx < 0) {
+      Store.set('currentCountry', 'ALL');
+      _countryFocusIdx = 0;
+    } else {
+      Store.set('currentCountry', country);
+      _countryFocusIdx = cIdx;
+    }
+    _updateCountryClasses();
+
+    const currentCountry = Store.get('currentCountry');
+    const groups = Playlist.getGroups(channels, currentCountry);
+    Store.set('groups', groups);
+
+    let groupObj = groups.find(g => g.id === ch.group);
+    if (!groupObj) groupObj = groups.find(g => g.id === '__all__');
+    
+    let gIdx = groups.findIndex(g => g.id === (groupObj ? groupObj.id : '__all__'));
+    Store.set('currentGroup', groupObj ? groupObj.id : '__all__');
+    Store.set('groupIdx', gIdx >= 0 ? gIdx : 0);
+    _sidebarFocusIdx = (gIdx >= 0 ? gIdx : 0) + 2;
+
+    renderGroups();
+
+    let filtered = Playlist.filterByGroup(channels, Store.get('currentGroup'), favIds, currentCountry);
+    let chIdx = filtered.findIndex(c => c.id === ch.id);
+    
+    if (chIdx < 0) {
+      Store.set('currentGroup', '__all__');
+      Store.set('groupIdx', 0);
+      _sidebarFocusIdx = 2;
+      renderGroups();
+      filtered = Playlist.filterByGroup(channels, '__all__', favIds, currentCountry);
+      chIdx = filtered.findIndex(c => c.id === ch.id);
+    }
+
+    renderChannels();
+
+    if (chIdx >= 0 && typeof VirtualList !== 'undefined') {
+      VirtualList.setFocused(chIdx);
+    }
+    _setFocusZone('channels');
+  }
+
   return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel };
 })();
