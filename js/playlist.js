@@ -116,7 +116,7 @@ const Playlist = (() => {
     }
   }
 
-  function _cleanCategoryName(rawName) {
+  function _cleanVodCategoryName(rawName) {
     if (!rawName) return '➕ Otras';
     let n = rawName.toUpperCase();
     
@@ -146,6 +146,37 @@ const Playlist = (() => {
     return '➕ Otras';
   }
 
+  function _cleanSeriesCategoryName(rawName) {
+    if (!rawName) return '📺 Series Generales';
+    let n = rawName.toUpperCase();
+    
+    // Eliminar prefijos de país (códigos o nombres completos)
+    n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '');
+    n = n.replace(/^(ESPA[ÑN]A|FRANCE|ITALY|GERMANY|NORDIC|QU[EÉ]BEC|TURKISH|GREECE|GREEK|INDIA|HINDI|SOMALIA|PAKISTAN|NETHERLANDS|BELGIUM|POLSKA|LATINO|PT\/BR|PERSIAN|KURDISH|HEBREW|ROMANIAN|BULGARIYA|HUNGARY|RUSSAIN|AFRICA|SOUTH AFRICA|CHINA|PHILIPPINES|SVENSK|SVENSKA|DANSK|DANSKE|NORSK|SUOMI|SUOMEN|ÍSLANDS)\s*/, '').trim();
+
+    // Plataformas separadas
+    if (n.match(/NETFLIX/)) return '🟥 Netflix';
+    if (n.match(/HBO/)) return '🟣 HBO Max';
+    if (n.match(/PRIME|AMAZON/)) return '🟦 Amazon Prime';
+    if (n.match(/DISNEY/)) return '✨ Disney+';
+    if (n.match(/APPLE/)) return '🍏 Apple TV+';
+    if (n.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
+    if (n.match(/PARAMOUNT/)) return '⛰️ Paramount+';
+    if (n.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
+    
+    // Calidad
+    if (n.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR|VISION/)) return '💎 Series en 4K / UHD';
+    
+    // Géneros y Temáticas de Series
+    if (n.match(/TURCA|TURKISH|NOVELA/)) return '🇹🇷 Telenovelas y Turcas';
+    if (n.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI/)) return '🦄 Infantil y Animación';
+    if (n.match(/ANIME|MANGA/)) return '🎌 Anime';
+    if (n.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
+    if (n.match(/REALITY/)) return '🎭 Reality Shows';
+    
+    return '📺 Series Generales';
+  }
+
   async function loadVod(server, user, pass, onProgress, signal) {
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
     
@@ -167,7 +198,7 @@ const Playlist = (() => {
     });
 
     const movies = sortedStreams.map((s, i) => {
-      const groupName = _cleanCategoryName(catMap[s.category_id]);
+      const groupName = _cleanVodCategoryName(catMap[s.category_id]);
       return {
         id:          `vod_${s.stream_id}`,
         name:        s.name,
@@ -206,7 +237,7 @@ const Playlist = (() => {
     });
 
     const series = sortedSeries.map((s, i) => {
-      const groupName = _cleanCategoryName(catMap[s.category_id]);
+      const groupName = _cleanSeriesCategoryName(catMap[s.category_id]);
       return {
         id:          `series_${s.series_id}`,
         name:        s.name,
