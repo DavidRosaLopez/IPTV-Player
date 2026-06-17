@@ -192,10 +192,6 @@ const App = (() => {
         ViewChannels.renderGroups();
         ViewChannels.renderChannels();
       }
-      setTimeout(() => {
-        const ch = VirtualList.getCurrentItem();
-        if (ch) Player.schedulePreview(ch);
-      }, 300);
     }
 
     // Comprobar actualización silenciosa
