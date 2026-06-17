@@ -597,7 +597,7 @@ html, body {
   will-change: background;
 }
 .channel-card:hover { background: var(--bg-hover); }
-.channel-card.focused {
+#view-channels[data-focus="channels"] .channel-card.focused {
   background: var(--accent-dim);
   border-color: var(--accent);
   box-shadow: var(--focus-ring);

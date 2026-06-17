@@ -467,6 +467,9 @@ const ViewChannels = (() => {
 
   function _setFocusZone(zone) {
     _focusZone = zone;
+    const viewEl = document.getElementById('view-channels');
+    if (viewEl) viewEl.setAttribute('data-focus', zone);
+    
     document.querySelectorAll('.channel-card.focused, .country-item.focused, .sidebar-btn.focused, .group-item.focused, .sidebar-tab-btn.focused').forEach(e => e.classList.remove('focused'));
     
     if (zone === 'groups') {
