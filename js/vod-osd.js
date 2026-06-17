@@ -5,7 +5,7 @@ const VodOSD = (() => {
   let _timer = null;
   let _progressTimer = null;
   let _isVisible = false;
-  let _focusIdx = 1; // 0: Rewind, 1: Play/Pause, 2: Forward
+
 
   function show(currentCh) {
     if (!currentCh) return;

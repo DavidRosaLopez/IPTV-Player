@@ -691,6 +691,11 @@ const ViewChannels = (() => {
       b.classList.toggle('active', b.dataset.type === tabId);
     });
 
+    const groupNameEl = document.getElementById('current-group-name');
+    if (groupNameEl) {
+      groupNameEl.textContent = tabId === 'tv' ? 'TV' : (tabId === 'vod' ? 'Películas' : 'Series');
+    }
+
     const list = Store.get('currentList');
     if (!list || list.type !== 'xtream') {
       Router.showToast('VOD y Series solo disponibles en cuentas Xtream Codes', 'info');

@@ -450,15 +450,6 @@ const Player = (() => {
     }, 600);
   }
 
-  // Removed OSD block
-  function _b64DecodeUnicode(str) {
-    try {
-      return decodeURIComponent(atob(str).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-    } catch (e) { return atob(str); }
-  }
-
   // ── UTILS ────────────────────────────────────────────
   function stop() { 
     if (_current && (_current.type === 'vod' || _current.type === 'series')) {
