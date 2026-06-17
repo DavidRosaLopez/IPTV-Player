@@ -736,6 +736,9 @@ const ViewChannels = (() => {
       loader.classList.remove('hidden');
       document.getElementById('tab-loader-msg').textContent = tabId === 'tv' ? 'Cargando TV...' : (tabId === 'vod' ? 'Cargando Películas...' : 'Cargando Series...');
     }
+    
+    // Forzar renderizado del DOM antes de bloquear con IndexedDB/Parsing
+    await new Promise(r => setTimeout(r, 10));
 
     let data = [];
     if (tabId === 'tv') {
