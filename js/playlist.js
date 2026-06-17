@@ -189,6 +189,21 @@ const Playlist = (() => {
     return 0;
   }
 
+  function _cleanStreamName(n) {
+    if (!n) return '';
+    let parts = n.split(' - ');
+    while (parts.length > 1) {
+      if (!/[a-z]/.test(parts[0]) || parts[0].length <= 6) {
+        parts.shift();
+      } else {
+        break;
+      }
+    }
+    let res = parts.join(' - ');
+    res = res.replace(/\s*[\[\(\{][A-Z]{2,3}[\]\)\}]$/i, '');
+    return res.trim() || n;
+  }
+
   async function loadVod(server, user, pass, onProgress, signal) {
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
     
@@ -215,9 +230,10 @@ const Playlist = (() => {
 
     const movies = sortedStreams.map((s, i) => {
       const groupName = _cleanVodCategoryName(catMap[s.category_id]);
+      const cleanName = _cleanStreamName(s.name);
       return {
         id:          `vod_${s.stream_id}`,
-        name:        s.name,
+        name:        cleanName,
         _search:     _normalize(s.name),
         logo:        s.stream_icon || '',
         group:       groupName,
@@ -258,9 +274,10 @@ const Playlist = (() => {
 
     const series = sortedSeries.map((s, i) => {
       const groupName = _cleanSeriesCategoryName(catMap[s.category_id]);
+      const cleanName = _cleanStreamName(s.name);
       return {
         id:          `series_${s.series_id}`,
-        name:        s.name,
+        name:        cleanName,
         _search:     _normalize(s.name),
         logo:        s.cover || s.stream_icon || '',
         group:       groupName,

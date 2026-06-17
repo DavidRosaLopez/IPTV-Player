@@ -57,34 +57,11 @@ const ViewChannels = (() => {
     } else if (fromView === 'player') {
       _setFocusZone('channels');
     } else {
-      // Al entrar por primera vez (o desde Configuración), no hay selección activa de país o categoría
-      Store.set('currentCountry', null);
-      Store.set('currentGroup', null);
-      _countryFocusIdx = 0;
-      
+      // Al entrar por primera vez (o desde Configuración), preseleccionar "Todos" y "Canales"
+      Store.set('currentCountry', null); // Forzar que _selectCountry haga el render completo
       renderCountries();
-      
-      // Limpiamos los contenedores de grupos y canales en la UI
-      const groupList = document.getElementById('group-list');
-      if (groupList) groupList.innerHTML = '';
-      
-      const groupName = document.getElementById('current-group-name');
-      if (groupName) groupName.textContent = _currentTab === 'tv' ? 'TV' : (_currentTab === 'vod' ? 'Películas' : 'Series');
-      
-      const channelCount = document.getElementById('channel-count');
-      if (channelCount) {
-        channelCount.textContent = '';
-        channelCount.style.display = 'none';
-      }
-      
-      if (typeof VirtualList !== 'undefined') {
-        VirtualList.init({
-          containerId: 'channel-grid',
-          items: [],
-          onSelect: () => {}
-        });
-      }
-      _setFocusZone('tabs');
+      _selectCountry('ALL', 0);
+      _setFocusZone('groups');
     }
 
     // Si el reproductor tiene canal en PiP, reafirmar su posición

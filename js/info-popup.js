@@ -311,17 +311,23 @@ const InfoPopup = (() => {
     Player.play(playCh);
   }
 
-  document.getElementById('btn-info-play')?.addEventListener('click', () => {
-    if (!_isVisible) return;
-    _actionIdx = 0;
-    _executeAction();
-  });
-  
-  document.getElementById('btn-info-fav')?.addEventListener('click', () => {
-    if (!_isVisible) return;
-    _actionIdx = 1;
-    _executeAction();
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-info-play')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!_isVisible) return;
+      _actionIdx = 0;
+      _executeAction();
+    });
+    
+    document.getElementById('btn-info-fav')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!_isVisible) return;
+      _actionIdx = 1;
+      _executeAction();
+    });
   });
 
-  return { show, hide, handleKey, isVisible: () => _isVisible };
+  return { show, hide, isVisible: () => _isVisible, handleKey };
 })();
