@@ -699,6 +699,12 @@ const ViewChannels = (() => {
 
     _currentTab = tabId;
     Store.set('currentTab', _currentTab);
+    
+    // Si pasamos a VOD o Series, ocultamos el PIP
+    if ((tabId === 'vod' || tabId === 'series') && typeof Player !== 'undefined') {
+      Player.stop();
+    }
+
     Playlist.clearGroupCache();
 
     // Resetear filtro de país al cambiar de pestaña
