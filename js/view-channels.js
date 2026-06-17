@@ -42,63 +42,7 @@ const ViewChannels = (() => {
     
     // Si volvemos del reproductor, sincronizamos la vista (país, categoría y canal)
     if (fromView === 'player' && typeof Player !== 'undefined' && Player.getCurrent()) {
-      const ch = Player.getCurrent();
-      const channels = Store.get('channels') || [];
-      const favIds = new Set(Favorites.getIds());
-
-      // 1. Establecer el país del canal activo
-      const country = ch.countryCode || 'ALL';
-      const codes = Store.get('countries') || ['ALL'];
-      let cIdx = codes.indexOf(country);
-      if (cIdx < 0) {
-        Store.set('currentCountry', 'ALL');
-        _countryFocusIdx = 0;
-      } else {
-        Store.set('currentCountry', country);
-        _countryFocusIdx = cIdx;
-      }
-      _updateCountryClasses();
-
-      // 2. Obtener grupos y buscar la categoría del canal activo
-      const currentCountry = Store.get('currentCountry');
-      const groups = Playlist.getGroups(channels, currentCountry);
-      Store.set('groups', groups);
-
-      let groupObj = groups.find(g => g.id === ch.group);
-      if (!groupObj) {
-        groupObj = groups.find(g => g.id === '__all__');
-      }
-      
-      let gIdx = groups.findIndex(g => g.id === (groupObj ? groupObj.id : '__all__'));
-      Store.set('currentGroup', groupObj ? groupObj.id : '__all__');
-      Store.set('groupIdx', gIdx >= 0 ? gIdx : 0);
-      _sidebarFocusIdx = (gIdx >= 0 ? gIdx : 0) + 2;
-
-      // Renderizar los grupos actualizados
-      renderGroups();
-
-      // 3. Buscar el índice del canal en la lista filtrada de la categoría
-      let filtered = Playlist.filterByGroup(channels, Store.get('currentGroup'), favIds, currentCountry);
-      let chIdx = filtered.findIndex(c => c.id === ch.id);
-      
-      // Si no está en esa categoría (por ejemplo, si se cambió a un canal huérfano), forzar a "Todos"
-      if (chIdx < 0) {
-        Store.set('currentGroup', '__all__');
-        Store.set('groupIdx', 0);
-        _sidebarFocusIdx = 2;
-        renderGroups();
-        filtered = Playlist.filterByGroup(channels, '__all__', favIds, currentCountry);
-        chIdx = filtered.findIndex(c => c.id === ch.id);
-      }
-
-      // Renderizar los canales filtrados
-      renderChannels();
-
-      // 4. Enfocar el canal en el grid
-      if (chIdx >= 0 && typeof VirtualList !== 'undefined') {
-        VirtualList.setFocused(chIdx);
-      }
-      _setFocusZone('channels');
+      syncWithChannel(Player.getCurrent());
     } else if (fromView === 'player') {
       _setFocusZone('channels');
     } else {
@@ -638,5 +582,5 @@ const ViewChannels = (() => {
     if (next) { VirtualList.setFocused(nextIdx); _playChannel(next); }
   }
 
-  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative };
+  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel };
 })();

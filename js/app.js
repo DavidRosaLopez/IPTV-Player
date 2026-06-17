@@ -174,18 +174,24 @@ const App = (() => {
     });
 
     Router.showView('channels');
-    if (typeof ViewChannels !== 'undefined') {
-      ViewChannels.renderGroups();
-      ViewChannels.renderChannels();
-    }
-
+    
     const lastChannelId = Storage.getLastChannel();
     if (lastChannelId) {
       const ch = channels.find(c => c.id === lastChannelId);
       if (ch) {
+        if (typeof ViewChannels !== 'undefined') ViewChannels.syncWithChannel(ch);
         setTimeout(() => Player.schedulePreview(ch), 300);
+      } else {
+        if (typeof ViewChannels !== 'undefined') {
+          ViewChannels.renderGroups();
+          ViewChannels.renderChannels();
+        }
       }
     } else {
+      if (typeof ViewChannels !== 'undefined') {
+        ViewChannels.renderGroups();
+        ViewChannels.renderChannels();
+      }
       setTimeout(() => {
         const ch = VirtualList.getCurrentItem();
         if (ch) Player.schedulePreview(ch);
