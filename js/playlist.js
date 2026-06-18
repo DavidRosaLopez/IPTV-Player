@@ -273,9 +273,8 @@ const Playlist = (() => {
       _added: parseInt(s.added || '0', 10)
     }));
 
-    // Ordenar de más reciente a más antiguo
+    // Ordenar de más reciente a más antiguo (por fecha de adición al servidor)
     streamsWithKeys.sort((a, b) => {
-      if (a._year !== b._year) return b._year - a._year;
       return b._added - a._added;
     });
 
@@ -329,9 +328,8 @@ const Playlist = (() => {
       _added: parseInt(s.added || s.last_modified || '0', 10)
     }));
 
-    // Ordenar de más reciente a más antiguo
+    // Ordenar de más reciente a más antiguo (por fecha de adición al servidor)
     seriesWithKeys.sort((a, b) => {
-      if (a._year !== b._year) return b._year - a._year;
       return b._added - a._added;
     });
 

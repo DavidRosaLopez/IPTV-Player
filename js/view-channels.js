@@ -276,7 +276,7 @@ const ViewChannels = (() => {
       '__favs__': Favorites.getIds().length
     };
     for (const ch of channels) {
-      if (currentCountry === 'ALL' || ch.countryCode === currentCountry) {
+      if (currentCountry === 'ALL' || ch.countryCode === currentCountry || Playlist.isGlobalGroup(ch.group)) {
         cache[ch.group] = (cache[ch.group] || 0) + 1;
       }
     }
@@ -449,7 +449,7 @@ const ViewChannels = (() => {
         _setFocusZone('countries');
       } else if (dir === 'up') {
         _sidebarFocusIdx = 0;
-        _setFocusZone('groups'); // Setup / search buttons
+        _setFocusZone('groups', false); // Setup / search buttons
       }
       return;
     }
@@ -522,7 +522,7 @@ const ViewChannels = (() => {
     }
   }
 
-  function _setFocusZone(zone) {
+  function _setFocusZone(zone, restoreActive = true) {
     const isEnteringGroups = zone === 'groups' && _focusZone !== 'groups';
     _focusZone = zone;
     const viewEl = document.getElementById('view-channels');
@@ -533,7 +533,7 @@ const ViewChannels = (() => {
     
     if (zone === 'groups') {
       const els = _getSidebarFocusables();
-      if (isEnteringGroups) {
+      if (isEnteringGroups && restoreActive) {
         const activeIdx = els.findIndex(el => el.classList.contains('active'));
         if (activeIdx !== -1) {
           _sidebarFocusIdx = activeIdx;
