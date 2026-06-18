@@ -367,6 +367,7 @@ const ViewChannels = (() => {
     Storage.setLastChannel(ch.id);
 
     if (ch.type === 'vod' || ch.type === 'series') {
+      if (typeof Search !== 'undefined' && Search.isOpen()) Search.close();
       if (typeof InfoPopup !== 'undefined') InfoPopup.show(ch);
       return;
     }
@@ -663,6 +664,8 @@ const ViewChannels = (() => {
           _setFocusZone('groups');
         } else if (_focusZone === 'groups') {
           _setFocusZone('countries');
+        } else if (_focusZone === 'countries') {
+          _setFocusZone('tabs');
         } else {
           _showExitPopup();
         }

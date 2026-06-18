@@ -44,12 +44,17 @@ const Search = (() => {
       const data = currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
       const res = Playlist.search(data, q);
       const cnt = document.getElementById('search-count');
-      if (cnt) {
-         if (currentTab === 'tv') cnt.textContent = q ? res.length + ' canales' : '';
-         else if (currentTab === 'vod') cnt.textContent = q ? res.length + ' películas' : '';
-         else cnt.textContent = q ? res.length + ' series' : '';
+      if (!q) {
+        if (cnt) cnt.textContent = '';
+        ViewChannels.renderChannels(); // Restaura la vista filtrada por grupo
+      } else {
+        if (cnt) {
+           if (currentTab === 'tv') cnt.textContent = res.length + ' canales';
+           else if (currentTab === 'vod') cnt.textContent = res.length + ' películas';
+           else cnt.textContent = res.length + ' series';
+        }
+        ViewChannels.renderChannels(res);
       }
-      ViewChannels.renderChannels(res.length || q ? res : data);
     }, 120); // 120ms debounce — fast but not every keystroke
   };
 

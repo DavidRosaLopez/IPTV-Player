@@ -396,13 +396,13 @@ const Playlist = (() => {
       'Ⓜ️ Movistar+',
       '⛰️ Paramount+',
       '📺 Nacionales / Otras Apps',
-      '🇹🇷 Telenovelas y Turcas',
-      '🦄 Infantil y Animación',
       '🌍 Documentales',
+      '🦄 Infantil y Animación',
       '🎌 Anime',
       '🎭 Reality Shows',
       '💎 Series en 4K / UHD',
-      '📺 Series Generales'
+      '📺 Series Generales',
+      '🇹🇷 Telenovelas y Turcas'
     ];
 
     const vodOrder = [
