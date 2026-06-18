@@ -493,7 +493,7 @@ const ViewChannels = (() => {
         }
       } else if (dir === 'down') {
         if (_sidebarFocusIdx === 0 || _sidebarFocusIdx === 1) {
-          _setFocusZone('countries');
+          _setFocusZone('tabs');
           return;
         } else {
           _sidebarFocusIdx = Math.min(els.length - 1, _sidebarFocusIdx + 1);
