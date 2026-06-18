@@ -895,7 +895,15 @@ const ViewChannels = (() => {
     
     Store.set('groupIdx', 0);
     renderChannels();
-    _setFocusZone('groups');
+    
+    // Si la zona actual era groups o tabs, la mantenemos.
+    // Solo forzamos groups si estaba vacía (p.ej. al inicio).
+    if (!_focusZone) {
+      _setFocusZone('groups');
+    } else {
+      // Re-aplicar clases de focus actuales por si el DOM fue reconstruido
+      _setFocusZone(_focusZone);
+    }
   }
 
   function playChannelRelative(dir) {
