@@ -87,7 +87,11 @@ const VirtualList = (() => {
   }
 
   function setFocused(idx) {
-    _unfocus(_focusedIdx);
+    if (_focusedIdx >= 0) _unfocus(_focusedIdx);
+    if (idx < 0) {
+      _focusedIdx = -1;
+      return;
+    }
     _focusedIdx = Math.max(0, Math.min(_items.length - 1, idx));
     _focus(_focusedIdx);
     _scrollToVisible(_focusedIdx);

@@ -17,6 +17,8 @@ const Search = (() => {
     const input = document.getElementById('search-input');
     if (!bar || !input) return;
     input.value = '';
+    const count = document.getElementById('search-count');
+    if (count) count.textContent = '';
     bar.classList.remove('hidden');
     // Focus the input so TV keyboard appears (if available)
     setTimeout(() => input.focus(), 50);
@@ -24,6 +26,9 @@ const Search = (() => {
     input.addEventListener('change', _onChange);
     input.addEventListener('keydown', _onNativeKeyDown);
     KeyHandler.on('BACK', _onBack);
+    
+    if (typeof VirtualList !== 'undefined') VirtualList.setFocused(-1);
+    if (typeof Player !== 'undefined' && Player.getMode() === 'PIP') Player.stop();
   }
 
   function close() {
@@ -31,7 +36,9 @@ const Search = (() => {
     _isOpen = false;
     const bar   = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
+    const count = document.getElementById('search-count');
     if (bar)   bar.classList.add('hidden');
+    if (count) count.textContent = '';
     if (input) { 
       input.removeEventListener('input', _onInput); 
       input.removeEventListener('change', _onChange);
@@ -93,6 +100,12 @@ const Search = (() => {
         }
       } else {
         if (input) input.focus();
+        if (typeof VirtualList !== 'undefined') {
+          VirtualList.setFocused(-1); // Quitar el foco del canal
+        }
+        if (typeof Player !== 'undefined' && Player.getMode() === 'PIP') {
+          Player.stop(); // Cerrar el mini-reproductor
+        }
       }
       return true; 
     }
