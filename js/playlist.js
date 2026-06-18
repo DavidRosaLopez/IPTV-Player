@@ -139,35 +139,37 @@ const Playlist = (() => {
     // Eliminar prefijo de país
     n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '').trim();
 
+    let nUnaccented = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     // 1. Novedades y Calidad Premium
-    if (n.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
-    if (n.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR|VISION/)) return '💎 Calidad 4K / UHD';
+    if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
+    if (nUnaccented.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR/)) return '💎 Calidad 4K / UHD';
     
     // 2. Plataformas separadas (para submenú)
-    if (n.match(/NETFLIX/)) return '🟥 Netflix';
-    if (n.match(/HBO/)) return '🟣 HBO Max';
-    if (n.match(/PRIME|AMAZON/)) return '🟦 Amazon Prime';
-    if (n.match(/DISNEY/)) return '✨ Disney+';
-    if (n.match(/APPLE/)) return '🍏 Apple TV+';
-    if (n.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
-    if (n.match(/PARAMOUNT/)) return '⛰️ Paramount+';
-    if (n.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
+    if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
+    if (nUnaccented.match(/HBO|MAX/)) return '🟣 HBO Max';
+    if (nUnaccented.match(/\b(PRIME|AMAZON)\b/)) return '🟦 Amazon Prime';
+    if (nUnaccented.match(/DISNEY/)) return '✨ Disney+';
+    if (nUnaccented.match(/APPLE/)) return '🍏 Apple TV+';
+    if (nUnaccented.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
+    if (nUnaccented.match(/PARAMOUNT/)) return '⛰️ Paramount+';
+    if (nUnaccented.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
     
     // 3. Géneros Principales (Simplificados)
-    if (n.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
-    if (n.match(/ACCION|ACTION|GUERRE|CRIME|AÇÃO/)) return '💥 Acción y Aventuras';
-    if (n.match(/SCI-FI|FANTASIA|FANTASY|CIENCIA FICCION|SYFY/)) return '🛸 Ciencia Ficción y Fantasía';
-    if (n.match(/COMEDIA|COMEDY/)) return '😂 Comedia';
-    if (n.match(/TERROR|HORROR|SUSPENSE|THRILLER/)) return '👻 Terror y Suspense';
-    if (n.match(/DRAMA|ROMANCE|AMOR/)) return '🎭 Drama y Romance';
-    if (n.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
+    if (nUnaccented.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
+    if (nUnaccented.match(/ACCION|ACTION|GUERRE|CRIME|CRIMEN|ACAO|AVENTURA|ADVENTURE|BELICO|WAR|MAFIA/)) return '💥 Acción y Aventuras';
+    if (nUnaccented.match(/SCI-FI|FANTASIA|FANTASY|CIENCIA FICCION|SYFY|FICTION|FICION/)) return '🛸 Ciencia Ficción y Fantasía';
+    if (nUnaccented.match(/COMEDIA|COMEDY|STAND UP|MONOLOGO/)) return '😂 Comedia';
+    if (nUnaccented.match(/TERROR|HORROR|SUSPENSE|THRILLER|MISTERIO|MYSTERY|MIEDO/)) return '👻 Terror y Suspense';
+    if (nUnaccented.match(/DRAMA|ROMANCE|AMOR|ROMANTICA|BIOGRAFIA|BIOPIC/)) return '🎭 Drama y Romance';
+    if (nUnaccented.match(/DOCUMENTAL|DOCUMENTARY|DOCU|HISTORIA|HISTORY|NATURE|NATURALEZA/)) return '🌍 Documentales';
     
     // 4. Colecciones y Deportes
-    if (n.match(/CLASICO|OLD|ANTIGUA|SAGA/)) return '📺 Clásicos y Colecciones';
-    if (n.match(/MUSICA|MUSIC|CONCERT|CONCIERTO/)) return '🎵 Música y Conciertos';
-    if (n.match(/WESTERN/)) return '🤠 Western';
-    if (n.match(/NAVIDAD|CHRISTMAS/)) return '🎄 Especial Navidad';
-    if (n.match(/LALIGA|MOTOGP|FORMULA|F1|FOOTBALL|RUGBY|GOLF|MOTO|SPORT/)) return '⚽ Deportes en Diferido';
+    if (nUnaccented.match(/CLASICO|OLD|ANTIGUA|SAGA|COLECCION|COLLECTION/)) return '📺 Clásicos y Colecciones';
+    if (nUnaccented.match(/\b(MUSICA|MUSIC|MUSICAL|CONCERT|CONCIERTO|CONCIERTOS)\b/)) return '🎵 Música y Conciertos';
+    if (nUnaccented.match(/WESTERN|OESTE/)) return '🤠 Western';
+    if (nUnaccented.match(/NAVIDAD|CHRISTMAS|XMAS/)) return '🎄 Especial Navidad';
+    if (nUnaccented.match(/LALIGA|MOTOGP|FORMULA|F1|FOOTBALL|RUGBY|GOLF|MOTO|SPORT|DEPORTE/)) return '⚽ Deportes en Diferido';
 
     // Todo lo demás
     return '➕ Otras';
@@ -181,28 +183,30 @@ const Playlist = (() => {
     n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '');
     n = n.replace(/^(ESPA[ÑN]A|FRANCE|ITALY|GERMANY|NORDIC|QU[EÉ]BEC|TURKISH|GREECE|GREEK|INDIA|HINDI|SOMALIA|PAKISTAN|NETHERLANDS|BELGIUM|POLSKA|LATINO|PT\/BR|PERSIAN|KURDISH|HEBREW|ROMANIAN|BULGARIYA|HUNGARY|RUSSAIN|AFRICA|SOUTH AFRICA|CHINA|PHILIPPINES|SVENSK|SVENSKA|DANSK|DANSKE|NORSK|SUOMI|SUOMEN|ÍSLANDS)\s*/, '').trim();
 
+    let nUnaccented = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     // Plataformas separadas
-    if (n.match(/NETFLIX/)) return '🟥 Netflix';
-    if (n.match(/HBO/)) return '🟣 HBO Max';
-    if (n.match(/PRIME|AMAZON/)) return '🟦 Amazon Prime';
-    if (n.match(/DISNEY/)) return '✨ Disney+';
-    if (n.match(/APPLE/)) return '🍏 Apple TV+';
-    if (n.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
-    if (n.match(/PARAMOUNT/)) return '⛰️ Paramount+';
-    if (n.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
+    if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
+    if (nUnaccented.match(/HBO|MAX/)) return '🟣 HBO Max';
+    if (nUnaccented.match(/\b(PRIME|AMAZON)\b/)) return '🟦 Amazon Prime';
+    if (nUnaccented.match(/DISNEY/)) return '✨ Disney+';
+    if (nUnaccented.match(/APPLE/)) return '🍏 Apple TV+';
+    if (nUnaccented.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
+    if (nUnaccented.match(/PARAMOUNT/)) return '⛰️ Paramount+';
+    if (nUnaccented.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
     
     // Novedades
-    if (n.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
+    if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
     
     // Calidad
-    if (n.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR|VISION/)) return '💎 Series en 4K / UHD';
+    if (nUnaccented.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR/)) return '💎 Series en 4K / UHD';
     
     // Géneros y Temáticas de Series
-    if (n.match(/TURCA|TURKISH|NOVELA/)) return '🇹🇷 Telenovelas y Turcas';
-    if (n.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI/)) return '🦄 Infantil y Animación';
-    if (n.match(/ANIME|MANGA/)) return '🎌 Anime';
-    if (n.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
-    if (n.match(/REALITY/)) return '🎭 Reality Shows';
+    if (nUnaccented.match(/TURCA|TURKISH|NOVELA/)) return '🇹🇷 Telenovelas y Turcas';
+    if (nUnaccented.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI/)) return '🦄 Infantil y Animación';
+    if (nUnaccented.match(/ANIME|MANGA/)) return '🎌 Anime';
+    if (nUnaccented.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
+    if (nUnaccented.match(/REALITY/)) return '🎭 Reality Shows';
     
     return '📺 Series Generales';
   }

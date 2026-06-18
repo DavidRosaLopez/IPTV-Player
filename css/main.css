@@ -519,8 +519,7 @@ html, body {
   border-left: 2px solid transparent; /* Override left border for children so it aligns */
 }
 .group-item.folder-item {
-  font-weight: 600;
-  color: var(--text);
+  /* Inherit normal group styles */
 }
 .group-item.folder-item .folder-icon {
   margin-left: auto;
@@ -529,6 +528,9 @@ html, body {
 }
 .group-item.folder-item.focused .folder-icon {
   color: #fff;
+}
+.group-item.hidden {
+  display: none !important;
 }
 
 .sidebar-footer {
