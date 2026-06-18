@@ -532,8 +532,15 @@ const ViewChannels = (() => {
     
     if (zone === 'groups') {
       const els = _getSidebarFocusables();
+      const activeIdx = els.findIndex(el => el.classList.contains('active'));
+      if (activeIdx !== -1) {
+        _sidebarFocusIdx = activeIdx;
+      }
       const next = els[_sidebarFocusIdx];
-      if (next) next.classList.add('focused');
+      if (next) {
+        next.classList.add('focused');
+        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      }
     } else if (zone === 'countries') {
       _updateCountryClasses();
     } else if (zone === 'tabs') {
