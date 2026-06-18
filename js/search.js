@@ -35,10 +35,10 @@ const Search = (() => {
     if (input) { 
       input.removeEventListener('input', _onInput); 
       input.removeEventListener('change', _onChange);
+      input.removeEventListener('keydown', _onNativeKeyDown);
       input.value = ''; 
     }
     KeyHandler.off('BACK', _onBack);
-    KeyHandler.off('ENTER', _onEnter);
     // Restore full channel list
     ViewChannels.renderChannels();
   }
@@ -46,18 +46,15 @@ const Search = (() => {
   const _onChange = (e) => {
     _onInput(e);
     if (typeof ViewChannels !== 'undefined' && ViewChannels.focusSearchResults) {
-      setTimeout(() => ViewChannels.focusSearchResults(), 150);
+      setTimeout(() => ViewChannels.focusSearchResults(), 200);
     }
   };
 
-  const _onEnter = (e) => {
-    const input = document.getElementById('search-input');
-    if (document.activeElement === input && _isOpen) {
-      _onInput({ target: input });
-      // Cuando pulsan ENTER o "Hecho" en el teclado, a menudo el usuario quiere ir a los resultados.
-      // Si hay resultados y ViewChannels existe, podemos darle foco.
+  const _onNativeKeyDown = (e) => {
+    if (e.keyCode === 13) {
+      _onInput(e);
       if (typeof ViewChannels !== 'undefined' && ViewChannels.focusSearchResults) {
-        setTimeout(() => ViewChannels.focusSearchResults(), 150);
+        setTimeout(() => ViewChannels.focusSearchResults(), 200);
       }
     }
   };

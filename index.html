@@ -155,20 +155,22 @@
         </aside>
 
         <main class="channel-panel">
-          <div class="panel-header" style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; align-items: baseline; justify-content: space-between; width: 100%;">
+          <div class="panel-header" style="position: relative; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; width: 100%; position: relative;">
               <div style="display: flex; align-items: baseline; gap: 16px;">
                 <h2 id="current-group-name">Todos los canales</h2>
                 <span id="channel-count" class="channel-count"></span>
               </div>
+              
+              <div id="search-bar" class="search-bar hidden" style="position: absolute; left: 50%; transform: translateX(-50%); top: -10px; display: flex; align-items: center; width: 400px;">
+                <input type="text" id="search-input" class="search-input tv-input" placeholder="Buscar..." style="width: 100%; text-align: center; border-radius: 20px; padding: 12px 20px; font-size: 18px;" />
+                <span id="search-count" style="position: absolute; right: -120px; font-size: 14px; color: var(--text-sec); width: 110px;"></span>
+              </div>
+
               <div id="channels-clock" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; margin-top: -6px;">
                 <span id="channels-time" style="font-size: 28px; color: var(--text); font-weight: 600; letter-spacing: 0.5px;"></span>
                 <span id="channels-date" style="font-size: 16px; color: var(--text-sec); text-transform: capitalize;"></span>
               </div>
-            </div>
-            <div id="search-bar" class="search-bar hidden">
-              <input type="text" id="search-input" class="search-input tv-input" placeholder="Buscar canal..." />
-              <span id="search-count" style="font-size: 14px; color: var(--text-sec); margin-left: 10px;"></span>
             </div>
           </div>
           <!-- VirtualList renders here -->

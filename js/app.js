@@ -40,13 +40,14 @@ const App = (() => {
       listToLoad = lists[0];
     }
 
+    _startClock();
+
     if (listToLoad) {
       loadList(listToLoad);
       return;
     }
 
     Router.showView('setup');
-    _startClock();
   }
 
   function _startClock() {
