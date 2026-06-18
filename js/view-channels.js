@@ -209,13 +209,35 @@ const ViewChannels = (() => {
     const currentGroup = Store.get('currentGroup');
     const groupIdx = Store.get('groupIdx') || 0;
 
+    const expandedFolders = Store.get('expandedFolders') || {};
+
     groups.forEach((g, i) => {
+      if (g.isFolder) {
+        const li = document.createElement('li');
+        li.className = 'group-item folder-item' + (i === groupIdx && _focusZone === 'groups' ? ' focused' : '');
+        li.dataset.idx = i;
+        li.dataset.groupId = g.id;
+        li.innerHTML = `<span>${g.name}</span><span class="material-symbols-rounded folder-icon">${expandedFolders[g.id] ? 'expand_less' : 'expand_more'}</span>`;
+        li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g); });
+        list.appendChild(li);
+        return;
+      }
+
+      const isChild = g.parentId ? true : false;
+      const isHidden = isChild && !expandedFolders[g.parentId];
+      
       const cnt = g.id === '__all__'  ? Playlist.filterByGroup(channels, '__all__', null, currentCountry).length :
                   g.id === '__favs__' ? Favorites.getIds().length :
                   channels.filter(c => c.group === g.id && (currentCountry === 'ALL' || c.countryCode === currentCountry)).length;
+                  
       const li = document.createElement('li');
-      li.className = 'group-item' + (i === groupIdx && _focusZone === 'groups' ? ' focused' : '') + (g.id === currentGroup ? ' active' : '');
+      li.className = 'group-item' + 
+                     (isChild ? ' group-child' : '') + 
+                     (isHidden ? ' hidden' : '') + 
+                     (i === groupIdx && _focusZone === 'groups' ? ' focused' : '') + 
+                     (g.id === currentGroup ? ' active' : '');
       li.dataset.idx = i;
+      li.dataset.groupId = g.id;
       li.innerHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
       li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g); });
       list.appendChild(li);
@@ -266,23 +288,38 @@ const ViewChannels = (() => {
     const bc = document.getElementById('btn-open-setup');
     if (bs) list.push(bs);
     if (bc) list.push(bc);
-    list.push(...Array.from(document.querySelectorAll('.group-item')));
+    list.push(...Array.from(document.querySelectorAll('.group-item:not(.hidden)')));
     _sidebarFocusablesCache = list;
     return list;
   }
 
-  function _selectGroup(group) {
-    if (!group) return;
+  function _selectGroup(g) {
+    if (g.isFolder) {
+      const expanded = Store.get('expandedFolders') || {};
+      expanded[g.id] = !expanded[g.id];
+      Store.set('expandedFolders', expanded);
+      
+      const folderId = g.id;
+      renderGroups();
+      
+      const focusables = _getSidebarFocusables();
+      const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === folderId);
+      if (newIdx !== -1) _sidebarFocusIdx = newIdx;
+      
+      _setFocusZone('groups');
+      return;
+    }
+
     const prevGroup = Store.get('currentGroup');
     const groups = Store.get('groups');
-    const gIdx = groups.findIndex(g => g.id === group.id);
+    const gIdx = groups.findIndex(item => item.id === g.id);
 
     const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
     const favIds = new Set(Favorites.getIds());
     const currentCountry = Store.get('currentCountry') || 'ALL';
-    const items = Playlist.filterByGroup(channels, group.id, favIds, currentCountry);
+    const items = Playlist.filterByGroup(channels, g.id, favIds, currentCountry);
 
-    if (prevGroup === group.id) {
+    if (prevGroup === g.id) {
       _sidebarFocusIdx = gIdx + 2;
       _updateGroupClasses();
       if (items.length > 0) {
@@ -291,19 +328,13 @@ const ViewChannels = (() => {
       return;
     }
 
-    if (items.length === 0) {
-      Store.set('currentGroup', group.id);
-      Store.set('groupIdx', gIdx);
-      _sidebarFocusIdx = gIdx + 2;
-      _updateGroupClasses();
-      renderChannels();
-      return;
-    }
-
-    Store.set('currentGroup', group.id);
+    Store.set('currentGroup', g.id);
     Store.set('groupIdx', gIdx);
     _sidebarFocusIdx = gIdx + 2;
     _updateGroupClasses();
+    
+    // Clear virtual list quickly to avoid lag
+    VirtualList.update([]);
     renderChannels();
     
     if (items.length > 0) {

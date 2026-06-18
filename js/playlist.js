@@ -143,8 +143,15 @@ const Playlist = (() => {
     if (n.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
     if (n.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR|VISION/)) return '💎 Calidad 4K / UHD';
     
-    // 2. Plataformas (Netflix, HBO, Disney...)
-    if (n.match(/NETFLIX|PRIME|AMAZON|DISNEY|APPLE|HBO|PARAMOUNT|SHOWTIME/)) return '🍿 Originales (Plataformas)';
+    // 2. Plataformas separadas (para submenú)
+    if (n.match(/NETFLIX/)) return '🟥 Netflix';
+    if (n.match(/HBO/)) return '🟣 HBO Max';
+    if (n.match(/PRIME|AMAZON/)) return '🟦 Amazon Prime';
+    if (n.match(/DISNEY/)) return '✨ Disney+';
+    if (n.match(/APPLE/)) return '🍏 Apple TV+';
+    if (n.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
+    if (n.match(/PARAMOUNT/)) return '⛰️ Paramount+';
+    if (n.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
     
     // 3. Géneros Principales (Simplificados)
     if (n.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
@@ -377,17 +384,42 @@ const Playlist = (() => {
     const staticGroups = [{ id: '__all__', name: mainGroupName },
                           { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' }];
     
+    const FOLDERS = {
+      '__folder_plataformas__': {
+        name: '🍿 Plataformas',
+        children: ['🟥 Netflix', '🟣 HBO Max', '🟦 Amazon Prime', '✨ Disney+', '🍏 Apple TV+', 'Ⓜ️ Movistar+', '⛰️ Paramount+', '📺 Nacionales / Otras Apps']
+      }
+    };
+
+    const childToFolder = {};
+    for (const [fId, f] of Object.entries(FOLDERS)) {
+      f.children.forEach(c => childToFolder[c] = fId);
+    }
+
     const dynamicGroups = [];
+    const seenFolders = new Set();
     const list = countryCode === 'ALL' ? channels : channels.filter(c => c.countryCode === countryCode);
+    
     for (const ch of list) {
       if (!seen.has(ch.group)) {
         seen.add(ch.group);
-        dynamicGroups.push({ id: ch.group, name: ch.group });
+        
+        const parentId = childToFolder[ch.group];
+        if (parentId) {
+          if (!seenFolders.has(parentId)) {
+            seenFolders.add(parentId);
+            dynamicGroups.push({ id: parentId, name: FOLDERS[parentId].name, isFolder: true });
+          }
+          dynamicGroups.push({ id: ch.group, name: ch.group, parentId: parentId });
+        } else {
+          dynamicGroups.push({ id: ch.group, name: ch.group });
+        }
       }
     }
     
     const seriesOrder = [
       '✨ Últimos Estrenos',
+      '__folder_plataformas__',
       '🟥 Netflix',
       '🟣 HBO Max',
       '🟦 Amazon Prime',
@@ -408,7 +440,15 @@ const Playlist = (() => {
     const vodOrder = [
       '✨ Últimos Estrenos',
       '💎 Calidad 4K / UHD',
-      '🍿 Originales (Plataformas)',
+      '__folder_plataformas__',
+      '🟥 Netflix',
+      '🟣 HBO Max',
+      '🟦 Amazon Prime',
+      '✨ Disney+',
+      '🍏 Apple TV+',
+      'Ⓜ️ Movistar+',
+      '⛰️ Paramount+',
+      '📺 Nacionales / Otras Apps',
       '🦄 Infantil y Animación',
       '💥 Acción y Aventuras',
       '🛸 Ciencia Ficción y Fantasía',

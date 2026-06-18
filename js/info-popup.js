@@ -36,10 +36,16 @@ const InfoPopup = (() => {
         const idStr = ch.id.replace('vod_', '');
         _data = await Playlist.getVodInfo(list.server, list.user, list.pass, idStr);
         _renderVodData(_data);
+        if (_data && _data.info && _data.info.name) {
+          document.getElementById('info-title').textContent = _data.info.name;
+        }
       } else if (ch.type === 'series') {
         const idStr = ch.id.replace('series_', '');
         _data = await Playlist.getSeriesInfo(list.server, list.user, list.pass, idStr);
         _renderSeriesData(_data);
+        if (_data && _data.info && _data.info.name) {
+          document.getElementById('info-title').textContent = _data.info.name;
+        }
       }
     } catch (e) {
       console.error(e);
@@ -178,14 +184,26 @@ const InfoPopup = (() => {
       const li = document.createElement('li');
       const info = ep.info || {};
       const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" onerror="this.style.display='none'">` : '';
-      let cleanTitle = (info.name && info.name.trim().length > 0) ? info.name : (ep.title || ('Episodio ' + ep.episode_num));
+      let infoName = String(info.name || '');
+      let cleanTitle = (infoName.trim().length > 0) ? infoName : (String(ep.title || 'Episodio ' + ep.episode_num));
       
-      // FIX 1: Clean Episode Names
-      if (_current && _current.name) {
-        const safeName = _current.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        cleanTitle = cleanTitle.replace(new RegExp('^' + safeName + '\\s*[-:]?\\s*', 'i'), '');
+      // FIX: Clean Episode Names globally (not just anchored to start)
+      const markerRegex = /(?:S\d+\s*E\d+|T\d+\s*E\d+|\d+x\d+|E\d+|Ep(?:isodio|isode)?\s*\d+)\s*[-:|.]?\s*/i;
+      const match = cleanTitle.match(markerRegex);
+      
+      if (match) {
+        // If we found a marker like "S01E01 - ", take whatever is AFTER the marker
+        cleanTitle = cleanTitle.substring(match.index + match[0].length);
+      } else {
+        // No marker found, try to strip the series name if it's separated by a hyphen
+        if (_current && _current.name) {
+          const parts = cleanTitle.split(' - ');
+          if (parts.length > 1) {
+            cleanTitle = parts.slice(1).join(' - ');
+          }
+        }
       }
-      cleanTitle = cleanTitle.replace(/^(?:S\d+\s*E\d+|T\d+\s*E\d+|\d+x\d+|E\d+|Ep(?:isodio|isode)?\s*\d+)\s*[-:|.]?\s*/i, '');
+      
       cleanTitle = cleanTitle.replace(/^[-:|.|_|\s]+/, '');
       cleanTitle = cleanTitle.replace(/^\d+\s*[-:|.]?\s*/, ''); // FIX: strip leading standalone numbers
       if (!cleanTitle) cleanTitle = 'Episodio ' + ep.episode_num;

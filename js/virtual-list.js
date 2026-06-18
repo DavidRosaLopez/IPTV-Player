@@ -28,9 +28,9 @@ const VirtualList = (() => {
   function init({ containerId, items, onSelect, getFavBadge, layout = 'tv' }) {
     _layout = layout;
     if (_layout === 'poster') {
-      COLS = 6;
-      ITEM_H = 416;
-      ITEM_GAP = 16;
+      COLS = 5;
+      ITEM_H = 460;
+      ITEM_GAP = 20;
     } else {
       COLS = 3;
       ITEM_H = 74;
