@@ -62,12 +62,28 @@ const Search = (() => {
     // Solo procesar BACK si la vista de canales está activa
     const viewChannels = document.getElementById('view-channels');
     if (_isOpen && viewChannels && viewChannels.classList.contains('active')) { 
-      close(); 
+      const input = document.getElementById('search-input');
+      if (document.activeElement === input) {
+        close();
+        if (typeof ViewChannels !== 'undefined' && ViewChannels.setSidebarFocusToSearch) {
+          ViewChannels.setSidebarFocusToSearch();
+        }
+      } else {
+        if (input) input.focus();
+      }
       return true; 
     }
   };
 
   function isOpen() { return _isOpen; }
 
-  return { init, open, close, isOpen };
+  function reapply() {
+    if (!_isOpen) return;
+    const input = document.getElementById('search-input');
+    if (input) {
+      input.dispatchEvent(new Event('input'));
+    }
+  }
+
+  return { init, open, close, isOpen, reapply };
 })();

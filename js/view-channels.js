@@ -415,7 +415,6 @@ const ViewChannels = (() => {
     Storage.setLastChannel(ch.id);
 
     if (ch.type === 'vod' || ch.type === 'series') {
-      if (typeof Search !== 'undefined' && Search.isOpen()) Search.close();
       if (typeof InfoPopup !== 'undefined') InfoPopup.show(ch);
       return;
     }
@@ -917,6 +916,7 @@ const ViewChannels = (() => {
 
   function syncWithChannel(ch) {
     if (!ch) return;
+    if (typeof Search !== 'undefined' && Search.isOpen()) return; // Maintain search state, do not sync groups
     _updateCountriesList();
     renderCountries(); // Asegurarnos de que estén renderizados
     const channels = _currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
@@ -965,7 +965,6 @@ const ViewChannels = (() => {
       filtered = Playlist.filterByGroup(channels, '__all__', favIds, currentCountry);
       chIdx = filtered.findIndex(c => c.id === ch.id);
     }
-
     renderChannels();
 
     if (chIdx >= 0 && typeof VirtualList !== 'undefined') {
@@ -976,5 +975,10 @@ const ViewChannels = (() => {
 
   function getCurrentTab() { return _currentTab; }
 
-  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab };
+  function setSidebarFocusToSearch() {
+    _sidebarFocusIdx = 0;
+    _setFocusZone('groups', false);
+  }
+
+  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch };
 })();
