@@ -149,12 +149,16 @@ const Playlist = (() => {
     // 3. Géneros Principales (Simplificados)
     if (n.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
     if (n.match(/ACCION|ACTION|GUERRE|CRIME|AÇÃO/)) return '💥 Acción y Aventuras';
+    if (n.match(/SCI-FI|FANTASIA|FANTASY|CIENCIA FICCION|SYFY/)) return '🛸 Ciencia Ficción y Fantasía';
     if (n.match(/COMEDIA|COMEDY/)) return '😂 Comedia';
     if (n.match(/TERROR|HORROR|SUSPENSE|THRILLER/)) return '👻 Terror y Suspense';
+    if (n.match(/DRAMA|ROMANCE|AMOR/)) return '🎭 Drama y Romance';
     if (n.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
     
     // 4. Colecciones y Deportes
     if (n.match(/CLASICO|OLD|ANTIGUA|SAGA/)) return '📺 Clásicos y Colecciones';
+    if (n.match(/MUSICA|MUSIC|CONCERT|CONCIERTO/)) return '🎵 Música y Conciertos';
+    if (n.match(/WESTERN/)) return '🤠 Western';
     if (n.match(/NAVIDAD|CHRISTMAS/)) return '🎄 Especial Navidad';
     if (n.match(/LALIGA|MOTOGP|FORMULA|F1|FOOTBALL|RUGBY|GOLF|MOTO|SPORT/)) return '⚽ Deportes en Diferido';
 
@@ -407,9 +411,13 @@ const Playlist = (() => {
       '🍿 Originales (Plataformas)',
       '🦄 Infantil y Animación',
       '💥 Acción y Aventuras',
-      '😂 Comedia',
+      '🛸 Ciencia Ficción y Fantasía',
       '👻 Terror y Suspense',
+      '😂 Comedia',
+      '🎭 Drama y Romance',
       '🌍 Documentales',
+      '🎵 Música y Conciertos',
+      '🤠 Western',
       '📺 Clásicos y Colecciones',
       '🎄 Especial Navidad',
       '⚽ Deportes en Diferido',
