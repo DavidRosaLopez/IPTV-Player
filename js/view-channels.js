@@ -770,11 +770,13 @@ const ViewChannels = (() => {
     const loader = document.getElementById('tab-loader');
     if (grid) grid.classList.add('hidden');
     if (loader) {
-      if (tabId === 'tv') {
-        loader.classList.add('hidden');
+      loader.classList.remove('hidden');
+      if (tabId === 'vod') {
+        document.getElementById('tab-loader-msg').textContent = 'Cargando películas...';
+      } else if (tabId === 'series') {
+        document.getElementById('tab-loader-msg').textContent = 'Cargando series...';
       } else {
-        loader.classList.remove('hidden');
-        document.getElementById('tab-loader-msg').textContent = tabId === 'vod' ? 'Cargando películas...' : 'Cargando series...';
+        document.getElementById('tab-loader-msg').textContent = 'Cargando canales...';
       }
     }
     

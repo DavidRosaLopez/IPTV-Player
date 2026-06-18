@@ -203,10 +203,18 @@ const Playlist = (() => {
     
     // Géneros y Temáticas de Series
     if (nUnaccented.match(/TURCA|TURKISH|NOVELA/)) return '🇹🇷 Telenovelas y Turcas';
-    if (nUnaccented.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI/)) return '🦄 Infantil y Animación';
+    if (nUnaccented.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
     if (nUnaccented.match(/ANIME|MANGA/)) return '🎌 Anime';
-    if (nUnaccented.match(/DOCUMENTAL|DOCUMENTARY|DOCU/)) return '🌍 Documentales';
+    if (nUnaccented.match(/DOCUMENTAL|DOCUMENTARY|DOCU|HISTORIA|HISTORY|NATURE|NATURALEZA/)) return '🌍 Documentales';
     if (nUnaccented.match(/REALITY/)) return '🎭 Reality Shows';
+    
+    // Añadidos los mismos de Películas
+    if (nUnaccented.match(/ACCION|ACTION|GUERRE|CRIME|CRIMEN|ACAO|AVENTURA|ADVENTURE|BELICO|WAR|MAFIA/)) return '💥 Acción y Aventuras';
+    if (nUnaccented.match(/SCI-FI|FANTASIA|FANTASY|CIENCIA FICCION|SYFY|FICTION|FICION/)) return '🛸 Ciencia Ficción y Fantasía';
+    if (nUnaccented.match(/COMEDIA|COMEDY|STAND UP|MONOLOGO/)) return '😂 Comedia';
+    if (nUnaccented.match(/TERROR|HORROR|SUSPENSE|THRILLER|MISTERIO|MYSTERY|MIEDO/)) return '👻 Terror y Suspense';
+    if (nUnaccented.match(/DRAMA|ROMANCE|AMOR|ROMANTICA|BIOGRAFIA|BIOPIC/)) return '🎭 Drama y Romance';
+    if (nUnaccented.match(/\b(MUSICA|MUSIC|MUSICAL|CONCERT|CONCIERTO|CONCIERTOS)\b/)) return '🎵 Música y Conciertos';
     
     return '📺 Series Generales';
   }
@@ -423,6 +431,7 @@ const Playlist = (() => {
     
     const seriesOrder = [
       '✨ Últimos Estrenos',
+      '💎 Series en 4K / UHD',
       '__folder_plataformas__',
       '🟥 Netflix',
       '🟣 HBO Max',
@@ -435,8 +444,13 @@ const Playlist = (() => {
       '🌍 Documentales',
       '🦄 Infantil y Animación',
       '🎌 Anime',
+      '💥 Acción y Aventuras',
+      '🛸 Ciencia Ficción y Fantasía',
+      '👻 Terror y Suspense',
+      '😂 Comedia',
+      '🎭 Drama y Romance',
+      '🎵 Música y Conciertos',
       '🎭 Reality Shows',
-      '💎 Series en 4K / UHD',
       '📺 Series Generales',
       '🇹🇷 Telenovelas y Turcas'
     ];
