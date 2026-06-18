@@ -21,6 +21,8 @@ const Search = (() => {
     // Focus the input so TV keyboard appears (if available)
     setTimeout(() => input.focus(), 50);
     input.addEventListener('input', _onInput);
+    input.addEventListener('change', _onChange);
+    input.addEventListener('keydown', _onNativeKeyDown);
     KeyHandler.on('BACK', _onBack);
   }
 
@@ -30,11 +32,35 @@ const Search = (() => {
     const bar   = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
     if (bar)   bar.classList.add('hidden');
-    if (input) { input.removeEventListener('input', _onInput); input.value = ''; }
+    if (input) { 
+      input.removeEventListener('input', _onInput); 
+      input.removeEventListener('change', _onChange);
+      input.value = ''; 
+    }
     KeyHandler.off('BACK', _onBack);
+    KeyHandler.off('ENTER', _onEnter);
     // Restore full channel list
     ViewChannels.renderChannels();
   }
+
+  const _onChange = (e) => {
+    _onInput(e);
+    if (typeof ViewChannels !== 'undefined' && ViewChannels.focusSearchResults) {
+      setTimeout(() => ViewChannels.focusSearchResults(), 150);
+    }
+  };
+
+  const _onEnter = (e) => {
+    const input = document.getElementById('search-input');
+    if (document.activeElement === input && _isOpen) {
+      _onInput({ target: input });
+      // Cuando pulsan ENTER o "Hecho" en el teclado, a menudo el usuario quiere ir a los resultados.
+      // Si hay resultados y ViewChannels existe, podemos darle foco.
+      if (typeof ViewChannels !== 'undefined' && ViewChannels.focusSearchResults) {
+        setTimeout(() => ViewChannels.focusSearchResults(), 150);
+      }
+    }
+  };
 
   const _onInput = (e) => {
     clearTimeout(_debounceTimer);

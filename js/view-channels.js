@@ -980,5 +980,13 @@ const ViewChannels = (() => {
     _setFocusZone('groups', false);
   }
 
-  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch };
+  function focusSearchResults() {
+    if (typeof VirtualList !== 'undefined' && VirtualList.getItems().length > 0) {
+      VirtualList.setFocused(0);
+      _setFocusZone('channels');
+      KeyHandler.setFocus(document.querySelector('.channel-card[data-index="0"]'), true);
+    }
+  }
+
+  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch, focusSearchResults };
 })();
