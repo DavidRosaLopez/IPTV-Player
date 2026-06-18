@@ -1182,7 +1182,6 @@ html, body {
   background: rgba(255,255,255,0.05);
   border-radius: 12px;
   border: 2px solid transparent;
-  transition: all 0.2s;
 }
 .info-vertical-list li.focused {
   border-color: var(--accent);

@@ -40,10 +40,16 @@ const Search = (() => {
     clearTimeout(_debounceTimer);
     _debounceTimer = setTimeout(() => {
       const q   = e.target.value.trim();
-      const res = Playlist.search(_allChannels, q);
+      const currentTab = typeof ViewChannels !== 'undefined' ? ViewChannels.getCurrentTab() : 'tv';
+      const data = currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
+      const res = Playlist.search(data, q);
       const cnt = document.getElementById('search-count');
-      if (cnt) cnt.textContent = q ? res.length + ' canales' : '';
-      ViewChannels.renderChannels(res.length || q ? res : _allChannels);
+      if (cnt) {
+         if (currentTab === 'tv') cnt.textContent = q ? res.length + ' canales' : '';
+         else if (currentTab === 'vod') cnt.textContent = q ? res.length + ' películas' : '';
+         else cnt.textContent = q ? res.length + ' series' : '';
+      }
+      ViewChannels.renderChannels(res.length || q ? res : data);
     }, 120); // 120ms debounce — fast but not every keystroke
   };
 

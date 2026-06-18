@@ -898,5 +898,7 @@ const ViewChannels = (() => {
     _setFocusZone('channels');
   }
 
-  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel };
+  function getCurrentTab() { return _currentTab; }
+
+  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab };
 })();

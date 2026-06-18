@@ -178,8 +178,17 @@ const InfoPopup = (() => {
       const li = document.createElement('li');
       const info = ep.info || {};
       const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" onerror="this.style.display='none'">` : '';
-      let cleanTitle = ep.title || ('Episodio ' + ep.episode_num);
-      cleanTitle = cleanTitle.replace(/^(?:S\d+\s*E\d+|T\d+\s*E\d+|\d+x\d+)\s*[-:]?\s*/i, '');
+      let cleanTitle = (info.name && info.name.trim().length > 0) ? info.name : (ep.title || ('Episodio ' + ep.episode_num));
+      
+      // FIX 1: Clean Episode Names
+      if (_current && _current.name) {
+        const safeName = _current.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        cleanTitle = cleanTitle.replace(new RegExp('^' + safeName + '\\s*[-:]?\\s*', 'i'), '');
+      }
+      cleanTitle = cleanTitle.replace(/^(?:S\d+\s*E\d+|T\d+\s*E\d+|\d+x\d+|E\d+|Ep(?:isodio|isode)?\s*\d+)\s*[-:|.]?\s*/i, '');
+      cleanTitle = cleanTitle.replace(/^[-:|.|_|\s]+/, '');
+      cleanTitle = cleanTitle.replace(/^\d+\s*[-:|.]?\s*/, ''); // FIX: strip leading standalone numbers
+      if (!cleanTitle) cleanTitle = 'Episodio ' + ep.episode_num;
       
       li.innerHTML = `
         ${img}
@@ -262,23 +271,39 @@ const InfoPopup = (() => {
     return true;
   }
 
+  // O(1) Focus tracking variables
+  let _lastSeasonIdx = -1;
+  let _lastEpisodeIdx = -1;
+  let _lastZone = null;
+
+  // FIX 2: Layout thrashing removed, O(1) updates
   function _updateFocus() {
     const btnPlay = document.getElementById('btn-info-play');
     const btnFav = document.getElementById('btn-info-fav');
     btnPlay.classList.toggle('focused', _zone === 'actions' && _actionIdx === 0 && _current.type === 'vod');
     btnFav.classList.toggle('focused', _zone === 'actions' && (_actionIdx === 1 || _current.type === 'series'));
 
-    const seasonItems = document.querySelectorAll('#info-seasons-list li');
-    seasonItems.forEach((el, i) => {
-      el.classList.toggle('focused', _zone === 'seasons' && i === _seasonIdx);
-      if (_zone === 'seasons' && i === _seasonIdx) el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-    });
+    const seasonItems = document.getElementById('info-seasons-list').children;
+    if (_lastZone === 'seasons' && _lastSeasonIdx >= 0 && _lastSeasonIdx < seasonItems.length) {
+      seasonItems[_lastSeasonIdx].classList.remove('focused');
+    }
+    if (_zone === 'seasons' && _seasonIdx >= 0 && _seasonIdx < seasonItems.length) {
+      seasonItems[_seasonIdx].classList.add('focused');
+      seasonItems[_seasonIdx].scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+    }
+    
+    const epItems = document.getElementById('info-episodes-list').children;
+    if ((_lastZone === 'episodes' || _zone !== 'episodes') && _lastEpisodeIdx >= 0 && _lastEpisodeIdx < epItems.length) {
+      epItems[_lastEpisodeIdx].classList.remove('focused');
+    }
+    if (_zone === 'episodes' && _episodeIdx >= 0 && _episodeIdx < epItems.length) {
+      epItems[_episodeIdx].classList.add('focused');
+      epItems[_episodeIdx].scrollIntoView({ behavior: 'auto', block: 'nearest' });
+    }
 
-    const epItems = document.querySelectorAll('#info-episodes-list li');
-    epItems.forEach((el, i) => {
-      el.classList.toggle('focused', _zone === 'episodes' && i === _episodeIdx);
-      if (_zone === 'episodes' && i === _episodeIdx) el.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-    });
+    _lastZone = _zone;
+    _lastSeasonIdx = _seasonIdx;
+    _lastEpisodeIdx = _episodeIdx;
   }
 
   function _updateFavIcon() {
