@@ -492,15 +492,6 @@ const ViewChannels = (() => {
       const curIdx = VirtualList.getFocused();
       const cols = _currentTab === 'tv' ? 3 : 6;
 
-      if (dir === 'left' && curIdx % cols === 0) {
-        _setFocusZone('groups');
-        return;
-      }
-      if (dir === 'up' && curIdx < cols) {
-        _setFocusZone('tabs');
-        return;
-      }
-
       VirtualList.move(dir);
       KeyHandler.setFocus(document.querySelector('.channel-card.focused'), true);
       
