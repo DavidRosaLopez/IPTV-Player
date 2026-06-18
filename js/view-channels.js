@@ -238,7 +238,7 @@ const ViewChannels = (() => {
       
       const cnt = g.id === '__all__'  ? Playlist.filterByGroup(channels, '__all__', null, currentCountry).length :
                   g.id === '__favs__' ? Favorites.getIds().length :
-                  channels.filter(c => c.group === g.id && (currentCountry === 'ALL' || c.countryCode === currentCountry)).length;
+                  Playlist.filterByGroup(channels, g.id, null, currentCountry).length;
                   
       const li = document.createElement('li');
       li.className = 'group-item' + 

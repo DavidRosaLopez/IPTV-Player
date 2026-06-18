@@ -379,6 +379,26 @@ const Playlist = (() => {
     return data;
   }
 
+  const GLOBAL_GROUPS = new Set([
+    '✨ Últimos Estrenos',
+    '💎 Calidad 4K / UHD',
+    '💎 Series en 4K / UHD',
+    '__folder_plataformas__',
+    '🍿 Plataformas',
+    '🟥 Netflix',
+    '🟣 HBO Max',
+    '🟦 Amazon Prime',
+    '✨ Disney+',
+    '🍏 Apple TV+',
+    'Ⓜ️ Movistar+',
+    '⛰️ Paramount+',
+    '📺 Nacionales / Otras Apps'
+  ]);
+
+  function isGlobalGroup(groupName) {
+    return GLOBAL_GROUPS.has(groupName);
+  }
+
   // ── GROUPS (cached by country) ─────────────────────────
   let _groupCache = {};
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
@@ -410,7 +430,7 @@ const Playlist = (() => {
 
     const dynamicGroups = [];
     const seenFolders = new Set();
-    const list = countryCode === 'ALL' ? channels : channels.filter(c => c.countryCode === countryCode);
+    const list = countryCode === 'ALL' ? channels : channels.filter(c => c.countryCode === countryCode || isGlobalGroup(c.group));
     
     for (const ch of list) {
       if (!seen.has(ch.group)) {
@@ -506,7 +526,7 @@ const Playlist = (() => {
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
     let list = channels;
     if (countryCode !== 'ALL') {
-      list = channels.filter(c => c.countryCode === countryCode);
+      list = channels.filter(c => c.countryCode === countryCode || isGlobalGroup(c.group));
     }
     if (groupId === '__all__')  return list;
     if (groupId === '__favs__') return list.filter(c => favIds && favIds.has(c.id));
@@ -520,5 +540,5 @@ const Playlist = (() => {
     return channels.filter(c => qTokens.every(t => c._search.includes(t)));
   }
 
-  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo };
+  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup };
 })();
