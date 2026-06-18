@@ -152,9 +152,19 @@ const ViewChannels = (() => {
     _countryFocusIdx = idx;
     
     if (prevCountry === code) {
-      const groupIdx = Store.get('groupIdx') || 0;
-      _sidebarFocusIdx = groupIdx + 2;
+      const gIdx = Store.get('groupIdx') || 0;
+      const groups = Store.get('groups');
+      const curG = groups[gIdx];
       _updateCountryClasses();
+      
+      const focusables = _getSidebarFocusables();
+      let newIdx = 2; // Default to first group
+      if (curG) {
+        const found = focusables.findIndex(el => el.dataset && el.dataset.groupId === curG.id);
+        if (found !== -1) newIdx = found;
+      }
+      _sidebarFocusIdx = newIdx;
+      
       _setFocusZone('groups');
       return;
     }
@@ -320,7 +330,10 @@ const ViewChannels = (() => {
     const items = Playlist.filterByGroup(channels, g.id, favIds, currentCountry);
 
     if (prevGroup === g.id) {
-      _sidebarFocusIdx = gIdx + 2;
+      const focusables = _getSidebarFocusables();
+      const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === g.id);
+      if (newIdx !== -1) _sidebarFocusIdx = newIdx;
+      
       _updateGroupClasses();
       if (items.length > 0) {
         _setFocusZone('channels');
@@ -330,7 +343,11 @@ const ViewChannels = (() => {
 
     Store.set('currentGroup', g.id);
     Store.set('groupIdx', gIdx);
-    _sidebarFocusIdx = gIdx + 2;
+    
+    const focusables = _getSidebarFocusables();
+    const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === g.id);
+    if (newIdx !== -1) _sidebarFocusIdx = newIdx;
+    
     _updateGroupClasses();
     
     // Clear virtual list quickly to avoid lag
@@ -492,6 +509,11 @@ const ViewChannels = (() => {
       const curIdx = VirtualList.getFocused();
       const cols = _currentTab === 'tv' ? 3 : 6;
 
+      if (dir === 'left' && curIdx % cols === 0) {
+        _setFocusZone('groups');
+        return;
+      }
+
       VirtualList.move(dir);
       KeyHandler.setFocus(document.querySelector('.channel-card.focused'), true);
       
@@ -610,7 +632,11 @@ const ViewChannels = (() => {
         const tabs = document.querySelectorAll('.sidebar-tab-btn');
         const tab = tabs[_tabFocusIdx];
         if (tab) {
-           _switchTab(tab.dataset.type);
+           if (tab.dataset.type === _currentTab) {
+             _setFocusZone('countries');
+           } else {
+             _switchTab(tab.dataset.type);
+           }
         }
         return true;
       }
@@ -633,9 +659,10 @@ const ViewChannels = (() => {
         } else if (el.id === 'btn-open-setup') {
           Router.showView('setup');
         } else {
-          const gIdx = _sidebarFocusIdx - 2;
+          const groupId = el.dataset.groupId;
           const groups = Store.get('groups');
-          if (groups[gIdx]) _selectGroup(groups[gIdx]);
+          const group = groups.find(g => g.id === groupId);
+          if (group) _selectGroup(group);
         }
         return true;
       }
@@ -699,8 +726,12 @@ const ViewChannels = (() => {
     document.querySelectorAll('.sidebar-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         _tabFocusIdx = TABS.indexOf(btn.dataset.type);
-        _setFocusZone('tabs');
-        _switchTab(btn.dataset.type);
+        if (btn.dataset.type === _currentTab) {
+          _setFocusZone('countries');
+        } else {
+          _setFocusZone('tabs');
+          _switchTab(btn.dataset.type);
+        }
       });
     });
 
