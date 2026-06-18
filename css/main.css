@@ -661,18 +661,18 @@ html, body {
 
 /* Search bar */
 .search-bar {
-  position: fixed;
-  bottom: 40px;
+  position: absolute;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   gap: 12px;
   background: var(--bg-card);
-  border: 1px solid var(--accent);
-  border-radius: 40px;
-  padding: 14px 24px;
-  width: 700px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  width: 500px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4), var(--focus-ring);
   z-index: 100;
 }
