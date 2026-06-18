@@ -276,7 +276,7 @@ const ViewChannels = (() => {
       '__favs__': Favorites.getIds().length
     };
     for (const ch of channels) {
-      if (currentCountry === 'ALL' || ch.countryCode === currentCountry || Playlist.isGlobalGroup(ch.group)) {
+      if (Playlist.isItemVisibleInCountry(ch, currentCountry)) {
         cache[ch.group] = (cache[ch.group] || 0) + 1;
       }
     }

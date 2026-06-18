@@ -139,7 +139,7 @@ const Playlist = (() => {
     // Eliminar prefijo de país
     n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '').trim();
 
-    let nUnaccented = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    let nUnaccented = n.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 
     // 1. Novedades y Calidad Premium
     if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
@@ -183,7 +183,11 @@ const Playlist = (() => {
     n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '');
     n = n.replace(/^(ESPA[ÑN]A|FRANCE|ITALY|GERMANY|NORDIC|QU[EÉ]BEC|TURKISH|GREECE|GREEK|INDIA|HINDI|SOMALIA|PAKISTAN|NETHERLANDS|BELGIUM|POLSKA|LATINO|PT\/BR|PERSIAN|KURDISH|HEBREW|ROMANIAN|BULGARIYA|HUNGARY|RUSSAIN|AFRICA|SOUTH AFRICA|CHINA|PHILIPPINES|SVENSK|SVENSKA|DANSK|DANSKE|NORSK|SUOMI|SUOMEN|ÍSLANDS)\s*/, '').trim();
 
-    let nUnaccented = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    let nUnaccented = n.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+    // Novedades y Calidad Premium
+    if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
+    if (nUnaccented.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR/)) return '💎 Series en 4K / UHD';
 
     // Plataformas separadas
     if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
@@ -194,12 +198,6 @@ const Playlist = (() => {
     if (nUnaccented.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
     if (nUnaccented.match(/PARAMOUNT/)) return '⛰️ Paramount+';
     if (nUnaccented.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
-    
-    // Novedades
-    if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
-    
-    // Calidad
-    if (nUnaccented.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR/)) return '💎 Series en 4K / UHD';
     
     // Géneros y Temáticas de Series
     if (nUnaccented.match(/TURCA|TURKISH|NOVELA/)) return '🇹🇷 Telenovelas y Turcas';
@@ -393,6 +391,15 @@ const Playlist = (() => {
     '📺 Nacionales / Otras Apps'
   ]);
 
+  function isItemVisibleInCountry(ch, countryCode) {
+    if (countryCode === 'ALL') return true;
+    if (ch.countryCode === countryCode) return true;
+    if (isGlobalGroup(ch.group) && (ch.countryCode === 'OTROS' || ch.countryCode === 'US' || ch.countryCode === 'LAT' || ch.countryCode === 'ES')) {
+        if (ch.countryCode === 'OTROS' || ch.countryCode === 'US') return true;
+    }
+    return false;
+  }
+
   function isGlobalGroup(groupName) {
     return GLOBAL_GROUPS.has(groupName);
   }
@@ -428,7 +435,7 @@ const Playlist = (() => {
 
     const dynamicGroups = [];
     const seenFolders = new Set();
-    const list = countryCode === 'ALL' ? channels : channels.filter(c => c.countryCode === countryCode || isGlobalGroup(c.group));
+    const list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
     
     for (const ch of list) {
       if (!seen.has(ch.group)) {
@@ -524,7 +531,7 @@ const Playlist = (() => {
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
     let list = channels;
     if (countryCode !== 'ALL') {
-      list = channels.filter(c => c.countryCode === countryCode || isGlobalGroup(c.group));
+      list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
     }
     if (groupId === '__all__')  return list;
     if (groupId === '__favs__') return list.filter(c => favIds && favIds.has(c.id));
@@ -538,5 +545,5 @@ const Playlist = (() => {
     return channels.filter(c => qTokens.every(t => c._search.includes(t)));
   }
 
-  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup };
+  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup, isItemVisibleInCountry };
 })();
