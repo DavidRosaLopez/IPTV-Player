@@ -507,7 +507,7 @@ const ViewChannels = (() => {
       }
     } else {
       const curIdx = VirtualList.getFocused();
-      const cols = _currentTab === 'tv' ? 3 : 6;
+      const cols = _currentTab === 'tv' ? 3 : 5;
 
       if (dir === 'left' && curIdx % cols === 0) {
         _setFocusZone('groups');
