@@ -373,6 +373,30 @@ const Player = (() => {
       }
     });
 
+    KeyHandler.on('UP', () => {
+      if (_isActive()) {
+        if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+          if (typeof VodOSD !== 'undefined') {
+            if (VodOSD.isVisible()) VodOSD.handleKey('UP');
+            else VodOSD.show(_current);
+          }
+        }
+        return true;
+      }
+    });
+
+    KeyHandler.on('DOWN', () => {
+      if (_isActive()) {
+        if (_current && (_current.type === 'vod' || _current.type === 'series')) {
+          if (typeof VodOSD !== 'undefined') {
+            if (VodOSD.isVisible()) VodOSD.handleKey('DOWN');
+            else VodOSD.show(_current);
+          }
+        }
+        return true;
+      }
+    });
+
     KeyHandler.on('BACK', () => {
       if (_isActive() && _current) {
         if (_current.type === 'vod' || _current.type === 'series') {
@@ -484,10 +508,29 @@ const Player = (() => {
       else webapis.avplay.jumpBackward(Math.abs(ms));
     } catch(e) {}
   }
+  function getAudioTracks() {
+    try {
+      if (typeof webapis === 'undefined') return [];
+      const tracks = webapis.avplay.getTotalTrackInfo();
+      return tracks.filter(t => t.type === 'AUDIO');
+    } catch(e) { return []; }
+  }
+  function setAudioTrack(index) {
+    try { if (typeof webapis !== 'undefined') webapis.avplay.setSelectTrack('AUDIO', index); } catch(e) {}
+  }
+  function getCurrentAudioTrack() {
+    try {
+      if (typeof webapis === 'undefined') return null;
+      const current = webapis.avplay.getCurrentStreamInfo() || [];
+      return current.find(t => t.type === 'AUDIO');
+    } catch(e) { return null; }
+  }
+
   function getCurrent()   { return _current; }
   function getState()     { return _state; }
   function getMode()      { return _mode; }
   function reapplyPip()   { if (_mode === 'PIP') _applyDisplayRect(); }
   function _isActive()    { return document.getElementById('view-player')?.classList.contains('active'); }
-  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek };
+  
+  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, getAudioTracks, setAudioTrack, getCurrentAudioTrack };
 })();
