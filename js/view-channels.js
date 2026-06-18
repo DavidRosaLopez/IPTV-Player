@@ -523,6 +523,7 @@ const ViewChannels = (() => {
   }
 
   function _setFocusZone(zone) {
+    const isEnteringGroups = zone === 'groups' && _focusZone !== 'groups';
     _focusZone = zone;
     const viewEl = document.getElementById('view-channels');
     if (viewEl) {
@@ -532,9 +533,11 @@ const ViewChannels = (() => {
     
     if (zone === 'groups') {
       const els = _getSidebarFocusables();
-      const activeIdx = els.findIndex(el => el.classList.contains('active'));
-      if (activeIdx !== -1) {
-        _sidebarFocusIdx = activeIdx;
+      if (isEnteringGroups) {
+        const activeIdx = els.findIndex(el => el.classList.contains('active'));
+        if (activeIdx !== -1) {
+          _sidebarFocusIdx = activeIdx;
+        }
       }
       const next = els[_sidebarFocusIdx];
       if (next) {
