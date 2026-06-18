@@ -216,7 +216,11 @@ const ViewSetup = (() => {
       for (const c of channels) {
         if (c.countryCode) codesSet.add(c.countryCode);
       }
-      codes = Array.from(codesSet).sort();
+      codes = Array.from(codesSet).sort((a, b) => {
+        const nameA = (COUNTRY_MAP[a] || {name: a}).name;
+        const nameB = (COUNTRY_MAP[b] || {name: b}).name;
+        return nameA.localeCompare(nameB);
+      });
       const idxOtros = codes.indexOf('OTROS');
       if (idxOtros >= 0) {
         codes.splice(idxOtros, 1);

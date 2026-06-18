@@ -855,9 +855,9 @@ html, body {
 }
 .channel-card.poster .channel-info {
   height: 44px;
-  padding: 4px 12px 0 12px;
+  padding: 0 12px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.7);
   flex: none;

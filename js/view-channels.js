@@ -85,7 +85,11 @@ const ViewChannels = (() => {
     for (const c of channels) {
       if (c.countryCode) codesSet.add(c.countryCode);
     }
-    const codes = Array.from(codesSet).sort();
+    const codes = Array.from(codesSet).sort((a, b) => {
+      const nameA = (COUNTRY_MAP[a] || {name: a}).name;
+      const nameB = (COUNTRY_MAP[b] || {name: b}).name;
+      return nameA.localeCompare(nameB);
+    });
     const idxOtros = codes.indexOf('OTROS');
     if (idxOtros >= 0) {
       codes.splice(idxOtros, 1);
@@ -176,14 +180,18 @@ const ViewChannels = (() => {
     const codes = Store.get('countries') || ['ALL'];
     const currentCountry = Store.get('currentCountry') || 'ALL';
     const els = document.querySelectorAll('.country-item');
+    let focusedEl = null;
+
     els.forEach((el, i) => {
-      el.classList.toggle('focused', i === _countryFocusIdx && _focusZone === 'countries');
+      const isFocused = i === _countryFocusIdx && _focusZone === 'countries';
+      el.classList.toggle('focused', isFocused);
       el.classList.toggle('active', codes[i] === currentCountry);
-      
-      if (i === _countryFocusIdx && _focusZone === 'countries') {
-        el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-      }
+      if (isFocused) focusedEl = el;
     });
+
+    if (focusedEl) {
+      focusedEl.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+    }
   }
 
   function renderGroups() {
@@ -472,9 +480,10 @@ const ViewChannels = (() => {
   function _setFocusZone(zone) {
     _focusZone = zone;
     const viewEl = document.getElementById('view-channels');
-    if (viewEl) viewEl.setAttribute('data-focus', zone);
-    
-    document.querySelectorAll('.channel-card.focused, .country-item.focused, .sidebar-btn.focused, .group-item.focused, .sidebar-tab-btn.focused').forEach(e => e.classList.remove('focused'));
+    if (viewEl) {
+      viewEl.setAttribute('data-focus', zone);
+      viewEl.querySelectorAll('.focused').forEach(e => e.classList.remove('focused'));
+    }
     
     if (zone === 'groups') {
       const els = _getSidebarFocusables();
