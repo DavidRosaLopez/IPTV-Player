@@ -89,6 +89,7 @@ const Search = (() => {
   };
 
   const _onBack = () => {
+    if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) return;
     // Solo procesar BACK si la vista de canales está activa
     const viewChannels = document.getElementById('view-channels');
     if (_isOpen && viewChannels && viewChannels.classList.contains('active')) { 
