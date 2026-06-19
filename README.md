@@ -1,7 +1,6 @@
 # 📺 IPTV Player — Samsung Tizen TV
 
-Aplicación IPTV nativa para **Samsung Smart TV con Tizen 9** (probada en S91F OLED 4K 2025).  
-Interfaz de guía de TV con soporte de listas M3U8, Xtream Codes, guía EPG, favoritos y búsqueda.
+Aplicación IPTV nativa para **Samsung Smart TV** basada en Tizen, pensada para navegar listas de TV en vivo, VOD y series desde un único panel optimizado para control remoto.
 
 ![Samsung Tizen](https://img.shields.io/badge/Samsung-Tizen%209-1428A0?style=flat-square&logo=samsung)
 ![Plataforma](https://img.shields.io/badge/Plataforma-Smart%20TV-black?style=flat-square)
@@ -9,107 +8,124 @@ Interfaz de guía de TV con soporte de listas M3U8, Xtream Codes, guía EPG, fav
 
 ---
 
-## ✨ Funcionalidades
+## ✨ Qué incluye la app
 
-| Módulo | Descripción |
-|--------|-------------|
-| 📋 **M3U8** | Carga y parseo instantáneo de listas `.m3u8` por URL |
-| 🔑 **Xtream Codes** | Autenticación con servidor + usuario + contraseña, descarga paralela de canales y categorías |
-| 🎬 **Reproductor** | AVPlay nativo con soporte RAW / HD / FHD / UHD / 4K / 8K, buffer adaptativo por calidad |
-| 📅 **Guía EPG** | Cuadrícula horaria XMLTV estilo guía TV, navegable con el mando |
-| ⭐ **Favoritos** | Añadir/quitar con tecla amarilla, persistidos en `localStorage` |
-| 🔍 **Búsqueda** | Filtrado instantáneo con índice pre-construido y debounce de 120ms |
-| 🗂️ **Grupos** | Navegación por categorías (sidebar) + "Todos los canales" y "Favoritos" |
-| 🔄 **Multi-lista** | Guarda y alterna entre varias fuentes IPTV |
+| Área | Estado actual del proyecto |
+|------|-----------------------------|
+| 📡 **Fuentes IPTV** | Soporte para listas **Xtream Codes** y URLs **M3U/M3U8** (incluidas desde configuración remota o listas guardadas) |
+| 📺 **TV en directo** | Reprodución con `AVPlay`, agrupación por categorías, filtro por país y navegación por lista |
+| 🎬 **VOD / Series** | Exploración y reproducción de contenido desde Xtream, con ficha informativa y navegación por temporadas/episodios |
+| ⭐ **Favoritos** | Guardado por lista y persistencia local |
+| 🔍 **Búsqueda** | Búsqueda rápida con debounce y lista filtrada en tiempo real |
+| 📅 **EPG** | Información de guía para canales en vivo cuando la API lo proporciona |
+| 🧭 **UI TV-first** | Diseño pensado para navegación con mando, tabs laterales, foco visible y overlays OSD |
+| 📱 **Sincronización remota** | Web remota para enviar configuraciones a la TV a través de PeerJS |
+| 🧠 **Cache local** | Caché de canales, VOD y series para acelerar arranques y reutilizar datos |
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Estructura del proyecto
 
-```
-IPTV-App/
-├── config.xml              # Manifest Tizen (privilegios, versión)
-├── index.html              # Punto de entrada y estructura HTML de todas las vistas
+```text
+IPTV-Player/
+├── config.xml                # Manifest de la app Tizen (privilegios y permisos)
+├── index.html                 # Vista principal de la TV y layouts base
 ├── css/
-│   ├── main.css            # Design system completo (dark mode, variables, todas las vistas)
-│   └── components.css      # Micro-animaciones y componentes extra
-└── js/
-    ├── app.js              # Orquestador general (comprobación de inicio y sincronización silenciosa)
-    ├── store.js            # Gestor central de estado (canales, grupos, índices)
-    ├── router.js           # Enrutador visual de vistas (setup, channels, player, toasts, loadings)
-    ├── view-setup.js       # Controlador aislado de la pantalla de inicio (Xtream, M3U, guardados)
-    ├── view-channels.js    # Controlador de la interfaz de canales (menú lateral, virtual-list, teclas)
-    ├── keyHandler.js       # Gestión del mando a distancia (Tizen TVInputDevice API)
-    ├── playlist.js         # Parser M3U8 ultra-rápido + cliente Xtream Codes API
-    ├── virtual-list.js     # Scroll virtual para listas de miles de canales
-    ├── epg.js              # Carga XMLTV, caché 12h y renderizado de cuadrícula EPG
-    ├── player.js           # Wrapper AVPlay con tuning por calidad (4K/8K, soporte PiP)
-    ├── favorites.js        # CRUD de favoritos con localStorage
-    ├── search.js           # Búsqueda debounced con índice pre-construido
-    ├── storage.js          # Abstracción de localStorage
+│   ├── main.css               # Estilos globales de la app
+│   └── components.css         # Componentes, overlays, badges y detalles visuales
+├── js/
+│   ├── app.js                 # Inicialización general, carga de listas y sincronización en segundo plano
+│   ├── router.js               # Cambio de vistas y toasts/loading overlay
+│   ├── view-setup.js           # Pantalla de configuración, listas guardadas y filtros
+│   ├── view-channels.js        # Navegación por canales, grupos, tabs y foco de la UI
+│   ├── keyHandler.js           # Manejo del mando y eventos de teclado
+│   ├── playlist.js             # Parseo de listas y lógica Xtream / VOD / series
+│   ├── player.js               # Wrapper AVPlay, PiP, reintentos y manejo de errores
+│   ├── player-osd.js           # OSD del reproductor para canales en directo
+│   ├── vod-osd.js              # OSD para VOD/series con controles y audio
+│   ├── info-popup.js           # Popup con metadata, temporadas y episodios
+│   ├── epg.js                  # Consulta y parseo de EPG real para canales XTream
+│   ├── search.js               # Búsqueda con debounce y restauración del listado
+│   ├── favorites.js            # Favoritos y seguimiento visualizado
+│   ├── storage.js              # Abstracción de localStorage / IndexedDB
+│   ├── sync.js                 # Sincronización P2P para recibir listas desde la web remota
+│   └── virtual-list.js         # Listado virtual para manejar muchas entradas sin degradar rendimiento
+└── web-remote/                # Mini web para enviar configuraciones a la TV
 ```
 
 ---
 
-## ⚡ Optimizaciones de rendimiento
+## 🔄 Flujo típico de uso
 
-- **Parseo secuencial optimizado** para M3U8 capaz de procesar listas de +10.000 canales en milisegundos
-- **Scroll virtual** (`virtual-list.js`) con reciclaje interno del DOM vía `innerHTML` — solo renderiza las filas visibles
-- **AVPlay `prepareAsync()`** — preparación no bloqueante del stream
-- **Aceleración por hardware nativa** asegurada al no requerir librerías extra como video.js o hls.js
-- **Caché EPG** de 12h en localStorage — no descarga la guía en cada arranque
-- **Descarga paralela** de streams y categorías en Xtream Codes (`Promise.all`)
-- **Búsqueda instantánea** con índice `_search` en minúsculas pre-construido al cargar
+1. La app inicia en la pantalla de configuración.
+2. El usuario añade una lista Xtream o una URL M3U/M3U8 (o la recibe desde la web remota).
+3. La app guarda la configuración, la carga y genera grupos/categorías.
+4. El usuario puede filtrar por país, buscar por nombre o entrar al modo VOD/Series si la cuenta lo soporta.
+5. Al reproducir un canal, la app muestra OSD, guía EPG si existe y permite volver al listado con modo PiP.
 
 ---
 
-## 🎮 Controles del mando
+## 🎮 Controles principales
 
-| Tecla | Acción |
-|-------|--------|
-| ▲ ▼ ◀ ▶ | Navegar entre grupos / canales |
-| **OK** | Reproducir canal seleccionado |
-| **BACK** | Volver / Cerrar búsqueda |
-| **OK (pulsación larga)** | Añadir / quitar de favoritos |
-| 🔍 **Buscador (Botón)** | Filtrado global de canales mediante teclado en pantalla |
-| **CH ▲▼** | Cambiar canal durante reproducción |
-
----
-
-## 🛠️ Requisitos de desarrollo
-
-- [Tizen Studio](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html) con **TV 9.0 Extension** y **Samsung Certificate Extension**
-- O extensión **Tizen TV** para VSCode/Cursor
-
-### Probar en el TV (recomendado)
-
-1. **Activar Developer Mode** en el TV:  
-   `Smart Hub → Apps → pulsar 1 2 3 4 5 → Developer Mode ON → introducir IP del PC → Reiniciar`
-
-2. **Conectar desde VSCode** (`Ctrl+Shift+P`):
-   ```
-   Tizen: Connect Device → IP del TV, puerto 26101
-   ```
-
-3. **Crear certificado** (primera vez):
-   ```
-   Tizen: Certificate Manager → Samsung → TV
-   ```
-
-4. **Ejecutar**:
-   ```
-   Tizen: Run on Device   (o F5)
-   ```
+| Tecla / acción | Función |
+|----------------|---------|
+| ▲ ▼ ◀ ▶ | Navegar entre grupos, filtros y canales |
+| OK | Abrir reproducir / confirmar selección |
+| OK larga | Añadir o quitar favorito (según contexto) |
+| BACK | Volver, cerrar overlays o salir del buscador |
+| CH ▲ / CH ▼ | Cambiar canal durante reproducción |
+| LEFT / RIGHT | Buscar / avanzar o retroceder en contenido (si el player está activo) |
+| Botón de búsqueda | Abrir teclado de búsqueda en pantalla |
 
 ---
 
-## 📦 Instalación local para UI preview
+## ⚡ Optimizaciones visibles en el código
+
+- Caché local de listas y contenido para evitar recargas innecesarias.
+- Carga paralela de categorías y streams para Xtream.
+- Listado virtual para listas grandes sin perder rendimiento.
+- Búsqueda con índice normalizado y debounce.
+- Reintentos automáticos y manejo de errores en reproducción.
+- PiP para mantener una vista previa del canal mientras el usuario navega.
+- Persistencia de progreso para VOD/series cuando la API lo permite.
+
+---
+
+## 📱 Web remota para enviar listas
+
+La carpeta [web-remote](web-remote) contiene una interfaz pequeña para vincular la TV mediante PeerJS y enviar configuraciones de listas desde un navegador móvil o PC.
+
+Funcionalidades incluidas:
+- Conexión con PIN de 4 dígitos.
+- Envío de listas Xtream o M3U.
+- Persistencia de la última configuración enviada.
+
+---
+
+## 🛠️ Requisitos para desarrollo
+
+- [Tizen Studio](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html)
+- Extensión **Tizen TV** para VSCode/Cursor (recomendada)
+- Permisos de red, entrada del mando y almacenamiento en [config.xml](config.xml)
+
+### Cómo probar en un TV Samsung
+
+1. Activar el modo desarrollador en el televisor.
+2. Conectar el TV desde VSCode usando la herramienta de Tizen.
+3. Crear el certificado de la app si es la primera vez.
+4. Ejecutar la aplicación en el dispositivo.
+
+---
+
+## 📦 Vista previa local en navegador
 
 ```bash
 npx serve . -l 3000
-# Abre http://localhost:3000
 ```
-> El reproductor AVPlay no funcionará en navegador (es API exclusiva de Tizen), pero toda la UI, navegación y EPG son completamente funcionales.
+
+Abre `http://localhost:3000` para revisar la interfaz.
+
+> El reproductor real (`AVPlay`) no funciona fuera del entorno Tizen, pero la UI, navegación, filtros, EPG y vistas auxiliares sí se pueden probar en navegador.
 
 ---
 
