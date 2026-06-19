@@ -13,6 +13,8 @@ const Player = (() => {
   let _state           = 'IDLE'; // IDLE | BUFFERING | PLAYING | ERROR
   let _mode            = 'IDLE'; // IDLE | FULLSCREEN | PIP
   let _previewTimer    = null;   // delay para preview al navegar
+  let _retryTimer      = null;   // retry cuando falla el stream
+  let _errorTimer      = null;   // ocultar error / volver a vista
   let _wasPlayingOnHide = false;
 
   let _initialized = false;
@@ -272,6 +274,14 @@ const Player = (() => {
 
   // ── SAFE STOP ────────────────────────────────────────
   function _safeStop() {
+    if (_retryTimer) {
+      clearTimeout(_retryTimer);
+      _retryTimer = null;
+    }
+    if (_errorTimer) {
+      clearTimeout(_errorTimer);
+      _errorTimer = null;
+    }
     try {
       const vl = document.getElementById('video-layer');
       if (vl) {
@@ -297,13 +307,16 @@ const Player = (() => {
 
   function _handleError() {
     _safeStop();
+    if (_retryTimer) clearTimeout(_retryTimer);
+    if (_errorTimer) clearTimeout(_errorTimer);
 
     if (_isActive() && _current && _retryCount < 3) {
       _retryCount++;
       if (typeof Router !== 'undefined' && Router.showToast) {
         Router.showToast(`Error de conexión. Reconectando (${_retryCount}/3)...`, 'error');
       }
-      setTimeout(() => {
+      _retryTimer = setTimeout(() => {
+        _retryTimer = null;
         if (_isActive() && _current) play(_current);
       }, 2000);
       return;
@@ -312,7 +325,8 @@ const Player = (() => {
     _retryCount = 0;
     const errEl = document.getElementById('player-error');
     if (errEl) errEl.classList.remove('hidden');
-    setTimeout(() => { 
+    _errorTimer = setTimeout(() => {
+      _errorTimer = null;
       if (errEl) errEl.classList.add('hidden');
       if (_isActive()) Router.showView('channels');
     }, 4000);
@@ -484,7 +498,18 @@ const Player = (() => {
     _current = null;
     _mode = 'IDLE';
     _hidePip();
-    clearTimeout(_previewTimer);
+    if (_previewTimer) {
+      clearTimeout(_previewTimer);
+      _previewTimer = null;
+    }
+    if (_retryTimer) {
+      clearTimeout(_retryTimer);
+      _retryTimer = null;
+    }
+    if (_errorTimer) {
+      clearTimeout(_errorTimer);
+      _errorTimer = null;
+    }
     if (typeof PlayerOSD !== 'undefined') PlayerOSD.hide();
     if (typeof VodOSD !== 'undefined') VodOSD.hide();
   }

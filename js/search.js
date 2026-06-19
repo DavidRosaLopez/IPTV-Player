@@ -5,9 +5,11 @@ const Search = (() => {
   let _allChannels = [];
   let _debounceTimer = null;
   let _isOpen = false;
+  let _lastSearchKey = '';
 
   function init(channels) {
     _allChannels = channels;
+    _lastSearchKey = '';
   }
 
   function open() {
@@ -34,6 +36,8 @@ const Search = (() => {
   function close() {
     if (!_isOpen) return;
     _isOpen = false;
+    clearTimeout(_debounceTimer);
+    _lastSearchKey = '';
     const bar   = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
     const count = document.getElementById('search-count');
@@ -72,6 +76,9 @@ const Search = (() => {
       const q   = e.target.value.trim();
       const currentTab = typeof ViewChannels !== 'undefined' ? ViewChannels.getCurrentTab() : 'tv';
       const data = currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
+      const cacheKey = `${currentTab}|${q}|${Store.get('currentCountry') || 'ALL'}|${Store.get('currentGroup') || ''}|${data.length}`;
+      if (_lastSearchKey === cacheKey) return;
+      _lastSearchKey = cacheKey;
       const res = Playlist.search(data, q);
       const cnt = document.getElementById('search-count');
       if (!q) {

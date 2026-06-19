@@ -3,6 +3,7 @@
  */
 const Storage = (() => {
   const PREFIX = 'iptv_';
+  let _dbPromise = null;
 
   const get = (key, fallback = null) => {
     try {
@@ -54,7 +55,8 @@ const Storage = (() => {
   const STORE_NAME = 'cache';
   
   function _getDB() {
-    return new Promise((resolve, reject) => {
+    if (_dbPromise) return _dbPromise;
+    _dbPromise = new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
@@ -63,8 +65,12 @@ const Storage = (() => {
         }
       };
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => {
+        _dbPromise = null;
+        reject(req.error);
+      };
     });
+    return _dbPromise;
   }
 
   const _getFromDB = async (key, ttl) => {

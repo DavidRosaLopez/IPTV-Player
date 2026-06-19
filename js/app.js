@@ -4,6 +4,9 @@
 const App = (() => {
   let _clockTimer = null;
   let _currentAbortController = null;
+  let _prefetchTimer = null;
+  let _prefetchController = null;
+  let _syncTimer = null;
 
   function init() {
     KeyHandler.init();
@@ -158,6 +161,18 @@ const App = (() => {
       _currentAbortController.abort();
       _currentAbortController = null;
     }
+    if (_prefetchController) {
+      _prefetchController.abort();
+      _prefetchController = null;
+    }
+    if (_prefetchTimer) {
+      clearTimeout(_prefetchTimer);
+      _prefetchTimer = null;
+    }
+    if (_syncTimer) {
+      clearTimeout(_syncTimer);
+      _syncTimer = null;
+    }
   }
 
   async function _afterLoad(list, fromCache = false) {
@@ -203,27 +218,43 @@ const App = (() => {
 
     // Background prefetch for VOD and Series
     if (list && list.type === 'xtream') {
-      setTimeout(async () => {
+      if (_prefetchTimer) clearTimeout(_prefetchTimer);
+      _prefetchTimer = setTimeout(async () => {
+        _prefetchTimer = null;
+        if (_prefetchController) _prefetchController.abort();
+        _prefetchController = new AbortController();
+        const signal = _prefetchController.signal;
         try {
           let vodCached = await Storage.getVodCache(list.id);
           if (!vodCached || vodCached.length === 0) {
-            const vData = await Playlist.loadVod(list.server, list.user, list.pass, null, null);
-            if (vData && vData.length > 0) await Storage.setVodCache(list.id, vData);
+            const vData = await Playlist.loadVod(list.server, list.user, list.pass, null, signal);
+            if (!signal.aborted && vData && vData.length > 0) await Storage.setVodCache(list.id, vData);
           }
+          if (signal.aborted) return;
           let serCached = await Storage.getSeriesCache(list.id);
           if (!serCached || serCached.length === 0) {
-            const sData = await Playlist.loadSeries(list.server, list.user, list.pass, null, null);
-            if (sData && sData.length > 0) await Storage.setSeriesCache(list.id, sData);
+            const sData = await Playlist.loadSeries(list.server, list.user, list.pass, null, signal);
+            if (!signal.aborted && sData && sData.length > 0) await Storage.setSeriesCache(list.id, sData);
           }
         } catch(e) {
-          console.error("Prefetch error", e);
+          if (e.name !== 'AbortError') console.error('Prefetch error', e);
+        } finally {
+          if (_prefetchController && _prefetchController.signal.aborted) {
+            _prefetchController = null;
+          } else if (_prefetchController) {
+            _prefetchController = null;
+          }
         }
       }, 3000);
     }
 
     // Comprobar actualización silenciosa
     if (fromCache && _shouldCheckUpdate(list.id)) {
-      _backgroundSync(list);
+      if (_syncTimer) clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(() => {
+        _syncTimer = null;
+        _backgroundSync(list);
+      }, 500);
     }
   }
 
@@ -235,16 +266,18 @@ const App = (() => {
   }
 
   async function _backgroundSync(list) {
+    const controller = new AbortController();
     try {
       console.log('Background Sync: Buscando actualizaciones silenciosas...');
       let newChannels = [];
       if (list.type === 'xtream') {
-        const r = await Playlist.loadXtream(list.server, list.user, list.pass, () => {});
+        const r = await Playlist.loadXtream(list.server, list.user, list.pass, () => {}, controller.signal);
         newChannels = r.channels;
       } else {
-        newChannels = await Playlist.loadM3U(list.url, () => {});
+        newChannels = await Playlist.loadM3U(list.url, () => {}, controller.signal);
       }
       
+      if (controller.signal.aborted) return;
       if (newChannels.length > 0) {
         Store.set('channels', newChannels);
         await Storage.setChannelCache(list.id, newChannels);
@@ -261,7 +294,9 @@ const App = (() => {
         Router.showToast('Lista actualizada en segundo plano', 'success');
       }
     } catch (e) {
-      console.warn('Background Sync Fallido:', e);
+      if (e.name !== 'AbortError') console.warn('Background Sync Fallido:', e);
+    } finally {
+      controller.abort();
     }
   }
 
