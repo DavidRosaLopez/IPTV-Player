@@ -389,7 +389,7 @@ const ViewChannels = (() => {
         const groups = Store.get('groups') || [];
         const gObj = groups.find(g => g.id === currentGroup);
         if (gObj) {
-          groupNameEl.innerHTML = gObj.name;
+          groupNameEl.textContent = gObj.name.replace(/<span.*?<\/span>\s*/g, '');
         } else {
           groupNameEl.textContent = 'Canales';
         }
