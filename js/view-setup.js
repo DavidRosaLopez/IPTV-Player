@@ -195,7 +195,10 @@ const ViewSetup = (() => {
     const server = _val('xt-server').replace(/\/+$/,'');
     const user   = _val('xt-user');
     const pass   = _val('xt-pass');
-    if (!server || !user || !pass) return;
+    if (!server || !user || !pass) {
+      _setStatus('xt-status', 'Rellena todos los campos', 'error');
+      return;
+    }
     _setStatus('xt-status', 'Probando...', '');
     try {
       const r  = await fetch(`${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`);
