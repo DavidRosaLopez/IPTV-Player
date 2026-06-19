@@ -34,3 +34,34 @@ const Favorites = (() => {
 
   return { init: () => {}, toggle, isFav, getIds };
 })();
+
+const Watching = (() => {
+  function _getKey() {
+    const list = typeof Store !== 'undefined' ? Store.get('currentList') : null;
+    const listId = list ? list.id : 'default';
+    return `${listId}_watching_series`;
+  }
+
+  function getIds() {
+    return Storage.get(_getKey()) || [];
+  }
+
+  function add(seriesId) {
+    const key = _getKey();
+    const watching = new Set(Storage.get(key) || []);
+    if (watching.has(seriesId)) {
+      watching.delete(seriesId);
+    }
+    const arr = Array.from(watching);
+    arr.unshift(seriesId);
+    Storage.set(key, arr);
+  }
+
+  function isWatching(seriesId) {
+    const watching = new Set(getIds());
+    return watching.has(seriesId);
+  }
+
+  return { getIds, add, isWatching };
+})();
+

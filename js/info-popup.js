@@ -349,6 +349,9 @@ const InfoPopup = (() => {
 
   function _executeAction() {
     if (_actionIdx === 0 && _current.type === 'vod') {
+      if (typeof Watching !== 'undefined') {
+        Watching.add(_current.id);
+      }
       suspend();
       Player.play(_current);
     } else if (_actionIdx === 1) {
@@ -362,6 +365,11 @@ const InfoPopup = (() => {
     const ext = ep.container_extension || 'mp4';
     const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
     
+    // Guardar en seguir viendo
+    if (typeof Watching !== 'undefined') {
+      Watching.add(_current.id);
+    }
+
     // Create a temporary channel object for the episode
     const playCh = {
       id: `ep_${ep.id}`,

@@ -128,10 +128,13 @@ const ViewChannels = (() => {
     }
   }
 
-
   function renderCountries() {
     const container = document.getElementById('country-filter');
     if (!container) return;
+    if (_currentTab === 'vod' || _currentTab === 'series') {
+      container.style.display = 'none';
+      return;
+    }
     container.style.display = '';
     container.innerHTML = '';
     const codes = Store.get('countries') || ['ALL'];
@@ -273,7 +276,8 @@ const ViewChannels = (() => {
 
     const cache = { 
       '__all__': Playlist.filterByGroup(channels, '__all__', null, currentCountry).length,
-      '__favs__': Favorites.getIds().length
+      '__favs__': Favorites.getIds().length,
+      '__watching__': Playlist.filterByGroup(channels, '__watching__', null, currentCountry).length
     };
     for (const ch of channels) {
       if (Playlist.isItemVisibleInCountry(ch, currentCountry)) {
@@ -445,7 +449,12 @@ const ViewChannels = (() => {
           _setFocusZone('tabs');
         }
       } else if (dir === 'down') {
-        _setFocusZone('countries');
+        if (_currentTab === 'vod' || _currentTab === 'series') {
+          _sidebarFocusIdx = 2; // primer grupo
+          _setFocusZone('groups');
+        } else {
+          _setFocusZone('countries');
+        }
       } else if (dir === 'up') {
         _sidebarFocusIdx = 0;
         _setFocusZone('groups', false); // Setup / search buttons
@@ -485,7 +494,11 @@ const ViewChannels = (() => {
         }
       } else if (dir === 'up') {
         if (_sidebarFocusIdx === 2) {
-          _setFocusZone('countries');
+          if (_currentTab === 'vod' || _currentTab === 'series') {
+            _setFocusZone('tabs');
+          } else {
+            _setFocusZone('countries');
+          }
           return;
         } else if (_sidebarFocusIdx > 2) {
           _sidebarFocusIdx--;
@@ -721,7 +734,11 @@ const ViewChannels = (() => {
         if (_focusZone === 'channels') {
           _setFocusZone('groups');
         } else if (_focusZone === 'groups') {
-          _setFocusZone('countries');
+          if (_currentTab === 'vod' || _currentTab === 'series') {
+            _setFocusZone('tabs');
+          } else {
+            _setFocusZone('countries');
+          }
         } else if (_focusZone === 'countries') {
           _setFocusZone('tabs');
         } else {
@@ -922,7 +939,7 @@ const ViewChannels = (() => {
     const channels = _currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
     const favIds = new Set(Favorites.getIds());
 
-    const country = ch.countryCode || 'ALL';
+    const country = (_currentTab === 'vod' || _currentTab === 'series') ? 'ALL' : (ch.countryCode || 'ALL');
     const codes = Store.get('countries') || ['ALL'];
     let cIdx = codes.indexOf(country);
     if (cIdx < 0) {

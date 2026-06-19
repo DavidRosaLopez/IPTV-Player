@@ -407,16 +407,25 @@ const Playlist = (() => {
   // ── GROUPS (cached by country) ─────────────────────────
   let _groupCache = {};
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
+    if (tabId === 'vod') {
+      return [
+        { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> Películas' },
+        { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
+        { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
+      ];
+    } else if (tabId === 'series') {
+      return [
+        { id: '__all__', name: '<span class="material-symbols-rounded">live_tv</span> Series' },
+        { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
+        { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
+      ];
+    }
+
     const cacheKey = `${countryCode}_${tabId}`;
     if (_groupCache[cacheKey]) return _groupCache[cacheKey];
     const seen = new Set();
     
     let mainGroupName = '<span class="material-symbols-rounded">tv</span> Canales';
-    if (tabId === 'vod') {
-      mainGroupName = '<span class="material-symbols-rounded">movie</span> Películas';
-    } else if (tabId === 'series') {
-      mainGroupName = '<span class="material-symbols-rounded">live_tv</span> Series';
-    }
 
     const staticGroups = [{ id: '__all__', name: mainGroupName },
                           { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' }];
@@ -453,73 +462,8 @@ const Playlist = (() => {
         }
       }
     }
-    
-    const seriesOrder = [
-      '✨ Últimos Estrenos',
-      '💎 Series en 4K / UHD',
-      '__folder_plataformas__',
-      '🟥 Netflix',
-      '🟣 HBO Max',
-      '🟦 Amazon Prime',
-      '✨ Disney+',
-      '🍏 Apple TV+',
-      'Ⓜ️ Movistar+',
-      '⛰️ Paramount+',
-      '📺 Nacionales / Otras Apps',
-      '🌍 Documentales',
-      '🦄 Infantil y Animación',
-      '🎌 Anime',
-      '💥 Acción y Aventuras',
-      '🛸 Ciencia Ficción y Fantasía',
-      '👻 Terror y Suspense',
-      '😂 Comedia',
-      '🎭 Drama y Romance',
-      '🎵 Música y Conciertos',
-      '🎭 Reality Shows',
-      '📺 Series Generales',
-      '🇹🇷 Telenovelas y Turcas'
-    ];
 
-    const vodOrder = [
-      '✨ Últimos Estrenos',
-      '💎 Calidad 4K / UHD',
-      '__folder_plataformas__',
-      '🟥 Netflix',
-      '🟣 HBO Max',
-      '🟦 Amazon Prime',
-      '✨ Disney+',
-      '🍏 Apple TV+',
-      'Ⓜ️ Movistar+',
-      '⛰️ Paramount+',
-      '📺 Nacionales / Otras Apps',
-      '🦄 Infantil y Animación',
-      '💥 Acción y Aventuras',
-      '🛸 Ciencia Ficción y Fantasía',
-      '👻 Terror y Suspense',
-      '😂 Comedia',
-      '🎭 Drama y Romance',
-      '🌍 Documentales',
-      '🎵 Música y Conciertos',
-      '🤠 Western',
-      '📺 Clásicos y Colecciones',
-      '🎄 Especial Navidad',
-      '⚽ Deportes en Diferido',
-      '➕ Otras'
-    ];
-
-    let orderList = [];
-    if (tabId === 'series') orderList = seriesOrder;
-    else if (tabId === 'vod') orderList = vodOrder;
-
-    dynamicGroups.sort((a, b) => {
-      let idxA = orderList.indexOf(a.id);
-      let idxB = orderList.indexOf(b.id);
-      if (idxA === -1) idxA = 999;
-      if (idxB === -1) idxB = 999;
-      
-      if (idxA !== idxB) return idxA - idxB;
-      return a.id.localeCompare(b.id);
-    });
+    dynamicGroups.sort((a, b) => a.id.localeCompare(b.id));
 
     const finalGroups = [...staticGroups, ...dynamicGroups];
     _groupCache[cacheKey] = finalGroups;
@@ -535,6 +479,11 @@ const Playlist = (() => {
     }
     if (groupId === '__all__')  return list;
     if (groupId === '__favs__') return list.filter(c => favIds && favIds.has(c.id));
+    if (groupId === '__watching__') {
+      const watchingIds = typeof Watching !== 'undefined' ? Watching.getIds() : [];
+      const idMap = new Map(watchingIds.map((id, index) => [id, index]));
+      return list.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
+    }
     return list.filter(c => c.group === groupId);
   }
 
