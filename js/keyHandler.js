@@ -83,9 +83,11 @@ const KeyHandler = (() => {
 
   function _dispatch(code, e) {
     let consumed = false;
+    let actualCode = code;
+    if (code === 88) actualCode = 10009; // Map RETURN (88) to BACK (10009)
 
     // Dispatch to registered listeners (most recently added first)
-    const handlers = _listeners[code] || [];
+    const handlers = _listeners[actualCode] || [];
     for (let i = handlers.length - 1; i >= 0; i--) {
       const result = handlers[i](e);
       if (result === true) {
