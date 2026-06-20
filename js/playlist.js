@@ -485,5 +485,42 @@ const Playlist = (() => {
     return channels.filter(c => qTokens.every(t => c._search.includes(t)));
   }
 
-  return { loadXtream, loadVod, loadSeries, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup, isItemVisibleInCountry };
+  // ── M3U LOADER (Web Worker) ─────────────────────────
+  async function loadM3U(url, onProgress, signal) {
+    if (onProgress) onProgress(10);
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error('Error al descargar la lista M3U');
+    
+    if (onProgress) onProgress(30);
+    const text = await res.text();
+    
+    if (onProgress) onProgress(50);
+    
+    return new Promise((resolve, reject) => {
+      const worker = new Worker('js/m3u-worker.js');
+      
+      worker.onmessage = (e) => {
+        if (e.data.progress && onProgress) {
+          // Map worker progress (0-100) to 50-100 range
+          onProgress(50 + (e.data.progress * 0.5));
+        } else if (e.data.channels) {
+          worker.terminate();
+          if (onProgress) onProgress(100);
+          resolve(e.data.channels);
+        } else if (e.data.error) {
+          worker.terminate();
+          reject(new Error(e.data.error));
+        }
+      };
+
+      worker.onerror = (err) => {
+        worker.terminate();
+        reject(err);
+      };
+
+      worker.postMessage({ content: text });
+    });
+  }
+
+  return { loadXtream, loadVod, loadSeries, loadM3U, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup, isItemVisibleInCountry };
 })();
