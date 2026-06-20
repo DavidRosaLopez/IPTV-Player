@@ -200,7 +200,7 @@ const InfoPopup = (() => {
     eps.forEach((ep, i) => {
       const li = document.createElement('li');
       const info = ep.info || {};
-      const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" onerror="this.style.display='none'">` : '';
+      const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" loading="lazy" onerror="this.style.display='none'">` : '';
       let cleanTitle = String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim();
       
       li.innerHTML = `
