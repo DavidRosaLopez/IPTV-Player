@@ -422,6 +422,36 @@ const ViewChannels = (() => {
     if (!ch) return;
     Storage.setLastChannel(ch.id);
 
+    // Si estamos en "Seguir viendo" y tiene un episodio guardado
+    if (Store.get('currentGroup') === '__watching__' && ch.type === 'series') {
+       if (typeof Watching !== 'undefined') {
+         const items = Watching.getItems();
+         const wItem = items.find(i => (typeof i === 'object' && i.id === ch.id));
+         if (wItem && wItem.ep) {
+            const ep = wItem.ep;
+            const list = Store.get('currentList');
+            const ext = ep.container_extension || 'mp4';
+            const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
+            const playCh = {
+              id: `ep_${ep.id}`,
+              name: `${ch.name} - ${ep.episode_num}. ${ep.title}`,
+              url: url,
+              logo: ch.logo,
+              type: 'series'
+            };
+            if (typeof InfoPopup !== 'undefined') {
+               InfoPopup.show(ch); 
+               InfoPopup.setPlayingEpisode(ep);
+               InfoPopup.suspend(); 
+            }
+            Router.showView('player');
+            document.getElementById('view-player').focus();
+            Player.play(playCh);
+            return;
+         }
+       }
+    }
+
     if (ch.type === 'vod' || ch.type === 'series') {
       if (typeof InfoPopup !== 'undefined') InfoPopup.show(ch);
       return;

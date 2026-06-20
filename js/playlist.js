@@ -231,18 +231,7 @@ const Playlist = (() => {
 
   function _cleanStreamName(n) {
     if (!n) return '';
-    let res = n.replace(/^(\[.*?\]|\{.*?\}|\|.*?\||[A-Z0-9]{2,6}\s*[-|:]\s*)\s*/i, '');
-    let parts = res.split(' - ');
-    while (parts.length > 1) {
-      if (!/[a-z]/i.test(parts[0]) || parts[0].length <= 6) {
-        parts.shift();
-      } else {
-        break;
-      }
-    }
-    res = parts.join(' - ');
-    res = res.replace(/\s*[\[\(\{][A-Z]{2,3}[\]\)\}]$/i, '');
-    return res.trim() || n;
+    return n.trim();
   }
 
   const _fetchPromises = { vod: null, series: null };

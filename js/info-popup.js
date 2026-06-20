@@ -92,6 +92,7 @@ const InfoPopup = (() => {
 
     document.getElementById('info-year').textContent = '';
     document.getElementById('info-duration').textContent = '';
+    document.getElementById('info-quality').innerHTML = '';
     document.getElementById('info-rating').textContent = '';
     document.getElementById('info-genre').textContent = '';
     document.getElementById('info-plot').textContent = 'Cargando datos...';
@@ -111,6 +112,10 @@ const InfoPopup = (() => {
     document.getElementById('info-title').textContent = info.name || _current.name;
     document.getElementById('info-year').textContent = info.releasedate ? `🗓️ ${info.releasedate}` : '';
     document.getElementById('info-duration').textContent = info.duration ? `⏱️ ${info.duration}` : (info.episode_run_time ? `⏱️ ${info.episode_run_time} min` : '');
+    
+    const quality = _detectQuality(info.name || _current.name);
+    document.getElementById('info-quality').innerHTML = quality.html;
+    
     document.getElementById('info-rating').textContent = info.rating ? `⭐ ${info.rating}` : '';
     document.getElementById('info-genre').textContent = info.genre ? `🏷️ ${info.genre}` : '';
     
@@ -130,6 +135,10 @@ const InfoPopup = (() => {
     
     document.getElementById('info-title').textContent = info.name || _current.name;
     document.getElementById('info-year').textContent = info.year || info.releaseDate ? `🗓️ ${info.year || info.releaseDate}` : '';
+    
+    const quality = _detectQuality(info.name || _current.name);
+    document.getElementById('info-quality').innerHTML = quality.html;
+    
     document.getElementById('info-rating').textContent = info.rating ? `⭐ ${info.rating}` : '';
     document.getElementById('info-genre').textContent = info.genre ? `🏷️ ${info.genre}` : '';
     
@@ -184,29 +193,7 @@ const InfoPopup = (() => {
       const li = document.createElement('li');
       const info = ep.info || {};
       const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" onerror="this.style.display='none'">` : '';
-      let infoName = String(info.name || '');
-      let cleanTitle = (infoName.trim().length > 0) ? infoName : (String(ep.title || 'Episodio ' + ep.episode_num));
-      
-      // FIX: Clean Episode Names globally (not just anchored to start)
-      const markerRegex = /(?:S\d+\s*E\d+|T\d+\s*E\d+|\d+x\d+|E\d+|Ep(?:isodio|isode)?\s*\d+)\s*[-:|.]?\s*/i;
-      const match = cleanTitle.match(markerRegex);
-      
-      if (match) {
-        // If we found a marker like "S01E01 - ", take whatever is AFTER the marker
-        cleanTitle = cleanTitle.substring(match.index + match[0].length);
-      } else {
-        // No marker found, try to strip the series name if it's separated by a hyphen
-        if (_current && _current.name) {
-          const parts = cleanTitle.split(' - ');
-          if (parts.length > 1) {
-            cleanTitle = parts.slice(1).join(' - ');
-          }
-        }
-      }
-      
-      cleanTitle = cleanTitle.replace(/^[-:|.|_|\s]+/, '');
-      cleanTitle = cleanTitle.replace(/^\d+\s*[-:|.]?\s*/, ''); // FIX: strip leading standalone numbers
-      if (!cleanTitle) cleanTitle = 'Episodio ' + ep.episode_num;
+      let cleanTitle = String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim();
       
       li.innerHTML = `
         ${img}
@@ -218,6 +205,36 @@ const InfoPopup = (() => {
     });
 
     if (_episodeIdx >= eps.length) _episodeIdx = Math.max(0, eps.length - 1);
+  }
+
+  // ── DETECCIÓN DE CALIDAD ────────────────────────────
+  function _detectQuality(name) {
+    if (!name) return { html: '', quality: 'SD' };
+    
+    const nameUpper = name.toUpperCase();
+    
+    // Prioridad de detección: primero las más altas, luego las más bajas
+    if (nameUpper.includes('8K') || nameUpper.includes('7680')) {
+      return { html: '<span class="quality-badge quality-8k">8K</span>', quality: '8K' };
+    }
+    if (nameUpper.includes('4K') || nameUpper.includes('UHD') || nameUpper.includes('2160')) {
+      return { html: '<span class="quality-badge quality-4k">4K</span>', quality: '4K' };
+    }
+    if (nameUpper.includes('BLURAY') || nameUpper.includes('BLU-RAY') || nameUpper.includes('1080')) {
+      if (nameUpper.includes('HDR')) {
+        return { html: '<span class="quality-badge quality-1080p-hdr">1080p HDR</span>', quality: '1080p HDR' };
+      }
+      return { html: '<span class="quality-badge quality-1080p">1080p</span>', quality: '1080p' };
+    }
+    if (nameUpper.includes('720') || nameUpper.includes('HD') && !nameUpper.includes('FHD')) {
+      return { html: '<span class="quality-badge quality-720p">720p</span>', quality: '720p' };
+    }
+    if (nameUpper.includes('FHD') || nameUpper.includes('1080P')) {
+      return { html: '<span class="quality-badge quality-fhd">FHD</span>', quality: 'FHD' };
+    }
+    
+    // Por defecto, SD (Standard Definition)
+    return { html: '<span class="quality-badge quality-sd">SD</span>', quality: 'SD' };
   }
 
   function handleKey(key) {
@@ -350,7 +367,7 @@ const InfoPopup = (() => {
   function _executeAction() {
     if (_actionIdx === 0 && _current.type === 'vod') {
       if (typeof Watching !== 'undefined') {
-        Watching.add(_current.id);
+        Watching.add(_current, null);
       }
       suspend();
       Player.play(_current);
@@ -359,15 +376,17 @@ const InfoPopup = (() => {
     }
   }
 
+  let _playingEpisode = null;
   function _playEpisode(ep) {
     if (!ep) return;
+    _playingEpisode = ep;
     const list = Store.get('currentList');
     const ext = ep.container_extension || 'mp4';
     const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
     
     // Guardar en seguir viendo
     if (typeof Watching !== 'undefined') {
-      Watching.add(_current.id);
+      Watching.add(_current, ep);
     }
 
     // Create a temporary channel object for the episode
@@ -381,6 +400,36 @@ const InfoPopup = (() => {
 
     suspend();
     Player.play(playCh);
+  }
+
+  function playNextEpisode() {
+    if (!_playingEpisode || !_current || _current.type !== 'series') return;
+    let found = false;
+    let nextEp = null;
+    for (let s of _seasons) {
+      const eps = _episodesMap[s.season_number] || [];
+      for (let i = 0; i < eps.length; i++) {
+        if (found) {
+           nextEp = eps[i];
+           break;
+        }
+        if (eps[i].id === _playingEpisode.id) {
+           found = true;
+        }
+      }
+      if (nextEp) break;
+    }
+    if (nextEp) {
+      _playEpisode(nextEp);
+    } else {
+      if (typeof Player !== 'undefined') Player.stop();
+      if (typeof Router !== 'undefined') Router.showView('channels');
+      if (isSuspended()) resume();
+    }
+  }
+
+  function setPlayingEpisode(ep) {
+    _playingEpisode = ep;
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -401,5 +450,5 @@ const InfoPopup = (() => {
     });
   });
 
-  return { show, hide, handleKey, isVisible: () => _isVisible, suspend, resume, isSuspended: () => _isSuspended };
+  return { show, hide, handleKey, isVisible: () => _isVisible, suspend, resume, isSuspended: () => _isSuspended, playNextEpisode, setPlayingEpisode };
 })();

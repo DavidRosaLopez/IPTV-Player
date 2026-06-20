@@ -92,28 +92,37 @@ const Player = (() => {
             `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}|BUFFERLENGTH=${Math.round(bufMs / 1000)}`);
         } catch(e) {}
 
-        webapis.avplay.setListener({
-          onbufferingstart:    () => _onBufferingStart(),
-          onbufferingcomplete: () => _onBufferingComplete(),
-          oncurrentplaytime:   () => {
-            if (_state === 'BUFFERING') {
-              _setState('PLAYING');
-              _retryCount = 0;
+          const handleStreamEnd = () => {
+            if (_current && _current.type === 'series') {
+               stop();
+               if (typeof Router !== 'undefined') Router.showView('channels');
+               if (typeof InfoPopup !== 'undefined' && InfoPopup.isSuspended()) {
+                 InfoPopup.resume();
+               }
+            } else {
+               setTimeout(() => { if (_current) play(_current); }, 1000);
             }
-          },
-          onevent:             (type) => {
-            if (type === 'PLAYER_MSG_END_OF_STREAM')
-              setTimeout(() => { if (_current) play(_current); }, 1000);
-            if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
-              if (_state === 'BUFFERING') _setState('PLAYING');
-            }
-          },
-          onerror:           (err) => _onError(err),
-          ondrmevent:        () => {},
-          onstreamcompleted: () => {
-            setTimeout(() => { if (_current) play(_current); }, 1000);
-          },
-        });
+          };
+
+          webapis.avplay.setListener({
+            onbufferingstart:    () => _onBufferingStart(),
+            onbufferingcomplete: () => _onBufferingComplete(),
+            oncurrentplaytime:   () => {
+              if (_state === 'BUFFERING') {
+                _setState('PLAYING');
+                _retryCount = 0;
+              }
+            },
+            onevent:             (type) => {
+              if (type === 'PLAYER_MSG_END_OF_STREAM') handleStreamEnd();
+              if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
+                if (_state === 'BUFFERING') _setState('PLAYING');
+              }
+            },
+            onerror:           (err) => _onError(err),
+            ondrmevent:        () => {},
+            onstreamcompleted: () => handleStreamEnd(),
+          });
 
         webapis.avplay.prepareAsync(
           () => {
@@ -414,6 +423,9 @@ const Player = (() => {
     KeyHandler.on('BACK', () => {
       if (_isActive() && _current) {
         if (_current.type === 'vod' || _current.type === 'series') {
+          if (typeof VodOSD !== 'undefined' && VodOSD.isVisible()) {
+            if (VodOSD.handleKey('BACK')) return true;
+          }
           stop();
           Router.showView('channels');
         } else {
@@ -533,6 +545,9 @@ const Player = (() => {
       else webapis.avplay.jumpBackward(Math.abs(ms));
     } catch(e) {}
   }
+  function seekTo(ms) {
+    try { webapis.avplay.seekTo(ms); } catch(e) {}
+  }
   function getAudioTracks() {
     try {
       if (typeof webapis === 'undefined') return [];
@@ -557,5 +572,5 @@ const Player = (() => {
   function reapplyPip()   { if (_mode === 'PIP') _applyDisplayRect(); }
   function _isActive()    { return document.getElementById('view-player')?.classList.contains('active'); }
   
-  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, getAudioTracks, setAudioTrack, getCurrentAudioTrack };
+  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack };
 })();

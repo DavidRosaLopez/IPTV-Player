@@ -42,26 +42,39 @@ const Watching = (() => {
     return `${listId}_watching_series`;
   }
 
-  function getIds() {
+  function getItems() {
     return Storage.get(_getKey()) || [];
   }
 
-  function add(seriesId) {
+  function getIds() {
+    return getItems().map(item => typeof item === 'string' ? item : item.id);
+  }
+
+  function add(ch, ep = null) {
     const key = _getKey();
-    const watching = new Set(Storage.get(key) || []);
-    if (watching.has(seriesId)) {
-      watching.delete(seriesId);
-    }
-    const arr = Array.from(watching);
-    arr.unshift(seriesId);
-    Storage.set(key, arr);
+    let items = getItems();
+    
+    const idToFind = typeof ch === 'string' ? ch : ch.id;
+    
+    // Eliminar duplicados
+    items = items.filter(item => {
+      const id = typeof item === 'string' ? item : item.id;
+      return id !== idToFind;
+    });
+    
+    // Guardar al principio
+    items.unshift({
+      id: idToFind,
+      ep: ep
+    });
+    
+    Storage.set(key, items);
   }
 
-  function isWatching(seriesId) {
-    const watching = new Set(getIds());
-    return watching.has(seriesId);
+  function isWatching(id) {
+    return getIds().includes(id);
   }
 
-  return { getIds, add, isWatching };
+  return { getIds, getItems, add, isWatching };
 })();
 

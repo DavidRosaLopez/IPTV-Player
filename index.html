@@ -245,12 +245,19 @@
         <div class="vod-osd-bottom">
           <div class="vod-controls-row">
             <button id="btn-vod-audio" class="vod-btn"><span class="material-symbols-rounded">chat</span> Audio</button>
+            <button id="btn-vod-restart" class="vod-btn hidden"><span class="material-symbols-rounded">replay</span> Reiniciar</button>
+            <button id="btn-vod-next" class="vod-btn hidden"><span class="material-symbols-rounded">skip_next</span> Siguiente Cap.</button>
           </div>
           <div class="vod-progress-row">
             <span id="vod-time-current" class="vod-time">00:00:00</span>
             <div class="vod-progress-bar-container">
               <div id="vod-progress-fill" class="vod-progress-fill" style="width: 0%;"></div>
               <div id="vod-progress-thumb" class="vod-progress-thumb" style="left: 0%;"></div>
+              <!-- Preview de seek Netflix-style -->
+              <div id="vod-seek-preview" class="vod-seek-preview hidden">
+                <div class="vod-preview-gradient"></div>
+                <div class="vod-preview-time">00:00</div>
+              </div>
             </div>
             <span id="vod-time-total" class="vod-time">--:--:--</span>
           </div>
@@ -327,6 +334,7 @@
             <div class="info-meta">
               <span id="info-year" class="info-meta-item"></span>
               <span id="info-duration" class="info-meta-item"></span>
+              <span id="info-quality" class="info-meta-item info-quality-badge"></span>
               <span id="info-rating" class="info-meta-item"></span>
               <span id="info-genre" class="info-meta-item"></span>
             </div>
