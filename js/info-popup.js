@@ -180,6 +180,14 @@ const InfoPopup = (() => {
     });
   }
 
+  function _updateActiveSeasonClass() {
+    const list = document.getElementById('info-seasons-list');
+    if (!list) return;
+    Array.from(list.children).forEach((li, i) => {
+      li.classList.toggle('active', i === _seasonIdx);
+    });
+  }
+
   function _renderEpisodes() {
     const list = document.getElementById('info-episodes-list');
     list.innerHTML = '';
@@ -275,13 +283,13 @@ const InfoPopup = (() => {
       } else if (key === 'LEFT') {
         if (_seasonIdx > 0) {
           _seasonIdx--;
-          _renderSeasons();
+          _updateActiveSeasonClass();
           _renderEpisodes();
         }
       } else if (key === 'RIGHT') {
         if (_seasonIdx < _seasons.length - 1) {
           _seasonIdx++;
-          _renderSeasons();
+          _updateActiveSeasonClass();
           _renderEpisodes();
         }
       }
@@ -324,7 +332,7 @@ const InfoPopup = (() => {
     }
     if (_zone === 'seasons' && _seasonIdx >= 0 && _seasonIdx < seasonItems.length) {
       seasonItems[_seasonIdx].classList.add('focused');
-      seasonItems[_seasonIdx].scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+      seasonItems[_seasonIdx].scrollIntoView({ block: 'nearest', inline: 'center' });
     }
     
     const epItems = document.getElementById('info-episodes-list').children;
@@ -333,7 +341,7 @@ const InfoPopup = (() => {
     }
     if (_zone === 'episodes' && _episodeIdx >= 0 && _episodeIdx < epItems.length) {
       epItems[_episodeIdx].classList.add('focused');
-      epItems[_episodeIdx].scrollIntoView({ behavior: 'auto', block: 'nearest' });
+      epItems[_episodeIdx].scrollIntoView({ block: 'nearest' });
     }
 
     _lastZone = _zone;

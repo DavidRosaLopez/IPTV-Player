@@ -487,23 +487,21 @@ const Player = (() => {
       el.style.animation = null;
     }
 
+    // Ejecutar el salto inmediatamente para ver el frame
+    try {
+      if (dir === 'right') {
+        webapis.avplay.jumpForward(10000);
+      } else {
+        webapis.avplay.jumpBackward(10000);
+      }
+    } catch(e) {
+      console.error('AVPlay jump error', e);
+    }
+
     clearTimeout(_seekTimer);
     _seekTimer = setTimeout(() => {
       if (elLeft) elLeft.classList.add('hidden');
       if (elRight) elRight.classList.add('hidden');
-      
-      if (_seekAccumulator !== 0) {
-        try {
-          const jumpMs = _seekAccumulator * 1000;
-          if (jumpMs > 0) {
-            webapis.avplay.jumpForward(jumpMs);
-          } else {
-            webapis.avplay.jumpBackward(Math.abs(jumpMs));
-          }
-        } catch(e) {
-          console.error('AVPlay jump error', e);
-        }
-      }
       _seekAccumulator = 0;
     }, 600);
   }
