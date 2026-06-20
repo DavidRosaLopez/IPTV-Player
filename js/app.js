@@ -75,20 +75,30 @@ const App = (() => {
 
     const prevList = Store.get('currentList');
 
+    const steps = [
+      { id: 'cache',     label: 'Comprobando caché local' },
+      { id: 'connect',   label: 'Conectando al servidor' },
+      { id: 'download',  label: 'Descargando lista' },
+      { id: 'parse',     label: 'Procesando lista' },
+    ];
+    SetupProgress.show('Cargando Lista', list.name, steps);
+    SetupProgress.step('cache');
+    SetupProgress.progress(0);
+
     const cached = await Storage.getChannelCache(list.id);
+    
+    // Si el usuario le dio a cancelar durante la lectura asíncrona de IndexedDB
+    if (!_currentAbortController || _currentAbortController.signal.aborted) {
+      return; 
+    }
+
     if (cached) {
-      const steps = [{ id: 'cache', label: 'Cargando de caché local' }];
-      SetupProgress.show('Cargando Lista', list.name, steps);
-      SetupProgress.step('cache');
       SetupProgress.progress(100);
-      
       await new Promise(r => setTimeout(r, 400));
-      if (_currentAbortController.signal.aborted) {
-        SetupProgress.hide();
-        Router.showView('setup');
-        _currentAbortController = null;
-        return;
-      }
+      
+      // Chequeo secundario por si canceló durante los 400ms
+      if (!_currentAbortController || _currentAbortController.signal.aborted) return;
+
       SetupProgress.hide();
 
       Store.set('currentList', list);
@@ -99,13 +109,6 @@ const App = (() => {
       _currentAbortController = null;
       return;
     }
-
-    const steps = [
-      { id: 'connect',   label: 'Conectando al servidor' },
-      { id: 'download',  label: 'Descargando lista' },
-      { id: 'parse',     label: 'Procesando lista' },
-    ];
-    SetupProgress.show('Cargando Lista', list.name, steps);
 
     try {
       SetupProgress.step('connect');
