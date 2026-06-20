@@ -416,23 +416,32 @@ const InfoPopup = (() => {
     Player.play(playCh);
   }
 
-  function playNextEpisode() {
-    if (!_playingEpisode || !_current || _current.type !== 'series') return;
-    let found = false;
-    let nextEp = null;
+  function _getFlattenedEpisodes() {
+    const list = [];
     for (let s of _seasons) {
       const eps = _episodesMap[s.season_number] || [];
-      for (let i = 0; i < eps.length; i++) {
-        if (found) {
-           nextEp = eps[i];
-           break;
-        }
-        if (eps[i].id === _playingEpisode.id) {
-           found = true;
+      for (let ep of eps) {
+        list.push(ep);
+      }
+    }
+    return list;
+  }
+
+  function playNextEpisode() {
+    if (!_playingEpisode || !_current || _current.type !== 'series') return;
+    const list = _getFlattenedEpisodes();
+    const idx = list.findIndex(ep => String(ep.id) === String(_playingEpisode.id));
+    
+    let nextEp = null;
+    if (idx !== -1) {
+      for (let i = idx + 1; i < list.length; i++) {
+        if (String(list[i].id) !== String(_playingEpisode.id)) {
+          nextEp = list[i];
+          break;
         }
       }
-      if (nextEp) break;
     }
+
     if (nextEp) {
       _playEpisode(nextEp);
     } else {
@@ -448,15 +457,13 @@ const InfoPopup = (() => {
 
   function hasNextEpisode() {
     if (!_playingEpisode || !_current || _current.type !== 'series') return false;
-    let found = false;
-    for (let s of _seasons) {
-      const eps = _episodesMap[s.season_number] || [];
-      for (let i = 0; i < eps.length; i++) {
-        if (found) {
-           return true;
-        }
-        if (eps[i].id === _playingEpisode.id) {
-           found = true;
+    const list = _getFlattenedEpisodes();
+    const idx = list.findIndex(ep => String(ep.id) === String(_playingEpisode.id));
+    
+    if (idx !== -1) {
+      for (let i = idx + 1; i < list.length; i++) {
+        if (String(list[i].id) !== String(_playingEpisode.id)) {
+          return true;
         }
       }
     }
