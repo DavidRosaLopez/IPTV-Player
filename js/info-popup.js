@@ -113,7 +113,8 @@ const InfoPopup = (() => {
     document.getElementById('info-year').textContent = info.releasedate ? `🗓️ ${info.releasedate}` : '';
     document.getElementById('info-duration').textContent = info.duration ? `⏱️ ${info.duration}` : (info.episode_run_time ? `⏱️ ${info.episode_run_time} min` : '');
     
-    const quality = _detectQuality(info.name || _current.name);
+    // Usamos _current.name en vez de info.name porque las etiquetas (FHD, 4K) suelen venir en el nombre original de la playlist, no en la info limpia de TMDB.
+    const quality = _detectQuality(_current.name);
     document.getElementById('info-quality').innerHTML = quality.html;
     
     document.getElementById('info-rating').textContent = info.rating ? `⭐ ${info.rating}` : '';
@@ -136,7 +137,8 @@ const InfoPopup = (() => {
     document.getElementById('info-title').textContent = info.name || _current.name;
     document.getElementById('info-year').textContent = info.year || info.releaseDate ? `🗓️ ${info.year || info.releaseDate}` : '';
     
-    const quality = _detectQuality(info.name || _current.name);
+    // Usamos _current.name en vez de info.name porque las etiquetas (FHD, 4K) suelen venir en el nombre del archivo de la playlist, no en TMDB.
+    const quality = _detectQuality(_current.name);
     document.getElementById('info-quality').innerHTML = quality.html;
     
     document.getElementById('info-rating').textContent = info.rating ? `⭐ ${info.rating}` : '';
@@ -217,7 +219,7 @@ const InfoPopup = (() => {
 
   // ── DETECCIÓN DE CALIDAD ────────────────────────────
   function _detectQuality(name) {
-    if (!name) return { html: '', quality: 'SD' };
+    if (!name) return { html: '<span class="quality-badge quality-sd">SD</span>', quality: 'SD' };
     
     const nameUpper = name.toUpperCase();
     
@@ -225,20 +227,26 @@ const InfoPopup = (() => {
     if (nameUpper.includes('8K') || nameUpper.includes('7680')) {
       return { html: '<span class="quality-badge quality-8k">8K</span>', quality: '8K' };
     }
-    if (nameUpper.includes('4K') || nameUpper.includes('UHD') || nameUpper.includes('2160')) {
+    
+    // 4K y UHD
+    if (nameUpper.includes('4K') || nameUpper.includes('2160') || /(?:^|[^A-Z])UHD(?:[^A-Z]|$)/.test(nameUpper)) {
       return { html: '<span class="quality-badge quality-4k">4K</span>', quality: '4K' };
     }
-    if (nameUpper.includes('BLURAY') || nameUpper.includes('BLU-RAY') || nameUpper.includes('1080')) {
+    
+    // 1080p, FHD, Bluray
+    if (nameUpper.includes('1080') || /(?:^|[^A-Z])(?:FHD|BLURAY|BLU-RAY)(?:[^A-Z]|$)/.test(nameUpper)) {
       if (nameUpper.includes('HDR')) {
         return { html: '<span class="quality-badge quality-1080p-hdr">1080p HDR</span>', quality: '1080p HDR' };
       }
+      if (/(?:^|[^A-Z])FHD(?:[^A-Z]|$)/.test(nameUpper)) {
+        return { html: '<span class="quality-badge quality-fhd">FHD</span>', quality: 'FHD' };
+      }
       return { html: '<span class="quality-badge quality-1080p">1080p</span>', quality: '1080p' };
     }
-    if (nameUpper.includes('720') || nameUpper.includes('HD') && !nameUpper.includes('FHD')) {
+    
+    // 720p, HD, HDTV (Evitamos falsos positivos con regex como 'BIRTHDAY', 'WATCHDOG')
+    if (nameUpper.includes('720') || /(?:^|[^A-Z])(?:HD|HDTV)(?:[^A-Z]|$)/.test(nameUpper)) {
       return { html: '<span class="quality-badge quality-720p">720p</span>', quality: '720p' };
-    }
-    if (nameUpper.includes('FHD') || nameUpper.includes('1080P')) {
-      return { html: '<span class="quality-badge quality-fhd">FHD</span>', quality: 'FHD' };
     }
     
     // Por defecto, SD (Standard Definition)
