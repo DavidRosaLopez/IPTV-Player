@@ -42,7 +42,8 @@ const VodOSD = (() => {
     }
     if (btnNext) {
        btnNext.classList.remove('focused');
-       if (currentCh.type === 'series') {
+       const hasNext = typeof InfoPopup !== 'undefined' && InfoPopup.hasNextEpisode();
+       if (currentCh.type === 'series' && hasNext) {
          btnNext.classList.remove('hidden');
          _visibleBtns.push('btn-vod-next');
        } else {
@@ -326,10 +327,11 @@ const VodOSD = (() => {
     
     // Actualizar tiempo en la preview
     const timeEl = preview.querySelector('.vod-preview-time');
-    if (timeEl) {
-      const timeText = _formatTime(newTime * 1000);
-      const speedText = seekDelta > 0 ? `⏩ +${displaySpeed}s` : `⏪ -${displaySpeed}s`;
-      timeEl.innerHTML = `<div>${timeText}</div><div style="font-size: 12px; opacity: 0.8;">${speedText}</div>`;
+    const speedEl = preview.querySelector('.vod-preview-speed');
+    if (timeEl) timeEl.textContent = _formatTime(newTime * 1000);
+    if (speedEl) {
+      speedEl.textContent = seekDelta > 0 ? `⏩ +${displaySpeed}s` : `⏪ -${displaySpeed}s`;
+      speedEl.style.color = seekDelta > 0 ? 'var(--green)' : 'var(--accent)';
     }
     
     // Auto-hide la preview después de 2s de inactividad

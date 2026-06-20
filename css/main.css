@@ -1101,23 +1101,26 @@ html, body {
   transition: left 0.1s linear;
 }
 
-/* ── SEEK PREVIEW (Netflix-style) ────────────────────────── */
+/* ── SEEK PREVIEW (Premium Typography Focus) ────────────────────────── */
 .vod-seek-preview {
   position: absolute;
   bottom: 100%;
-  width: 80px;
-  height: auto;
-  margin-bottom: 12px;
-  background: var(--bg-card);
-  border: 1.5px solid var(--accent);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(108, 99, 255, 0.3);
+  width: 180px;
+  height: 90px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(30,30,40,0.95), rgba(15,15,20,0.95));
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.05);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
   z-index: 50;
-  animation: seekPreviewFadeIn 0.15s ease;
+  transform-origin: bottom center;
+  animation: seekPreviewFadeIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .vod-seek-preview.hidden {
@@ -1125,49 +1128,38 @@ html, body {
 }
 
 @keyframes seekPreviewFadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.6) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.vod-preview-gradient {
-  width: 100%;
-  height: 45px;
-  background: linear-gradient(135deg, rgba(108, 99, 255, 0.3) 0%, rgba(255, 101, 132, 0.2) 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-.vod-preview-gradient::after {
+.vod-seek-preview::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(255,255,255,0.05) 0px,
-    rgba(255,255,255,0.05) 2px,
-    transparent 2px,
-    transparent 4px
-  );
-  animation: gradientShift 1s linear infinite;
-}
-
-@keyframes gradientShift {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(8px); }
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: rgba(255,255,255,0.15) transparent transparent transparent;
+  display: block;
+  width: 0;
 }
 
 .vod-preview-time {
-  padding: 6px 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent);
-  text-align: center;
-  background: rgba(0, 0, 0, 0.5);
-  border-top: 1px solid rgba(108, 99, 255, 0.2);
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
   font-variant-numeric: tabular-nums;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  margin-bottom: 4px;
+}
+
+.vod-preview-speed {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px rgba(229,9,20,0.6));
 }
 
 /* =====================================================
@@ -1356,7 +1348,7 @@ html, body {
   color: #fff;
   font-size: 22px;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.08s;
 }
 .info-btn.info-btn-main {
   background: var(--text);
@@ -1401,7 +1393,7 @@ html, body {
   background: rgba(255,255,255,0.05);
   font-size: 20px;
   border: 2px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.08s;
   flex-shrink: 0;
   white-space: nowrap;
 }

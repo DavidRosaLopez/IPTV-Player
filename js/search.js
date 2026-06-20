@@ -22,8 +22,8 @@ const Search = (() => {
     const count = document.getElementById('search-count');
     if (count) count.textContent = '';
     bar.classList.remove('hidden');
-    // Focus the input so TV keyboard appears (if available)
-    setTimeout(() => input.focus(), 50);
+    // Focus the input so TV keyboard appears instantly
+    input.focus();
     input.addEventListener('input', _onInput);
     input.addEventListener('change', _onChange);
     input.addEventListener('keydown', _onNativeKeyDown);

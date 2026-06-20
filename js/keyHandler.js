@@ -136,7 +136,8 @@ const KeyHandler = (() => {
     _focusedEl = el;
     el.classList.add('focused');
     if (!skipScroll) {
-      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // Usar behavior 'instant' o omitirlo, ya que 'smooth' en Tizen es muy lento y laguea la navegación
+      el.scrollIntoView({ block: 'nearest' });
     }
   }
 

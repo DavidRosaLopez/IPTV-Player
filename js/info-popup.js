@@ -432,6 +432,23 @@ const InfoPopup = (() => {
     _playingEpisode = ep;
   }
 
+  function hasNextEpisode() {
+    if (!_playingEpisode || !_current || _current.type !== 'series') return false;
+    let found = false;
+    for (let s of _seasons) {
+      const eps = _episodesMap[s.season_number] || [];
+      for (let i = 0; i < eps.length; i++) {
+        if (found) {
+           return true;
+        }
+        if (eps[i].id === _playingEpisode.id) {
+           found = true;
+        }
+      }
+    }
+    return false;
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-info-play')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -450,5 +467,5 @@ const InfoPopup = (() => {
     });
   });
 
-  return { show, hide, handleKey, isVisible: () => _isVisible, suspend, resume, isSuspended: () => _isSuspended, playNextEpisode, setPlayingEpisode };
+  return { show, hide, handleKey, isVisible: () => _isVisible, suspend, resume, isSuspended: () => _isSuspended, playNextEpisode, setPlayingEpisode, hasNextEpisode };
 })();
