@@ -44,9 +44,11 @@ const VodOSD = (() => {
        const hasNext = typeof InfoPopup !== 'undefined' && InfoPopup.hasNextEpisode();
        if (currentCh.type === 'series' && hasNext) {
          btnNext.classList.remove('hidden');
+         btnNext.style.display = 'flex';
          _visibleBtns.push('btn-vod-next');
        } else {
          btnNext.classList.add('hidden');
+         btnNext.style.display = 'none';
        }
     }
     
