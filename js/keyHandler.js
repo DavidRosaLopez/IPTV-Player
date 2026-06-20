@@ -43,10 +43,24 @@ const KeyHandler = (() => {
   let _okTimeout = null;
   let _okLongPressed = false;
 
+  let _lastNavTime = 0;
+  const NAV_THROTTLE_MS = 90; // Limitamos a ~11 FPS la navegación direccional para Smart TVs
+
   function _handleKeyDown(e) {
     const code = e.keyCode;
     const activeTag = document.activeElement ? document.activeElement.tagName : '';
     const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+    // Throttle de teclas de navegación (evitar colapso de la CPU si se mantiene pulsado)
+    if (!isInput && (code === KEYS.UP || code === KEYS.DOWN || code === KEYS.LEFT || code === KEYS.RIGHT || code === KEYS.CH_UP || code === KEYS.CH_DOWN)) {
+      const now = Date.now();
+      if (now - _lastNavTime < NAV_THROTTLE_MS) {
+        e.preventDefault();
+        e.stopPropagation();
+        return; // Ignorar evento por ser demasiado rápido
+      }
+      _lastNavTime = now;
+    }
 
     if (code === 13 && !isInput) {
       if (!_okTimeout) {
