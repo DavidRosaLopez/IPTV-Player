@@ -372,8 +372,12 @@ const Player = (() => {
       if (_isActive()) { 
         if (_current && (_current.type === 'vod' || _current.type === 'series')) {
           if (typeof VodOSD !== 'undefined') {
-            if (VodOSD.isVisible()) VodOSD.handleKey('LEFT');
-            else { VodOSD.show(_current); seek(-10); }
+            if (VodOSD.isVisible()) {
+              if (!VodOSD.handleKey('LEFT')) _handleSeek('left');
+            } else {
+              VodOSD.show(_current);
+              _handleSeek('left');
+            }
           }
         } else {
           _handleSeek('left'); 
@@ -386,8 +390,12 @@ const Player = (() => {
       if (_isActive()) { 
         if (_current && (_current.type === 'vod' || _current.type === 'series')) {
           if (typeof VodOSD !== 'undefined') {
-            if (VodOSD.isVisible()) VodOSD.handleKey('RIGHT');
-            else { VodOSD.show(_current); seek(10); }
+            if (VodOSD.isVisible()) {
+              if (!VodOSD.handleKey('RIGHT')) _handleSeek('right');
+            } else {
+              VodOSD.show(_current);
+              _handleSeek('right');
+            }
           }
         } else {
           _handleSeek('right'); 

@@ -8,7 +8,6 @@ const VodOSD = (() => {
   let _audioTracks = [];
   let _audioIdx = 0;
   
-  // ── SEEK ACELERADO ──────────────────────────────────
   let _lastSeekTime = 0;
   let _seekVelocity = 0; // 0=parado, 1=3s, 2=5s, 3=10s, 4=30s, 5=60s
   let _seekDirection = null; // 'left' | 'right'
@@ -195,21 +194,12 @@ const VodOSD = (() => {
       _updateBtnFocus();
       return true;
     }
-    if (key === 'LEFT') {
-      _handleAcceleratedSeek('left');
-      return true;
-    }
-    if (key === 'RIGHT') {
-      _handleAcceleratedSeek('right');
-      return true;
-    }
     if (key === 'ENTER') {
       Player.togglePlayPause();
       _resetHideTimer(); 
       return true;
     }
     if (key === 'BACK' || key === 'DOWN') {
-      _hidePreview();
       hide();
       return true;
     }
@@ -274,78 +264,6 @@ const VodOSD = (() => {
 
     const focusedEl = list.querySelector('.focused');
     if (focusedEl) focusedEl.scrollIntoView({ block: 'nearest' });
-  }
-
-  // ── SEEK ACELERADO ──────────────────────────────────
-  function _handleAcceleratedSeek(direction) {
-    const now = Date.now();
-    const deltaTime = now - _lastSeekTime;
-    
-    // Resetear si pasó más de 500ms desde el último seek
-    if (deltaTime > 500 || _seekDirection !== direction) {
-      _seekVelocity = 0;
-      _seekDirection = direction;
-    }
-    
-    // Incrementar velocidad: 3s → 5s → 10s → 30s → 60s
-    if (_seekVelocity < 5) {
-      _seekVelocity++;
-    }
-    
-    const seekValues = [3, 5, 10, 30, 60];
-    const seekAmount = seekValues[_seekVelocity - 1] || 60;
-    const amount = direction === 'left' ? -seekAmount : seekAmount;
-    
-    _lastSeekTime = now;
-    Player.seek(amount);
-    _showPreview(amount, seekAmount);
-    _resetHideTimer();
-  }
-
-  function _showPreview(seekDelta, displaySpeed) {
-    if (typeof Player === 'undefined') return;
-    const current = Player.getCurrentTime();
-    const total = Player.getDuration();
-    const newTime = Math.max(0, Math.min(total, current + seekDelta));
-    
-    _previewSeekTime = newTime;
-    _previewVisible = true;
-    
-    const preview = document.getElementById('vod-seek-preview');
-    if (!preview) return;
-    
-    // Calcular posición y mostrar preview
-    const pct = (newTime / total) * 100;
-    const container = document.querySelector('.vod-progress-bar-container');
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const offset = (pct / 100) * rect.width - 40; // 80px de ancho del preview
-    
-    preview.style.left = Math.max(0, Math.min(rect.width - 80, offset)) + 'px';
-    preview.classList.remove('hidden');
-    
-    // Actualizar tiempo en la preview
-    const timeEl = preview.querySelector('.vod-preview-time');
-    const speedEl = preview.querySelector('.vod-preview-speed');
-    if (timeEl) timeEl.textContent = _formatTime(newTime * 1000);
-    if (speedEl) {
-      speedEl.textContent = seekDelta > 0 ? `⏩ +${displaySpeed}s` : `⏪ -${displaySpeed}s`;
-      speedEl.style.color = seekDelta > 0 ? 'var(--green)' : 'var(--accent)';
-    }
-    
-    // Auto-hide la preview después de 2s de inactividad
-    clearTimeout(_seekAccelTimer);
-    _seekAccelTimer = setTimeout(() => {
-      _hidePreview();
-    }, 2000);
-  }
-
-  function _hidePreview() {
-    _previewVisible = false;
-    const preview = document.getElementById('vod-seek-preview');
-    if (preview) preview.classList.add('hidden');
-    clearTimeout(_seekAccelTimer);
   }
 
   function isVisible() {

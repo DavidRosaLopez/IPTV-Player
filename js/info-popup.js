@@ -368,6 +368,9 @@ const InfoPopup = (() => {
     if (_actionIdx === 0 && _current.type === 'vod') {
       if (typeof Watching !== 'undefined') {
         Watching.add(_current, null);
+        if (typeof ViewChannels !== 'undefined' && ViewChannels.renderGroups) {
+           ViewChannels.renderGroups();
+        }
       }
       suspend();
       Player.play(_current);
@@ -387,6 +390,9 @@ const InfoPopup = (() => {
     // Guardar en seguir viendo
     if (typeof Watching !== 'undefined') {
       Watching.add(_current, ep);
+      if (typeof ViewChannels !== 'undefined' && ViewChannels.renderGroups) {
+         ViewChannels.renderGroups();
+      }
     }
 
     // Create a temporary channel object for the episode
