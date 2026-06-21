@@ -1,13 +1,22 @@
 /**
  * epg.js — TV Guide (EPG) Utility
  * Fetches and parses real program guide data for live channels from Xtream Codes API
+ * Performance: in-memory cache with 5-min TTL to avoid repeated HTTP requests per channel.
  */
 const EPG = (() => {
+  const EPG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  const _epgCache = new Map(); // streamId → { data, ts }
+
   async function fetchRealEpg(ch) {
     if (!ch || !ch.streamId) return null;
     if (typeof Store === 'undefined') return null;
     const list = Store.get('currentList');
     if (!list || list.type !== 'xtream') return null;
+
+    const cacheEntry = _epgCache.get(ch.streamId);
+    if (cacheEntry && (Date.now() - cacheEntry.ts) < EPG_CACHE_TTL) {
+      return cacheEntry.data;
+    }
     
     try {
       const url = `${list.server}/player_api.php?username=${encodeURIComponent(list.user)}&password=${encodeURIComponent(list.pass)}&action=get_short_epg&stream_id=${ch.streamId}`;
@@ -16,6 +25,7 @@ const EPG = (() => {
       const data = await res.json();
       if (!data || !data.epg_listings || data.epg_listings.length === 0) return null;
       
+      _epgCache.set(ch.streamId, { data: data.epg_listings, ts: Date.now() });
       return data.epg_listings;
     } catch (e) {
       console.error('Error fetching real EPG', e);

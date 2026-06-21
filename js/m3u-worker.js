@@ -37,28 +37,35 @@ const COUNTRY_MAP = {
   'NL': 'Holanda', 'BE': 'Bélgica', 'CH': 'Suiza'
 };
 
+// Memoize by group name: most M3U channels share groups, saves 90%+ regex calls
+const _countryCache = new Map();
+
 function detectCountry(name, group) {
   const cat = group || '';
+  if (_countryCache.has(cat)) return _countryCache.get(cat);
+
   const chName = name || '';
   const prefixRegex = /^\[?([A-Z]{2,3})\]?[\s*|:.-]/i;
   
   let match = cat.match(prefixRegex) || chName.match(prefixRegex);
   if (match) {
     const code = match[1].toUpperCase();
-    if (COUNTRY_MAP[code]) return code;
+    if (COUNTRY_MAP[code]) { _countryCache.set(cat, code); return code; }
   }
   
   const catLower = cat.toLowerCase();
-  if (catLower.includes('spain') || catLower.includes('españa') || catLower.includes('spanish')) return 'ES';
-  if (catLower.includes('usa') || catLower.includes('united states') || catLower.includes('english')) return 'US';
-  if (catLower.includes('france') || catLower.includes('french') || catLower.includes('francia')) return 'FR';
-  if (catLower.includes('arab') || catLower.includes('arabic')) return 'AR';
-  if (catLower.includes('germany') || catLower.includes('deutsch') || catLower.includes('germania')) return 'DE';
-  if (catLower.includes('italy') || catLower.includes('italia') || catLower.includes('italian')) return 'IT';
-  if (catLower.includes('portugal') || catLower.includes('portuguese')) return 'PT';
-  if (catLower.includes('latino') || catLower.includes('latin') || catLower.includes('latam')) return 'LAT';
+  let result = 'OTROS';
+  if (catLower.includes('spain') || catLower.includes('españa') || catLower.includes('spanish')) result = 'ES';
+  else if (catLower.includes('usa') || catLower.includes('united states') || catLower.includes('english')) result = 'US';
+  else if (catLower.includes('france') || catLower.includes('french') || catLower.includes('francia')) result = 'FR';
+  else if (catLower.includes('arab') || catLower.includes('arabic')) result = 'AR';
+  else if (catLower.includes('germany') || catLower.includes('deutsch') || catLower.includes('germania')) result = 'DE';
+  else if (catLower.includes('italy') || catLower.includes('italia') || catLower.includes('italian')) result = 'IT';
+  else if (catLower.includes('portugal') || catLower.includes('portuguese')) result = 'PT';
+  else if (catLower.includes('latino') || catLower.includes('latin') || catLower.includes('latam')) result = 'LAT';
   
-  return 'OTROS';
+  _countryCache.set(cat, result);
+  return result;
 }
 
 function parseM3U(m3uText) {

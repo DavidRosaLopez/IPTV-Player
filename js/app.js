@@ -225,31 +225,41 @@ const App = (() => {
       if (_prefetchTimer) clearTimeout(_prefetchTimer);
       _prefetchTimer = setTimeout(async () => {
         _prefetchTimer = null;
+        // No competir con el stream activo de vídeo
+        if (typeof Player !== 'undefined' && Player.getMode() !== 'IDLE') return;
         if (_prefetchController) _prefetchController.abort();
         _prefetchController = new AbortController();
         const signal = _prefetchController.signal;
         try {
-          let vodCached = await Storage.getVodCache(list.id);
-          if (!vodCached || vodCached.length === 0) {
-            const vData = await Playlist.loadVod(list.server, list.user, list.pass, null, signal);
-            if (!signal.aborted && vData && vData.length > 0) await Storage.setVodCache(list.id, vData);
-          }
+          // Lanzar VOD y Series en paralelo (antes era secuencial — el doble de tiempo)
+          const [vodCached, serCached] = await Promise.all([
+            Storage.getVodCache(list.id),
+            Storage.getSeriesCache(list.id)
+          ]);
           if (signal.aborted) return;
-          let serCached = await Storage.getSeriesCache(list.id);
-          if (!serCached || serCached.length === 0) {
-            const sData = await Playlist.loadSeries(list.server, list.user, list.pass, null, signal);
-            if (!signal.aborted && sData && sData.length > 0) await Storage.setSeriesCache(list.id, sData);
+
+          const tasks = [];
+          if (!vodCached || vodCached.length === 0) {
+            tasks.push(
+              Playlist.loadVod(list.server, list.user, list.pass, null, signal)
+                .then(vData => { if (!signal.aborted && vData && vData.length > 0) return Storage.setVodCache(list.id, vData); })
+                .catch(e => { if (e.name !== 'AbortError') console.error('Prefetch VOD error', e); })
+            );
           }
+          if (!serCached || serCached.length === 0) {
+            tasks.push(
+              Playlist.loadSeries(list.server, list.user, list.pass, null, signal)
+                .then(sData => { if (!signal.aborted && sData && sData.length > 0) return Storage.setSeriesCache(list.id, sData); })
+                .catch(e => { if (e.name !== 'AbortError') console.error('Prefetch Series error', e); })
+            );
+          }
+          await Promise.all(tasks);
         } catch(e) {
           if (e.name !== 'AbortError') console.error('Prefetch error', e);
         } finally {
-          if (_prefetchController && _prefetchController.signal.aborted) {
-            _prefetchController = null;
-          } else if (_prefetchController) {
-            _prefetchController = null;
-          }
+          _prefetchController = null;
         }
-      }, 3000);
+      }, 5000); // 5s — más margen para la UI inicial
     }
 
     // Comprobar actualización silenciosa
@@ -270,6 +280,13 @@ const App = (() => {
   }
 
   async function _backgroundSync(list) {
+    // No sincronizar si el reproductor está activo (compite por ancho de banda)
+    if (typeof Player !== 'undefined' && Player.getMode() !== 'IDLE') {
+      // Reintentar más tarde
+      if (_syncTimer) clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(() => { _syncTimer = null; _backgroundSync(list); }, 30000);
+      return;
+    }
     const controller = new AbortController();
     try {
       console.log('Background Sync: Buscando actualizaciones silenciosas...');

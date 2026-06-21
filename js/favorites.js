@@ -1,7 +1,11 @@
 /**
  * favorites.js — Favorite channels management (list-specific)
+ * Performance: in-memory cache to avoid repeated localStorage reads.
  */
 const Favorites = (() => {
+  // In-memory cache: { key: string, ids: Set, arr: [] }
+  let _cache = null;
+
   function _getKey() {
     const list = typeof Store !== 'undefined' ? Store.get('currentList') : null;
     const listId = list ? list.id : 'default';
@@ -9,30 +13,43 @@ const Favorites = (() => {
     return `${listId}_${tabId}`;
   }
 
+  function _loadCache() {
+    const key = _getKey();
+    if (_cache && _cache.key === key) return _cache;
+    const arr = Storage.getFavs(key) || [];
+    _cache = { key, ids: new Set(arr), arr };
+    return _cache;
+  }
+
+  function _invalidate() { _cache = null; }
+
   function getIds() {
-    return Storage.getFavs(_getKey()) || [];
+    return _loadCache().arr;
   }
 
   function toggle(channelId) {
     const key = _getKey();
-    const favs = new Set(Storage.getFavs(key) || []);
+    const cache = _loadCache();
     let added = false;
-    if (favs.has(channelId)) {
-      favs.delete(channelId);
+    if (cache.ids.has(channelId)) {
+      cache.ids.delete(channelId);
     } else {
-      favs.add(channelId);
+      cache.ids.add(channelId);
       added = true;
     }
-    Storage.saveFavs(key, Array.from(favs));
+    cache.arr = Array.from(cache.ids);
+    Storage.saveFavs(key, cache.arr);
     return added;
   }
 
   function isFav(channelId) {
-    const favs = new Set(getIds());
-    return favs.has(channelId);
+    return _loadCache().ids.has(channelId);
   }
 
-  return { init: () => {}, toggle, isFav, getIds };
+  // Expose invalidate for external callers that switch tabs/lists
+  function init() { _invalidate(); }
+
+  return { init, toggle, isFav, getIds };
 })();
 
 const Watching = (() => {
@@ -77,4 +94,3 @@ const Watching = (() => {
 
   return { getIds, getItems, add, isWatching };
 })();
-

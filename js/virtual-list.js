@@ -1,6 +1,7 @@
 /**
  * virtual-list.js — Virtual scroll renderer for channel grid
  * Only renders visible rows — handles 10,000+ channels smoothly
+ * Performance: pre-cached sub-element references on card creation.
  */
 const VirtualList = (() => {
   let COLS        = 3;
@@ -208,6 +209,10 @@ const VirtualList = (() => {
         el = document.createElement('div');
         // Pre-build structure ONLY once per new node
         el.innerHTML = '<span class="fav-badge material-symbols-rounded" style="display:none">favorite</span><img class="channel-logo" style="display:none" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"><div class="channel-info"><div class="channel-name"></div></div>';
+        // ── PRE-CACHE SUB-ELEMENT REFS (eliminates querySelector on every update) ──
+        el._favBadge  = el.querySelector('.fav-badge');
+        el._img       = el.querySelector('.channel-logo');
+        el._name      = el.querySelector('.channel-name');
       }
       _updateCard(el, i);
       fragment.appendChild(el);
@@ -227,16 +232,17 @@ const VirtualList = (() => {
       const ch = _items[i];
       const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
 
-      const fav = el.querySelector('.fav-badge');
+      // Use cached refs — no querySelector needed
+      const fav = el._favBadge || el.querySelector('.fav-badge');
       if (fav) fav.style.display = isFav ? '' : 'none';
 
-      const img = el.querySelector('.channel-logo');
+      const img = el._img || el.querySelector('.channel-logo');
       if (img) {
         if (ch.logo) { img.src = _safeStr(ch.logo); img.style.display = ''; }
         else { img.removeAttribute('src'); img.style.display = 'none'; }
       }
 
-      const name = el.querySelector('.channel-name');
+      const name = el._name || el.querySelector('.channel-name');
       if (name) name.textContent = ch.name || '';
     }
   }
@@ -254,10 +260,11 @@ const VirtualList = (() => {
 
     const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
 
-    const fav = el.querySelector('.fav-badge');
+    // Use cached refs — fall back to querySelector for recycled pool elements that may lack refs
+    const fav = el._favBadge || el.querySelector('.fav-badge');
     if (fav) fav.style.display = isFav ? '' : 'none';
 
-    const img = el.querySelector('.channel-logo');
+    const img = el._img || el.querySelector('.channel-logo');
     if (img) {
       if (ch.logo) {
         if (_scrolling) {
@@ -278,7 +285,7 @@ const VirtualList = (() => {
       }
     }
 
-    const name = el.querySelector('.channel-name');
+    const name = el._name || el.querySelector('.channel-name');
     if (name) name.textContent = ch.name || '';
 
     return el;
@@ -331,7 +338,7 @@ const VirtualList = (() => {
       const el = _domCache[key];
       const ch = _items[i];
       if (!ch) continue;
-      const img = el.querySelector('.channel-logo');
+      const img = el._img || el.querySelector('.channel-logo');
       if (img && ch.logo) {
         const src = _safeStr(ch.logo);
         if (img.getAttribute('src') !== src && img.dataset.targetSrc !== src) {

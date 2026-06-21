@@ -9,6 +9,30 @@ const Playlist = (() => {
     return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
+  // ── INVERTED GROUP INDEX — O(1) filterByGroup ────────
+  // Maps: groupId → channel[] (rebuilt when channels change)
+  let _groupIndex     = new Map();  // groupId → []
+  let _countryIndex   = new Map();  // countryCode → []
+  let _indexedChannels = null;      // reference to the array the index was built from
+
+  function _buildGroupIndex(channels) {
+    if (_indexedChannels === channels) return; // already up-to-date
+    _groupIndex   = new Map();
+    _countryIndex = new Map();
+    for (const ch of channels) {
+      // group index
+      if (!_groupIndex.has(ch.group)) _groupIndex.set(ch.group, []);
+      _groupIndex.get(ch.group).push(ch);
+      // country index
+      const cc = ch.countryCode || 'OTROS';
+      if (!_countryIndex.has(cc)) _countryIndex.set(cc, []);
+      _countryIndex.get(cc).push(ch);
+    }
+    _indexedChannels = channels;
+  }
+
+  function invalidateIndex() { _indexedChannels = null; }
+
   function _toArray(obj) {
     if (!obj) return [];
     if (Array.isArray(obj)) return obj;
@@ -52,28 +76,35 @@ const Playlist = (() => {
     'CH': 'Suiza'
   };
 
+  // Memoize detectCountry by group name (most channels share groups, saves 90%+ calls)
+  const _countryDetectCache = new Map();
+
   function detectCountry(name, group) {
     const cat = group || '';
+    if (_countryDetectCache.has(cat)) return _countryDetectCache.get(cat);
+
     const chName = name || '';
     const prefixRegex = /^\[?([A-Z]{2,3})\]?[\s*|:.-]/i;
     
     let match = cat.match(prefixRegex) || chName.match(prefixRegex);
     if (match) {
       const code = match[1].toUpperCase();
-      if (COUNTRY_MAP[code]) return code;
+      if (COUNTRY_MAP[code]) { _countryDetectCache.set(cat, code); return code; }
     }
     
     const catLower = cat.toLowerCase();
-    if (catLower.includes('spain') || catLower.includes('españa') || catLower.includes('spanish')) return 'ES';
-    if (catLower.includes('usa') || catLower.includes('united states') || catLower.includes('english')) return 'US';
-    if (catLower.includes('france') || catLower.includes('french') || catLower.includes('francia')) return 'FR';
-    if (catLower.includes('arab') || catLower.includes('arabic')) return 'AR';
-    if (catLower.includes('germany') || catLower.includes('deutsch') || catLower.includes('germania')) return 'DE';
-    if (catLower.includes('italy') || catLower.includes('italia') || catLower.includes('italian')) return 'IT';
-    if (catLower.includes('portugal') || catLower.includes('portuguese')) return 'PT';
-    if (catLower.includes('latino') || catLower.includes('latin') || catLower.includes('latam')) return 'LAT';
+    let result = 'OTROS';
+    if (catLower.includes('spain') || catLower.includes('españa') || catLower.includes('spanish')) result = 'ES';
+    else if (catLower.includes('usa') || catLower.includes('united states') || catLower.includes('english')) result = 'US';
+    else if (catLower.includes('france') || catLower.includes('french') || catLower.includes('francia')) result = 'FR';
+    else if (catLower.includes('arab') || catLower.includes('arabic')) result = 'AR';
+    else if (catLower.includes('germany') || catLower.includes('deutsch') || catLower.includes('germania')) result = 'DE';
+    else if (catLower.includes('italy') || catLower.includes('italia') || catLower.includes('italian')) result = 'IT';
+    else if (catLower.includes('portugal') || catLower.includes('portuguese')) result = 'PT';
+    else if (catLower.includes('latino') || catLower.includes('latin') || catLower.includes('latam')) result = 'LAT';
     
-    return 'OTROS';
+    _countryDetectCache.set(cat, result);
+    return result;
   }
 
   // ── XTREAM CODES ─────────────────────────────────────
@@ -117,7 +148,8 @@ const Playlist = (() => {
 
   async function _fetchJson(url, noCache = false, signal) {
     try {
-      const res = await fetch(url, { cache: noCache ? 'no-store' : 'force-cache', signal });
+      // 'default' respects server Cache-Control headers; 'force-cache' ignores them indefinitely
+      const res = await fetch(url, { cache: noCache ? 'no-store' : 'default', signal });
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
@@ -374,21 +406,41 @@ const Playlist = (() => {
     return _fetchPromises.series;
   }
 
-  const _infoCache = { vod: {}, series: {} };
+  // ── LRU CACHE para info de VOD/Series (max 100 entradas, evita RAM ilimitada en sesiones largas) ──
+  const LRU_MAX = 100;
+  function _makeLRU() {
+    const cache = new Map();
+    return {
+      get(key) {
+        if (!cache.has(key)) return undefined;
+        const val = cache.get(key);
+        cache.delete(key);
+        cache.set(key, val); // move to end (most-recently-used)
+        return val;
+      },
+      set(key, val) {
+        if (cache.has(key)) cache.delete(key);
+        else if (cache.size >= LRU_MAX) cache.delete(cache.keys().next().value); // evict oldest
+        cache.set(key, val);
+      },
+      has(key) { return cache.has(key); }
+    };
+  }
+  const _infoCache = { vod: _makeLRU(), series: _makeLRU() };
 
   async function getVodInfo(server, user, pass, vod_id, signal) {
-    if (_infoCache.vod[vod_id]) return _infoCache.vod[vod_id];
+    if (_infoCache.vod.has(vod_id)) return _infoCache.vod.get(vod_id);
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
     const data = await _fetchJson(`${base}&action=get_vod_info&vod_id=${vod_id}`, true, signal);
-    if (data) _infoCache.vod[vod_id] = data;
+    if (data) _infoCache.vod.set(vod_id, data);
     return data;
   }
 
   async function getSeriesInfo(server, user, pass, series_id, signal) {
-    if (_infoCache.series[series_id]) return _infoCache.series[series_id];
+    if (_infoCache.series.has(series_id)) return _infoCache.series.get(series_id);
     const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
     const data = await _fetchJson(`${base}&action=get_series_info&series_id=${series_id}`, true, signal);
-    if (data) _infoCache.series[series_id] = data;
+    if (data) _infoCache.series.set(series_id, data);
     return data;
   }
 
@@ -487,21 +539,32 @@ const Playlist = (() => {
     return finalGroups;
   }
 
-  function clearGroupCache() { _groupCache = {}; }
+  function clearGroupCache() { _groupCache = {}; invalidateIndex(); }
 
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
-    let list = channels;
-    if (countryCode !== 'ALL') {
-      list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
+    // Build inverted index on first call or if channels array changed
+    _buildGroupIndex(channels);
+
+    if (groupId === '__favs__') {
+      // Filter by country then favs
+      const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
+      return base.filter(c => favIds && favIds.has(c.id));
     }
-    if (groupId === '__all__')  return list;
-    if (groupId === '__favs__') return list.filter(c => favIds && favIds.has(c.id));
     if (groupId === '__watching__') {
       const watchingIds = typeof Watching !== 'undefined' ? Watching.getIds() : [];
       const idMap = new Map(watchingIds.map((id, index) => [id, index]));
-      return list.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
+      const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
+      return base.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
     }
-    return list.filter(c => c.group === groupId);
+    if (groupId === '__all__') {
+      if (countryCode === 'ALL') return channels;
+      return channels.filter(c => isItemVisibleInCountry(c, countryCode));
+    }
+
+    // O(1) group lookup via inverted index
+    const groupChannels = _groupIndex.get(groupId) || [];
+    if (countryCode === 'ALL') return groupChannels;
+    return groupChannels.filter(c => isItemVisibleInCountry(c, countryCode));
   }
 
   // Fast search using pre-built index
@@ -554,5 +617,5 @@ const Playlist = (() => {
     });
   }
 
-  return { loadXtream, loadVod, loadSeries, loadM3U, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup, isItemVisibleInCountry };
+  return { loadXtream, loadVod, loadSeries, loadM3U, search, filterByGroup, getGroups, clearGroupCache, getVodInfo, getSeriesInfo, isGlobalGroup, isItemVisibleInCountry, invalidateIndex };
 })();

@@ -16,6 +16,8 @@ const Player = (() => {
   let _retryTimer      = null;   // retry cuando falla el stream
   let _errorTimer      = null;   // ocultar error / volver a vista
   let _wasPlayingOnHide = false;
+  let _retryCount      = 0;      // declarado explícitamente (evita fuga al scope global)
+  let _videoLayerEl    = null;   // referencia cacheada a #video-layer
 
   let _initialized = false;
   // ── INIT ─────────────────────────────────────────────
@@ -23,6 +25,7 @@ const Player = (() => {
     if (_initialized) return;
     _initialized = true;
     _onChannelChange = onChannelChange;
+    _videoLayerEl = document.getElementById('video-layer'); // cache once
     _bindKeys();
 
     document.addEventListener('visibilitychange', () => {
@@ -179,15 +182,13 @@ const Player = (() => {
   const PIP_X = 1400, PIP_Y = 770, PIP_W = 480, PIP_H = 270;
 
   function _applyDisplayRect() {
-    const vl = document.getElementById('video-layer');
+    const vl = _videoLayerEl || document.getElementById('video-layer');
     if (_mode === 'FULLSCREEN') {
       if (vl) { vl.style.left='0px'; vl.style.top='0px'; vl.style.width='1920px'; vl.style.height='1080px'; }
       try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX'); } catch(e) {}
       try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
     } else if (_mode === 'PIP') {
-      // Posicionar video-layer exactamente en el área PiP
       if (vl) { vl.style.left=PIP_X+'px'; vl.style.top=PIP_Y+'px'; vl.style.width=PIP_W+'px'; vl.style.height=PIP_H+'px'; }
-      // FULL_SCREEN rellena el rect sin barras negras
       try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
       try { webapis.avplay.setDisplayRect(PIP_X, PIP_Y, PIP_W, PIP_H); } catch(e) {}
     }
@@ -318,7 +319,7 @@ const Player = (() => {
       _errorTimer = null;
     }
     try {
-      const vl = document.getElementById('video-layer');
+      const vl = _videoLayerEl || document.getElementById('video-layer');
       if (vl) {
         vl.style.left   = '0px';
         vl.style.top    = '0px';

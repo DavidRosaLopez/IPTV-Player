@@ -39,6 +39,10 @@ const ViewChannels = (() => {
   let _tabFocusIdx = 0;
   const TABS = ['tv', 'vod', 'series'];
   let _tabAbortController = null;
+  let _groupPreviewTimer = null;      // local: era window._groupPreviewTimer (contaminaba global)
+  let _prevCountryCodes  = null;      // cache para reconciliación DOM de países
+  let _prevFocusedEl     = null;      // trackear elemento enfocado previo (evita querySelectorAll masivo)
+  let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
 
   function onShow(fromView) {
     if (fromView !== 'player') {
@@ -133,11 +137,22 @@ const ViewChannels = (() => {
     if (!container) return;
     if (_currentTab === 'vod' || _currentTab === 'series') {
       container.style.display = 'none';
+      _prevCountryCodes = null;
       return;
     }
     container.style.display = '';
-    container.innerHTML = '';
     const codes = Store.get('countries') || ['ALL'];
+
+    // ── Reconciliación DOM: solo re-renderizar si la lista cambió ──
+    const codesKey = codes.join(',');
+    if (_prevCountryCodes === codesKey && container.children.length === codes.length) {
+      // Lista igual — solo actualizar clases de foco/activo
+      _updateCountryClasses();
+      return;
+    }
+    _prevCountryCodes = codesKey;
+
+    container.innerHTML = '';
     const currentCountry = Store.get('currentCountry') || 'ALL';
     
     codes.forEach((code, i) => {
@@ -211,7 +226,6 @@ const ViewChannels = (() => {
     _sidebarFocusablesCache = null;
     const list = document.getElementById('group-list');
     if (!list) return;
-    list.innerHTML = '';
     
     const currentCountry = Store.get('currentCountry') || 'ALL';
     const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
@@ -221,40 +235,65 @@ const ViewChannels = (() => {
     
     const currentGroup = Store.get('currentGroup');
     const groupIdx = Store.get('groupIdx') || 0;
-
     const expandedFolders = Store.get('expandedFolders') || {};
 
+    // ── Reconciliación DOM: reutilizar nodos existentes cuando sea posible ──
+    const existingItems = Array.from(list.children);
+    const existingMap = new Map(); // groupId → li element
+    for (const li of existingItems) {
+      if (li.dataset.groupId) existingMap.set(li.dataset.groupId, li);
+    }
+
+    const newIds = new Set();
+    const fragment = document.createDocumentFragment();
+
     groups.forEach((g, i) => {
+      newIds.add(g.id);
+      let li = existingMap.get(g.id);
+
       if (g.isFolder) {
-        const li = document.createElement('li');
+        if (!li) {
+          li = document.createElement('li');
+          li.dataset.groupId = g.id;
+          li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g, true); });
+        }
         li.className = 'group-item folder-item' + (i === groupIdx && _focusZone === 'groups' ? ' focused' : '');
         li.dataset.idx = i;
-        li.dataset.groupId = g.id;
         li.innerHTML = `<span>${g.name}</span><span class="material-symbols-rounded folder-icon">${expandedFolders[g.id] ? 'expand_less' : 'expand_more'}</span>`;
-        li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g, true); });
-        list.appendChild(li);
+        fragment.appendChild(li);
         return;
       }
 
       const isChild = g.parentId ? true : false;
       const isHidden = isChild && !expandedFolders[g.parentId];
-      
+
+      if (!li) {
+        li = document.createElement('li');
+        li.dataset.groupId = g.id;
+        li.addEventListener('click', () => { Store.set('groupIdx', parseInt(li.dataset.idx)); _selectGroup(g, true); });
+      }
+      li.className = 'group-item' +
+                     (isChild ? ' group-child' : '') +
+                     (isHidden ? ' hidden' : '') +
+                     (i === groupIdx && _focusZone === 'groups' ? ' focused' : '') +
+                     (g.id === currentGroup ? ' active' : '');
+      li.dataset.idx = i;
+
+      // Only rebuild innerHTML if content changed (avoids forced reflow)
       const cnt = g.id === '__all__'  ? Playlist.filterByGroup(channels, '__all__', null, currentCountry).length :
                   g.id === '__favs__' ? Favorites.getIds().length :
                   Playlist.filterByGroup(channels, g.id, null, currentCountry).length;
-                  
-      const li = document.createElement('li');
-      li.className = 'group-item' + 
-                     (isChild ? ' group-child' : '') + 
-                     (isHidden ? ' hidden' : '') + 
-                     (i === groupIdx && _focusZone === 'groups' ? ' focused' : '') + 
-                     (g.id === currentGroup ? ' active' : '');
-      li.dataset.idx = i;
-      li.dataset.groupId = g.id;
-      li.innerHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
-      li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g, true); });
-      list.appendChild(li);
+      const newHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
+      if (li.innerHTML !== newHTML) li.innerHTML = newHTML;
+
+      fragment.appendChild(li);
     });
+
+    // Remove stale nodes
+    for (const [id, li] of existingMap) {
+      if (!newIds.has(id)) li.remove();
+    }
+    list.appendChild(fragment);
   }
 
   function _updateGroupClasses() {
@@ -410,13 +449,21 @@ const ViewChannels = (() => {
       }
     }
 
-    VirtualList.init({
-      containerId:  'channel-grid',
-      items,
-      layout:       _currentTab === 'tv' ? 'tv' : 'poster',
-      onSelect:     ch => _playChannel(ch),
-      getFavBadge:  id => Favorites.isFav(id)
-    });
+    const newLayout = _currentTab === 'tv' ? 'tv' : 'poster';
+    if (_currentLayoutMode !== newLayout) {
+      // Layout change requires full re-init
+      _currentLayoutMode = newLayout;
+      VirtualList.init({
+        containerId:  'channel-grid',
+        items,
+        layout:       newLayout,
+        onSelect:     ch => _playChannel(ch),
+        getFavBadge:  id => Favorites.isFav(id)
+      });
+    } else {
+      // Same layout: just swap items (much faster, preserves DOM pool)
+      VirtualList.update(items);
+    }
 
     _updateGroupCounts();
   }
@@ -559,8 +606,8 @@ const ViewChannels = (() => {
           const groups = Store.get('groups');
           const group = groups.find(g => g.id === groupId);
           if (group) {
-             clearTimeout(window._groupPreviewTimer);
-             window._groupPreviewTimer = setTimeout(() => {
+             clearTimeout(_groupPreviewTimer);
+             _groupPreviewTimer = setTimeout(() => {
                 if (_focusZone === 'groups') {
                    _selectGroup(group, false);
                 }
@@ -591,7 +638,11 @@ const ViewChannels = (() => {
     const viewEl = document.getElementById('view-channels');
     if (viewEl) {
       viewEl.setAttribute('data-focus', zone);
-      viewEl.querySelectorAll('.focused').forEach(e => e.classList.remove('focused'));
+      // O(1): dequeue previous focused element instead of querySelectorAll('.focused')
+      if (_prevFocusedEl) {
+        _prevFocusedEl.classList.remove('focused');
+        _prevFocusedEl = null;
+      }
     }
     
     if (zone === 'groups') {
@@ -606,12 +657,16 @@ const ViewChannels = (() => {
       if (next) {
         next.classList.add('focused');
         next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        _prevFocusedEl = next;
       }
     } else if (zone === 'countries') {
       _updateCountryClasses();
     } else if (zone === 'tabs') {
       const tabs = document.querySelectorAll('.sidebar-tab-btn');
-      if (tabs[_tabFocusIdx]) tabs[_tabFocusIdx].classList.add('focused');
+      if (tabs[_tabFocusIdx]) {
+        tabs[_tabFocusIdx].classList.add('focused');
+        _prevFocusedEl = tabs[_tabFocusIdx];
+      }
     } else if (zone === 'channels') {
       if (typeof VirtualList !== 'undefined') {
         VirtualList.setFocused(VirtualList.getFocused());
@@ -619,7 +674,9 @@ const ViewChannels = (() => {
         if (ch && typeof Player !== 'undefined') Player.schedulePreview(ch);
       }
       setTimeout(() => {
-        KeyHandler.setFocus(document.querySelector('.channel-card.focused') || document.querySelector('.channel-card'), true);
+        const card = document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
+        if (card) _prevFocusedEl = card;
+        KeyHandler.setFocus(card, true);
       }, 50);
     }
   }

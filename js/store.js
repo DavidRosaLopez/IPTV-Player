@@ -15,7 +15,12 @@ const Store = (() => {
   let listeners = {};
 
   return {
-    get: (key) => state[key],
+    get: (key) => {
+      const val = state[key];
+      if (Array.isArray(val)) return [...val];
+      if (val !== null && typeof val === 'object') return { ...val };
+      return val;
+    },
     set: (key, val) => { 
       state[key] = val; 
       if (listeners[key]) {
@@ -29,6 +34,15 @@ const Store = (() => {
         listeners[key] = listeners[key].filter(item => item !== cb);
       };
     },
-    getAll: () => state
+    getAll: () => {
+      const copy = {};
+      for (const k in state) {
+        const val = state[k];
+        if (Array.isArray(val)) copy[k] = [...val];
+        else if (val !== null && typeof val === 'object') copy[k] = { ...val };
+        else copy[k] = val;
+      }
+      return copy;
+    }
   };
 })();
