@@ -220,14 +220,22 @@ const Playlist = (() => {
   }
 
   function _extractYear(item) {
+    const maxYear = new Date().getFullYear() + 1;
+    let y = 0;
+    
     const d1 = String(item.releaseDate || '');
-    if (d1.match(/^(19|20)\d{2}/)) return parseInt(d1.substring(0, 4));
+    if (d1.match(/^(19|20)\d{2}/)) y = parseInt(d1.substring(0, 4), 10);
+    if (y > 1900 && y <= maxYear) return y;
     
     const d2 = String(item.release_date || '');
-    if (d2.match(/^(19|20)\d{2}/)) return parseInt(d2.substring(0, 4));
+    if (d2.match(/^(19|20)\d{2}/)) y = parseInt(d2.substring(0, 4), 10);
+    if (y > 1900 && y <= maxYear) return y;
     
     const m = String(item.name || '').match(/\b(19\d{2}|20\d{2})\b/);
-    if (m) return parseInt(m[1], 10);
+    if (m) {
+      y = parseInt(m[1], 10);
+      if (y > 1900 && y <= maxYear) return y;
+    }
     return 0;
   }
 
@@ -256,11 +264,19 @@ const Playlist = (() => {
     _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     // Optimización de rendimiento: Precalcular claves de ordenación (Schwartzian transform)
-    const streamsWithKeys = _toArray(streams).map(s => ({
-      ...s,
-      _year: _extractYear(s),
-      _added: parseInt(s.added || '0', 10)
-    }));
+    const streamsWithKeys = _toArray(streams).map(s => {
+      let addedNum = parseInt(s.added, 10) || 0;
+      let yr = _extractYear(s);
+      if (yr === 0 && addedNum > 0) {
+        const ms = addedNum < 100000000000 ? addedNum * 1000 : addedNum;
+        yr = new Date(ms).getFullYear();
+      }
+      return {
+        ...s,
+        _year: yr,
+        _added: addedNum
+      };
+    });
 
     // Ordenar por año de lanzamiento más reciente, cayendo de vuelta a la fecha de adición
     streamsWithKeys.sort((a, b) => {
@@ -312,11 +328,19 @@ const Playlist = (() => {
     _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
 
     // Optimización de rendimiento: Precalcular claves de ordenación
-    const seriesWithKeys = _toArray(seriesList).map(s => ({
-      ...s,
-      _year: _extractYear(s),
-      _added: parseInt(s.added || s.last_modified || '0', 10)
-    }));
+    const seriesWithKeys = _toArray(seriesList).map(s => {
+      let addedNum = parseInt(s.added || s.last_modified, 10) || 0;
+      let yr = _extractYear(s);
+      if (yr === 0 && addedNum > 0) {
+        const ms = addedNum < 100000000000 ? addedNum * 1000 : addedNum;
+        yr = new Date(ms).getFullYear();
+      }
+      return {
+        ...s,
+        _year: yr,
+        _added: addedNum
+      };
+    });
 
     // Ordenar por año de lanzamiento más reciente, cayendo de vuelta a la fecha de adición
     seriesWithKeys.sort((a, b) => {
