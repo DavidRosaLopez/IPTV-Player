@@ -110,9 +110,10 @@ const VodOSD = (() => {
     if (typeof Player === 'undefined') return;
     const current = Player.getCurrentTime();
     const total = Player.getDuration();
+    const remaining = Math.max(0, total - current);
 
     document.getElementById('vod-time-current').textContent = _formatTime(current);
-    document.getElementById('vod-time-total').textContent = _formatTime(total);
+    document.getElementById('vod-time-total').textContent = '-' + _formatTime(remaining);
 
     let pct = 0;
     if (total > 0) {
