@@ -231,7 +231,7 @@ const ViewChannels = (() => {
         li.dataset.idx = i;
         li.dataset.groupId = g.id;
         li.innerHTML = `<span>${g.name}</span><span class="material-symbols-rounded folder-icon">${expandedFolders[g.id] ? 'expand_less' : 'expand_more'}</span>`;
-        li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g); });
+        li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g, true); });
         list.appendChild(li);
         return;
       }
@@ -252,7 +252,7 @@ const ViewChannels = (() => {
       li.dataset.idx = i;
       li.dataset.groupId = g.id;
       li.innerHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
-      li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g); });
+      li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g, true); });
       list.appendChild(li);
     });
   }
@@ -307,15 +307,16 @@ const ViewChannels = (() => {
     return list;
   }
 
-  function _selectGroup(g) {
+  function _selectGroup(g, autoFocusChannels = true) {
     if (g.isFolder) {
-      const expanded = Store.get('expandedFolders') || {};
-      expanded[g.id] = !expanded[g.id];
-      Store.set('expandedFolders', expanded);
+      if (autoFocusChannels) {
+        const expanded = Store.get('expandedFolders') || {};
+        expanded[g.id] = !expanded[g.id];
+        Store.set('expandedFolders', expanded);
+        renderGroups();
+      }
       
       const folderId = g.id;
-      renderGroups();
-      
       const focusables = _getSidebarFocusables();
       const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === folderId);
       if (newIdx !== -1) _sidebarFocusIdx = newIdx;
@@ -339,7 +340,7 @@ const ViewChannels = (() => {
       if (newIdx !== -1) _sidebarFocusIdx = newIdx;
       
       _updateGroupClasses();
-      if (items.length > 0) {
+      if (autoFocusChannels && items.length > 0) {
         _setFocusZone('channels');
       }
       return;
@@ -358,10 +359,12 @@ const ViewChannels = (() => {
     VirtualList.update([]);
     renderChannels();
     
-    if (items.length > 0) {
-      _setFocusZone('channels');
-    } else {
-      _setFocusZone('groups');
+    if (autoFocusChannels) {
+      if (items.length > 0) {
+        _setFocusZone('channels');
+      } else {
+        _setFocusZone('groups');
+      }
     }
   }
 
@@ -550,6 +553,20 @@ const ViewChannels = (() => {
       if (next) {
         next.classList.add('focused');
         next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        
+        if (next.id !== 'btn-open-search' && next.id !== 'btn-open-setup') {
+          const groupId = next.dataset.groupId;
+          const groups = Store.get('groups');
+          const group = groups.find(g => g.id === groupId);
+          if (group) {
+             clearTimeout(window._groupPreviewTimer);
+             window._groupPreviewTimer = setTimeout(() => {
+                if (_focusZone === 'groups') {
+                   _selectGroup(group, false);
+                }
+             }, 150);
+          }
+        }
       }
     } else {
       const curIdx = VirtualList.getFocused();
@@ -718,7 +735,7 @@ const ViewChannels = (() => {
           const groupId = el.dataset.groupId;
           const groups = Store.get('groups');
           const group = groups.find(g => g.id === groupId);
-          if (group) _selectGroup(group);
+          if (group) _selectGroup(group, true);
         }
         return true;
       }
