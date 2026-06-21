@@ -52,7 +52,6 @@ const Sync = (() => {
         if (statusEl) statusEl.textContent = 'Móvil conectado...';
         
         conn.on('data', (data) => {
-          console.log('Recibido:', data);
           if (data && data.type === 'new_list') {
             if (statusEl) statusEl.textContent = '¡Configuración recibida!';
             if (onConfigReceived) {
