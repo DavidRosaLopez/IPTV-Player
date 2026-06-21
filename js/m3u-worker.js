@@ -7,7 +7,10 @@ self.onmessage = function(e) {
 
   try {
     const channels = parseM3U(content);
-    self.postMessage({ channels });
+    // Zero-Copy Transfer: Use ArrayBuffer to avoid deep cloning large arrays in memory
+    const str = JSON.stringify(channels);
+    const buffer = new TextEncoder().encode(str).buffer;
+    self.postMessage({ channelsBuffer: buffer }, [buffer]);
   } catch (error) {
     self.postMessage({ error: error.message });
   }

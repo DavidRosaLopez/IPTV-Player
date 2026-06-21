@@ -529,6 +529,12 @@ const Playlist = (() => {
         if (e.data.progress && onProgress) {
           // Map worker progress (0-100) to 50-100 range
           onProgress(50 + (e.data.progress * 0.5));
+        } else if (e.data.channelsBuffer) {
+          const str = new TextDecoder().decode(e.data.channelsBuffer);
+          const channels = JSON.parse(str);
+          worker.terminate();
+          if (onProgress) onProgress(100);
+          resolve(channels);
         } else if (e.data.channels) {
           worker.terminate();
           if (onProgress) onProgress(100);
