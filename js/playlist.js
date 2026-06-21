@@ -104,7 +104,9 @@ const Playlist = (() => {
         logo:        s.stream_icon || '',
         group:       groupName,
         countryCode: detectCountry(s.name, catMap[s.category_id] || 'Sin categoría'),
-        url:         `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.m3u8`,
+        // Usamos .ts (Raw MPEG-TS) en lugar de .m3u8 para Live TV.
+        // Esto evita que el servidor Xtream transcodifique o degrade la señal de canales UHD.
+        url:         `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.ts`,
         streamId:    s.stream_id
       };
     });

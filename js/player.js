@@ -84,7 +84,7 @@ const Player = (() => {
           const is8K = name.includes('8K');
           const is4K = name.includes('4K') || name.includes('UHD') || name.includes('2160');
           const isHD = name.includes('FHD') || name.includes('HD') || name.includes('1080');
-          const maxBr = is8K ? 80000000 : is4K ? 40000000 : isHD ? 20000000 : 10000000;
+          const maxBr = is8K ? 150000000 : is4K ? 100000000 : isHD ? 50000000 : 25000000;
           // Buffer ampliado (hasta 10s en 4K) para evitar que Tizen baje la resolución automáticamente por falta de datos
           const bufMs = is8K ? 12000 : is4K ? 10000 : isHD ? 6000 : 4000;
 
