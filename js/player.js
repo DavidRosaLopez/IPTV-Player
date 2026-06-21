@@ -85,8 +85,8 @@ const Player = (() => {
           const is4K = name.includes('4K') || name.includes('UHD') || name.includes('2160');
           const isHD = name.includes('FHD') || name.includes('HD') || name.includes('1080');
           const maxBr = is8K ? 80000000 : is4K ? 40000000 : isHD ? 20000000 : 10000000;
-          // Buffer adaptado: 2-3 segundos para evitar cortes
-          const bufMs = is8K ? 5000 : is4K ? 4000 : isHD ? 3000 : 3000;
+          // Buffer ampliado (hasta 10s en 4K) para evitar que Tizen baje la resolución automáticamente por falta de datos
+          const bufMs = is8K ? 12000 : is4K ? 10000 : isHD ? 6000 : 4000;
 
           webapis.avplay.setStreamingProperty('ADAPTIVE_INFO',
             `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}|BUFFERLENGTH=${Math.round(bufMs / 1000)}`);
@@ -117,6 +117,8 @@ const Player = (() => {
               if (type === 'PLAYER_MSG_END_OF_STREAM') handleStreamEnd();
               if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
                 if (_state === 'BUFFERING') _setState('PLAYING');
+                // Tizen a veces no escala el video si la resolución cambia al vuelo (HLS)
+                if (type === 'PLAYER_MSG_RESOLUTION_CHANGED') _applyDisplayRect();
               }
             },
             onerror:           (err) => _onError(err),
@@ -157,7 +159,7 @@ const Player = (() => {
     const vl = document.getElementById('video-layer');
     if (_mode === 'FULLSCREEN') {
       if (vl) { vl.style.left='0px'; vl.style.top='0px'; vl.style.width='1920px'; vl.style.height='1080px'; }
-      try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
+      try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX'); } catch(e) {}
       try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
     } else if (_mode === 'PIP') {
       // Posicionar video-layer exactamente en el área PiP

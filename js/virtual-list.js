@@ -157,8 +157,13 @@ const VirtualList = (() => {
     }
 
     // Create or reuse visible elements
+    let fragment = null;
+
     for (let i = startIdx; i <= endIdx; i++) {
       if (_domCache[i]) continue;
+      
+      if (!fragment) fragment = document.createDocumentFragment();
+
       let el;
       if (_pool.length > 0) {
         el = _pool.pop();
@@ -168,8 +173,12 @@ const VirtualList = (() => {
         el.innerHTML = '<span class="fav-badge material-symbols-rounded" style="display:none">favorite</span><img class="channel-logo" style="display:none" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"><div class="channel-info"><div class="channel-name"></div></div>';
       }
       _updateCard(el, i);
-      _container.appendChild(el);
+      fragment.appendChild(el);
       _domCache[i] = el;
+    }
+
+    if (fragment) {
+      _container.appendChild(fragment);
     }
   }
 
