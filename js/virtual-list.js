@@ -25,6 +25,43 @@ const VirtualList = (() => {
   let _scrolling   = false;
   let _scrollTimeout = null;
 
+  const ImageQueue = (() => {
+    const queue = [];
+    let active = 0;
+    const MAX = 4;
+    const process = () => {
+      while(active < MAX && queue.length > 0) {
+        const { imgEl, src } = queue.shift();
+        if (imgEl.dataset.targetSrc !== src) continue;
+        active++;
+        
+        const loader = new Image();
+        const finish = () => { active--; process(); };
+        
+        loader.onload = () => {
+          if (imgEl.dataset.targetSrc === src) {
+            imgEl.src = src;
+          }
+          finish();
+        };
+        loader.onerror = finish;
+        loader.src = src;
+      }
+    };
+    return {
+      add: (imgEl, src) => {
+        if (imgEl.dataset.targetSrc === src) return;
+        
+        imgEl.dataset.targetSrc = src;
+        if (imgEl.src && !imgEl.src.startsWith('data:')) {
+          imgEl.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        }
+        queue.push({ imgEl, src });
+        process();
+      }
+    };
+  })();
+
   function init({ containerId, items, onSelect, getFavBadge, layout = 'tv' }) {
     _layout = layout;
     if (_layout === 'poster') {
@@ -209,9 +246,10 @@ const VirtualList = (() => {
     const col = i % COLS;
     const row = Math.floor(i / COLS);
     const y   = PADDING + row * (ITEM_H + ITEM_GAP);
+    const x   = PADDING + col * (_colW + ITEM_GAP);
 
     el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx ? ' focused' : '');
-    el.style.cssText = `position:absolute;top:${y}px;left:${PADDING + col*(_colW+ITEM_GAP)}px;width:${_colW}px;height:${ITEM_H}px;`;
+    el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${x}px,${y}px,0);width:${_colW}px;height:${ITEM_H}px;`;
     el.dataset.idx = i;
 
     const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
@@ -228,11 +266,14 @@ const VirtualList = (() => {
           img.style.display = '';
         } else {
           // Solo actualizar src si cambia para evitar parpadeos de red
-          if (img.getAttribute('src') !== ch.logo) img.src = _safeStr(ch.logo);
+          if (img.getAttribute('src') !== ch.logo) {
+            ImageQueue.add(img, _safeStr(ch.logo));
+          }
           img.style.display = '';
         }
       } else {
         img.removeAttribute('src');
+        img.dataset.targetSrc = '';
         img.style.display = 'none';
       }
     }
@@ -293,8 +334,8 @@ const VirtualList = (() => {
       const img = el.querySelector('.channel-logo');
       if (img && ch.logo) {
         const src = _safeStr(ch.logo);
-        if (img.getAttribute('src') !== src) {
-          img.src = src;
+        if (img.getAttribute('src') !== src && img.dataset.targetSrc !== src) {
+          ImageQueue.add(img, src);
           img.style.display = '';
         }
       }

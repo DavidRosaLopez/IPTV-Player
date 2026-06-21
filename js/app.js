@@ -114,6 +114,7 @@ const App = (() => {
       SetupProgress.step('connect');
       let loadedChannels = [];
       if (list.type === 'xtream') {
+        _preconnect(list.server);
         SetupProgress.step('download');
         const r = await Playlist.loadXtream(list.server, list.user, list.pass, pct => {
             SetupProgress.progress(Math.round(pct * 0.8));
@@ -301,6 +302,19 @@ const App = (() => {
     } finally {
       controller.abort();
     }
+  }
+
+  // --- Util: Preconnect ---
+  function _preconnect(url) {
+    try {
+      const origin = new URL(url).origin;
+      if (!document.querySelector(`link[href="${origin}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = origin;
+        document.head.appendChild(link);
+      }
+    } catch(e) {}
   }
 
   return { init, loadList, cancelLoad };
