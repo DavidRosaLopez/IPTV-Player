@@ -84,12 +84,32 @@ const Player = (() => {
           const is8K = name.includes('8K');
           const is4K = name.includes('4K') || name.includes('UHD') || name.includes('2160');
           const isHD = name.includes('FHD') || name.includes('HD') || name.includes('1080');
-          const maxBr = is8K ? 150000000 : is4K ? 100000000 : isHD ? 50000000 : 25000000;
-          // Buffer ampliado (hasta 10s en 4K) para evitar que Tizen baje la resolución automáticamente por falta de datos
-          const bufMs = is8K ? 12000 : is4K ? 10000 : isHD ? 6000 : 4000;
+          const isHEVC = name.includes('HEVC') || name.includes('H265');
+          const isRaw = name.includes('RAW') || name.includes('DIRECT');
+          const isLive = _current.type !== 'vod' && _current.type !== 'series';
 
-          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO',
-            `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}|BUFFERLENGTH=${Math.round(bufMs / 1000)}`);
+          // 1. Adaptive Info (afecta a conexiones HLS / .m3u8)
+          const maxBr = is8K ? 150000000 : is4K ? 100000000 : isHD ? 50000000 : 25000000;
+          const bufMs = is8K ? 12000 : is4K ? 10000 : isHD ? 6000 : 4000;
+          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}|BUFFERLENGTH=${Math.round(bufMs / 1000)}`);
+
+          // 2. Optimizaciones para señales en Vivo (MPEG-TS / Multicast)
+          if (isLive) {
+            try { webapis.avplay.setStreamingProperty("IS_LIVE", "true"); } catch(e) {}
+          }
+
+          // 3. Forzar plano de decodificación de hardware para Ultra Alta Definición 
+          // (Evita que el sistema base de Tizen downscalee HEVC/RAW antes de mostrarlo)
+          if (is4K || is8K || isHEVC || isRaw) {
+            try { webapis.avplay.setStreamingProperty("SET_MIX_RESOLUTION", "4k"); } catch(e) {}
+          }
+
+          // 4. Aumentar timeout de buffering para codecs pesados que tardan más en dar el primer frame
+          if (isRaw || isHEVC || is4K || is8K) {
+            try { webapis.avplay.setTimeoutForBuffering(10000); } catch(e) {}
+          } else {
+            try { webapis.avplay.setTimeoutForBuffering(5000); } catch(e) {}
+          }
         } catch(e) {}
 
           const handleStreamEnd = () => {
