@@ -45,7 +45,13 @@ const VirtualList = (() => {
           }
           finish();
         };
-        loader.onerror = finish;
+        loader.onerror = () => {
+          if (imgEl.dataset.targetSrc === src) {
+            imgEl.dataset.targetSrc = ''; // Allow retry later
+            imgEl.style.display = 'none';
+          }
+          finish();
+        };
         loader.src = src;
       }
     };

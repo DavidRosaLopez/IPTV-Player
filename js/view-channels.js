@@ -218,6 +218,7 @@ const ViewChannels = (() => {
     });
 
     if (focusedEl) {
+      _prevFocusedEl = focusedEl;
       focusedEl.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
     }
   }
@@ -924,7 +925,10 @@ const ViewChannels = (() => {
 
     const grid = document.getElementById('channel-grid');
     const loader = document.getElementById('tab-loader');
-    if (grid) grid.classList.add('hidden');
+    if (grid) {
+      grid.classList.add('hidden');
+      if (typeof VirtualList !== 'undefined') VirtualList.update([]);
+    }
     if (loader) {
       loader.classList.remove('hidden');
       if (tabId === 'vod') {
@@ -985,17 +989,6 @@ const ViewChannels = (() => {
 
     // Guardar en store y recargar
     Store.set('currentGroup', null);
-    
-    // Configurar VirtualList layout
-    if (typeof VirtualList !== 'undefined') {
-      VirtualList.init({
-        containerId: 'channel-grid',
-        items: [],
-        layout: tabId === 'tv' ? 'tv' : 'poster',
-        onSelect: (ch) => _playChannel(ch),
-        getFavBadge: (id) => Favorites.isFav(id)
-      });
-    }
 
     _renderData(data);
   }
