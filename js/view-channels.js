@@ -600,6 +600,7 @@ const ViewChannels = (() => {
       const next = els[_sidebarFocusIdx];
       if (next) {
         next.classList.add('focused');
+        _prevFocusedEl = next;
         next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
         
         if (next.id !== 'btn-open-search' && next.id !== 'btn-open-setup') {
@@ -764,7 +765,12 @@ const ViewChannels = (() => {
         const tab = tabs[_tabFocusIdx];
         if (tab) {
            if (tab.dataset.type === _currentTab) {
-             _setFocusZone('countries');
+             if (_currentTab === 'vod' || _currentTab === 'series') {
+               _sidebarFocusIdx = 2;
+               _setFocusZone('groups');
+             } else {
+               _setFocusZone('countries');
+             }
            } else {
              _switchTab(tab.dataset.type);
            }
