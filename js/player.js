@@ -105,10 +105,13 @@ const Player = (() => {
           }
 
           // 4. Aumentar timeout de buffering para codecs pesados que tardan más en dar el primer frame
+          // También aumentamos el buffer inicial en conexiones inestables (PLAYER_SPROPERTY_SET_INITIAL_BUFFER)
           if (isRaw || isHEVC || is4K || is8K) {
             try { webapis.avplay.setTimeoutForBuffering(10000); } catch(e) {}
+            try { webapis.avplay.setStreamingProperty("SET_INITIAL_BUFFER", "10000"); } catch(e) {}
           } else {
             try { webapis.avplay.setTimeoutForBuffering(5000); } catch(e) {}
+            try { webapis.avplay.setStreamingProperty("SET_INITIAL_BUFFER", "5000"); } catch(e) {}
           }
         } catch(e) {}
 
@@ -167,7 +170,7 @@ const Player = (() => {
         console.error('AVPlay open error', e);
         _onError('OPEN_FAILED');
       }
-    }, 50);
+    }, 150);
   }
 
   // Coordenadas fijas calculadas del CSS de .pip-box
@@ -267,6 +270,7 @@ const Player = (() => {
         try {
           webapis.avplay.setStreamingProperty('ADAPTIVE_INFO',
             'STARTBITRATE=LOWEST|MAXBITRATE=3000000|BUFFERLENGTH=3');
+          webapis.avplay.setStreamingProperty("SET_INITIAL_BUFFER", "3000");
         } catch(e) {}
         webapis.avplay.setListener({
           onbufferingstart:    () => _setState('BUFFERING'),
@@ -300,7 +304,7 @@ const Player = (() => {
           () => { _hidePip(); }
         );
       } catch(e) { _hidePip(); }
-    }, 50);
+    }, 150);
   }
 
   // ── SAFE STOP ────────────────────────────────────────
