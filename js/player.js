@@ -185,7 +185,11 @@ const Player = (() => {
     const vl = _videoLayerEl || document.getElementById('video-layer');
     if (_mode === 'FULLSCREEN') {
       if (vl) { vl.style.left='0px'; vl.style.top='0px'; vl.style.width='1920px'; vl.style.height='1080px'; }
-      try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX'); } catch(e) {}
+      // Use FULL_SCREEN for UHD/4K/8K so the TV hardware scaler handles downscaling
+      // (avoids blurry software scaling that LETTER_BOX triggers with high-bitrate HEVC streams)
+      const _isUHD = _current && ((_current.name||'').toUpperCase().match(/4K|UHD|2160|8K|HEVC|H265/));
+      const _dispMethod = _isUHD ? 'PLAYER_DISPLAY_MODE_FULL_SCREEN' : 'PLAYER_DISPLAY_MODE_LETTER_BOX';
+      try { webapis.avplay.setDisplayMethod(_dispMethod); } catch(e) {}
       try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
     } else if (_mode === 'PIP') {
       if (vl) { vl.style.left=PIP_X+'px'; vl.style.top=PIP_Y+'px'; vl.style.width=PIP_W+'px'; vl.style.height=PIP_H+'px'; }

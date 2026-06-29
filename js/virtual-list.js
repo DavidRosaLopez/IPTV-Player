@@ -211,6 +211,9 @@ const VirtualList = (() => {
       let el;
       if (_pool.length > 0) {
         el = _pool.pop();
+        // Clear stale targetSrc so ImageQueue doesn't skip re-loading on reuse
+        const recycledImg = el._img || el.querySelector('.channel-logo');
+        if (recycledImg) recycledImg.dataset.targetSrc = '';
       } else {
         el = document.createElement('div');
         // Pre-build structure ONLY once per new node
@@ -244,8 +247,16 @@ const VirtualList = (() => {
 
       const img = el._img || el.querySelector('.channel-logo');
       if (img) {
-        if (ch.logo) { img.src = _safeStr(ch.logo); img.style.display = ''; }
-        else { img.removeAttribute('src'); img.style.display = 'none'; }
+        if (ch.logo) {
+          const src = _safeStr(ch.logo);
+          // Route through ImageQueue so broken/stale images are retried properly
+          if (img.dataset.targetSrc !== src) ImageQueue.add(img, src);
+          img.style.display = '';
+        } else {
+          img.removeAttribute('src');
+          img.dataset.targetSrc = '';
+          img.style.display = 'none';
+        }
       }
 
       const name = el._name || el.querySelector('.channel-name');
@@ -275,6 +286,8 @@ const VirtualList = (() => {
       if (ch.logo) {
         if (_scrolling) {
           // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
+          // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
+          img.dataset.targetSrc = '';
           img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
           img.style.display = '';
         } else {
