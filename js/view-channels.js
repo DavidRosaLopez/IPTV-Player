@@ -765,15 +765,14 @@ const ViewChannels = (() => {
         const tabs = document.querySelectorAll('.sidebar-tab-btn');
         const tab = tabs[_tabFocusIdx];
         if (tab) {
-           if (tab.dataset.type === _currentTab) {
-             if (_currentTab === 'vod' || _currentTab === 'series') {
-               _sidebarFocusIdx = 2;
-               _setFocusZone('groups');
-             } else {
-               _setFocusZone('countries');
-             }
-           } else {
+           if (tab.dataset.type !== _currentTab) {
              _switchTab(tab.dataset.type);
+           }
+           if (tab.dataset.type === 'vod' || tab.dataset.type === 'series') {
+             _sidebarFocusIdx = 2;
+             _setFocusZone('groups');
+           } else {
+             _setFocusZone('countries');
            }
         }
         return true;
