@@ -34,14 +34,18 @@ const InfoPopup = (() => {
     try {
       if (ch.type === 'vod') {
         const idStr = ch.id.replace('vod_', '');
-        _data = await Playlist.getVodInfo(list.server, list.user, list.pass, idStr);
+        const data = await Playlist.getVodInfo(list.server, list.user, list.pass, idStr);
+        if (_current !== ch) return; // Prevent race condition if user closed/changed before load
+        _data = data;
         _renderVodData(_data);
         if (_data && _data.info && _data.info.name) {
           document.getElementById('info-title').textContent = _data.info.name;
         }
       } else if (ch.type === 'series') {
         const idStr = ch.id.replace('series_', '');
-        _data = await Playlist.getSeriesInfo(list.server, list.user, list.pass, idStr);
+        const data = await Playlist.getSeriesInfo(list.server, list.user, list.pass, idStr);
+        if (_current !== ch) return; // Prevent race condition if user closed/changed before load
+        _data = data;
         _renderSeriesData(_data);
         if (_data && _data.info && _data.info.name) {
           document.getElementById('info-title').textContent = _data.info.name;
@@ -113,6 +117,9 @@ const InfoPopup = (() => {
     _episodeIdx = 0;
     _seasons = [];
     _episodesMap = {};
+
+    document.getElementById('info-seasons-list').innerHTML = '';
+    document.getElementById('info-episodes-list').innerHTML = '';
 
     document.getElementById('info-year').textContent = '';
     document.getElementById('info-duration').textContent = '';
