@@ -498,8 +498,16 @@ const Player = (() => {
     }
     _seekLastTime = now;
 
-    if (dir === 'left')  _seekAccumulator -= 10;
-    if (dir === 'right') _seekAccumulator += 10;
+    // Aceleración dinámica: más veces pulsado = saltos más grandes
+    let stepSecs = 10;
+    const absAcc = Math.abs(_seekAccumulator);
+    if (absAcc >= 300) stepSecs = 120; // +2 mins
+    else if (absAcc >= 120) stepSecs = 60;  // +1 min
+    else if (absAcc >= 60) stepSecs = 30;   // +30 segs
+    else if (absAcc >= 30) stepSecs = 20;   // +20 segs
+
+    if (dir === 'left')  _seekAccumulator -= stepSecs;
+    if (dir === 'right') _seekAccumulator += stepSecs;
 
     const elLeft = document.getElementById('seek-feedback-left');
     const elRight = document.getElementById('seek-feedback-right');
@@ -509,7 +517,14 @@ const Player = (() => {
 
     const el = _seekAccumulator < 0 ? elLeft : elRight;
     const icon = _seekAccumulator < 0 ? 'fast_rewind' : 'fast_forward';
-    const text = Math.abs(_seekAccumulator) + 's';
+    
+    const totalSecs = Math.abs(_seekAccumulator);
+    let text = totalSecs + 's';
+    if (totalSecs >= 60) {
+      const m = Math.floor(totalSecs / 60);
+      const s = totalSecs % 60;
+      text = m + 'm' + (s > 0 ? ' ' + s + 's' : '');
+    }
 
     if (el) {
       el.innerHTML = `<span class="material-symbols-rounded">${icon}</span><span class="seek-time">${text}</span>`;
@@ -524,9 +539,9 @@ const Player = (() => {
     // Ejecutar el salto inmediatamente para ver el frame
     try {
       if (dir === 'right') {
-        webapis.avplay.jumpForward(10000);
+        webapis.avplay.jumpForward(stepSecs * 1000);
       } else {
-        webapis.avplay.jumpBackward(10000);
+        webapis.avplay.jumpBackward(stepSecs * 1000);
       }
     } catch(e) {
       console.error('AVPlay jump error', e);
