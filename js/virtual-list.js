@@ -65,6 +65,11 @@ const VirtualList = (() => {
         }
         queue.push({ imgEl, src });
         process();
+      },
+      // Discard pending requests from previous list so new icons aren't queued behind stale ones
+      flush: () => {
+        queue.length = 0;
+        active = 0;
       }
     };
   })();
@@ -90,6 +95,7 @@ const VirtualList = (() => {
     _scrollTop   = 0;
     _domCache    = {};
     _pool        = [];
+    ImageQueue.flush(); // Discard stale requests from previous list
     // Cachear propiedades geométricas UNA sola vez (fuerzan reflow)
     if (_container) {
       _colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
@@ -119,6 +125,7 @@ const VirtualList = (() => {
   let _sentinel = null;
 
   function update(items) {
+    ImageQueue.flush(); // Discard stale requests from previous country/group
     _items = items;
     _focusedIdx = 0;
     _scrollTop  = 0;
