@@ -56,6 +56,25 @@ const InfoPopup = (() => {
   }
 
   let _isSuspended = false;
+  let _playingEpisode = null;
+
+  function _focusPlayingEpisode() {
+    if (!_playingEpisode || _seasons.length === 0) return;
+    for (let sIdx = 0; sIdx < _seasons.length; sIdx++) {
+      const sNum = _seasons[sIdx].season_number;
+      const eps = _episodesMap[sNum] || [];
+      const eIdx = eps.findIndex(e => String(e.id) === String(_playingEpisode.id));
+      if (eIdx !== -1) {
+        _seasonIdx = sIdx;
+        _episodeIdx = eIdx;
+        _zone = 'episodes';
+        _updateActiveSeasonClass();
+        _renderEpisodes();
+        _updateFocus();
+        break;
+      }
+    }
+  }
 
   function suspend() {
     _isVisible = false;
@@ -67,7 +86,11 @@ const InfoPopup = (() => {
     _isVisible = true;
     _isSuspended = false;
     document.getElementById('info-popup').classList.remove('hidden');
-    _updateFocus();
+    if (_playingEpisode && _current && _current.type === 'series') {
+      _focusPlayingEpisode();
+    } else {
+      _updateFocus();
+    }
   }
 
   function isSuspended() { return _isSuspended; }
@@ -78,6 +101,7 @@ const InfoPopup = (() => {
     _isSuspended = false;
     _current = null;
     _data = null;
+    _playingEpisode = null;
     document.getElementById('info-popup').classList.add('hidden');
     document.getElementById('info-popup-bg').style.backgroundImage = 'none';
   }
@@ -167,6 +191,9 @@ const InfoPopup = (() => {
       _zone = 'seasons'; // Mover foco a temporadas por defecto
       _renderSeasons();
       _renderEpisodes();
+      if (_playingEpisode) {
+        _focusPlayingEpisode();
+      }
     }
     _updateFocus();
   }
@@ -420,7 +447,6 @@ const InfoPopup = (() => {
     }
   }
 
-  let _playingEpisode = null;
   function _playEpisode(ep) {
     if (!ep) return;
     _playingEpisode = ep;

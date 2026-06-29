@@ -1324,7 +1324,7 @@ html, body {
   color: var(--text);
   margin-bottom: 30px;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 12;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
