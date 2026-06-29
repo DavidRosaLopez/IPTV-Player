@@ -128,6 +128,12 @@ const Storage = (() => {
   const setSeriesCache = (listId, data) => _setToDB('series_cache_' + listId, data);
   const clearSeriesCache = (listId) => _delFromDB('series_cache_' + listId);
 
-  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getDefaultList, setDefaultList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache, getVodCache, setVodCache, clearVodCache, getSeriesCache, setSeriesCache, clearSeriesCache, getVisibleCountries, setVisibleCountries };
+  // ── Progreso de episodios (localStorage, persiste entre reinicios) ───
+  const EP_PROG_PREFIX = 'ep_prog_';
+  const getEpisodeProgress = (epId) => get(EP_PROG_PREFIX + epId, null);
+  const setEpisodeProgress = (epId, ms) => set(EP_PROG_PREFIX + epId, ms);
+  const clearEpisodeProgress = (epId) => del(EP_PROG_PREFIX + epId);
+
+  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getDefaultList, setDefaultList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache, getVodCache, setVodCache, clearVodCache, getSeriesCache, setSeriesCache, clearSeriesCache, getVisibleCountries, setVisibleCountries, getEpisodeProgress, setEpisodeProgress, clearEpisodeProgress };
 })();
 

@@ -79,18 +79,37 @@ const Watching = (() => {
       return id !== idToFind;
     });
     
-    // Guardar al principio
+    // Recuperar progreso actual del episodio si lo hay
+    const epId = ep ? `ep_${ep.id}` : null;
+    const progressMs = epId ? (Storage.getEpisodeProgress(epId) || null) : null;
+
+    // Guardar al principio con timestamp de progreso
     items.unshift({
       id: idToFind,
-      ep: ep
+      ep: ep,
+      progressMs: progressMs
     });
     
     Storage.set(key, items);
+  }
+
+  // Actualiza solo el progreso del episodio activo sin cambiar el orden
+  function updateProgress(seriesId, epId, ms) {
+    const key = _getKey();
+    const items = getItems();
+    const idx = items.findIndex(item => {
+      const id = typeof item === 'string' ? item : item.id;
+      return id === seriesId;
+    });
+    if (idx !== -1 && typeof items[idx] === 'object') {
+      items[idx].progressMs = ms;
+      Storage.set(key, items);
+    }
   }
 
   function isWatching(id) {
     return getIds().includes(id);
   }
 
-  return { getIds, getItems, add, isWatching };
+  return { getIds, getItems, add, isWatching, updateProgress };
 })();

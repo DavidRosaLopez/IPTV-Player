@@ -18,6 +18,7 @@ const Player = (() => {
   let _wasPlayingOnHide = false;
   let _retryCount      = 0;      // declarado explícitamente (evita fuga al scope global)
   let _videoLayerEl    = null;   // referencia cacheada a #video-layer
+  let _progressSaveTimer = null; // guardado periódico de progreso (series/vod)
 
   let _initialized = false;
   // ── INIT ─────────────────────────────────────────────
@@ -155,14 +156,16 @@ const Player = (() => {
         webapis.avplay.prepareAsync(
           () => {
             try { 
-              webapis.avplay.play(); 
+              webapis.avplay.play();
               if (_current && (_current.type === 'vod' || _current.type === 'series')) {
-                 const saved = Store.get('progress_' + _current.id);
+                 // Buscar progreso: primero en Storage (persiste entre reinicios), luego en Store (sesión actual)
+                 const saved = Storage.getEpisodeProgress(_current.id) || Store.get('progress_' + _current.id);
                  if (saved && saved > 10000) {
                    setTimeout(() => {
                      try { webapis.avplay.jumpForward(saved); } catch(e){}
                    }, 200);
                  }
+                 _startProgressSaveTimer();
               }
             } catch(e) { _onError(e); }
           },
@@ -541,8 +544,12 @@ const Player = (() => {
   function stop() { 
     if (_current && (_current.type === 'vod' || _current.type === 'series')) {
       const ms = getCurrentTime();
-      if (ms > 10000) Store.set('progress_' + _current.id, ms);
+      if (ms > 10000) {
+        Store.set('progress_' + _current.id, ms);
+        Storage.setEpisodeProgress(_current.id, ms); // Persistente entre reinicios
+      }
     }
+    _stopProgressSaveTimer();
     _safeStop(); 
     _current = null;
     _mode = 'IDLE';
@@ -562,6 +569,26 @@ const Player = (() => {
     if (typeof PlayerOSD !== 'undefined') PlayerOSD.hide();
     if (typeof VodOSD !== 'undefined') VodOSD.hide();
   }
+  function _startProgressSaveTimer() {
+    _stopProgressSaveTimer();
+    _progressSaveTimer = setInterval(() => {
+      if (_current && (_current.type === 'vod' || _current.type === 'series') && _state === 'PLAYING') {
+        const ms = getCurrentTime();
+        if (ms > 10000) {
+          Store.set('progress_' + _current.id, ms);
+          Storage.setEpisodeProgress(_current.id, ms);
+          // Actualizar "Seguir viendo" con el minuto actual
+          if (_current.type === 'series' && _current.seriesId && typeof Watching !== 'undefined') {
+            Watching.updateProgress(_current.seriesId, _current.id, ms);
+          }
+        }
+      }
+    }, 10000); // cada 10 segundos
+  }
+  function _stopProgressSaveTimer() {
+    if (_progressSaveTimer) { clearInterval(_progressSaveTimer); _progressSaveTimer = null; }
+  }
+
   function getCurrentTime() {
     try { return webapis.avplay.getCurrentTime(); } catch(e) { return 0; }
   }

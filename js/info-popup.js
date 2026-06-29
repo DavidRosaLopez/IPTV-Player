@@ -205,14 +205,39 @@ const InfoPopup = (() => {
       const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" loading="lazy" onerror="this.style.display='none'">` : '';
       let cleanTitle = String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim();
       
+      // Mostrar progreso guardado si existe
+      const epId = `ep_${ep.id}`;
+      const savedMs = Storage.getEpisodeProgress(epId);
+      let progressHtml = '';
+      if (savedMs && savedMs > 10000) {
+        const totalSecs = Math.floor(savedMs / 1000);
+        const m = Math.floor(totalSecs / 60);
+        const s = totalSecs % 60;
+        const timeStr = `${m}:${s.toString().padStart(2,'0')}`;
+        progressHtml = `<div class="info-ep-progress"><div class="info-ep-progress-fill" style="width:0%" data-ms="${savedMs}"></div></div><span class="info-ep-resume">▶ ${timeStr}</span>`;
+      }
+      
       li.innerHTML = `
         ${img}
         <div class="info-ep-details">
           <div class="info-ep-title">${ep.episode_num}. ${cleanTitle}</div>
+          ${progressHtml}
         </div>
       `;
       list.appendChild(li);
     });
+
+    // Rellenar barras de progreso con % real (necesita getDuration del episodio — se aproxima con el tiempo guardado)
+    // Las barras se actualizan con el ancho relativo al máximo de todos los episodios
+    if (typeof Storage !== 'undefined') {
+      const fills = list.querySelectorAll('.info-ep-progress-fill');
+      fills.forEach(fill => {
+        const ms = parseInt(fill.dataset.ms || 0);
+        // Aproximamos 45 minutos (2700000ms) como duración típica de serie; la barra es orientativa
+        const pct = Math.min(100, Math.round((ms / 2700000) * 100));
+        fill.style.width = pct + '%';
+      });
+    }
 
     if (_episodeIdx >= eps.length) _episodeIdx = Math.max(0, eps.length - 1);
   }
@@ -414,6 +439,7 @@ const InfoPopup = (() => {
     // Create a temporary channel object for the episode
     const playCh = {
       id: `ep_${ep.id}`,
+      seriesId: _current.id, // para Watching.updateProgress()
       name: `${_current.name} - ${ep.episode_num}. ${ep.title}`,
       url: url,
       logo: _current.logo,

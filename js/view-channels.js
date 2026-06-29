@@ -485,6 +485,7 @@ const ViewChannels = (() => {
             const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
             const playCh = {
               id: `ep_${ep.id}`,
+              seriesId: ch.id, // para Watching.updateProgress()
               name: `${ch.name} - ${ep.episode_num}. ${ep.title}`,
               url: url,
               logo: ch.logo,
