@@ -335,8 +335,9 @@ const Playlist = (() => {
       if (onProgress) onProgress(100);
       return movies;
       } catch (e) {
-        _fetchPromises.vod = null;
         throw e;
+      } finally {
+        _fetchPromises.vod = null;
       }
     })();
     return _fetchPromises.vod;
@@ -399,8 +400,9 @@ const Playlist = (() => {
       if (onProgress) onProgress(100);
       return series;
       } catch (e) {
-        _fetchPromises.series = null;
         throw e;
+      } finally {
+        _fetchPromises.series = null;
       }
     })();
     return _fetchPromises.series;
