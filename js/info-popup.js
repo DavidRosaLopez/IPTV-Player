@@ -1,7 +1,16 @@
 /**
  * info-popup.js — Controlador de la Ficha de Películas y Series
  */
-const InfoPopup = (() => {
+import { Store } from './store.js';
+import { Storage } from './storage.js';
+import { Router } from './router.js';
+import { Favorites } from './favorites.js';
+import { Playlist } from './playlist.js';
+import { Player } from './player.js';
+import { ViewChannels } from './view-channels.js';
+
+
+export const InfoPopup = (() => {
   let _isVisible = false;
   let _current = null;
   let _data = null;

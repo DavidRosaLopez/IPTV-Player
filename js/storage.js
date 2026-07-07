@@ -1,7 +1,10 @@
 /**
  * storage.js — localStorage abstraction
  */
-const Storage = (() => {
+import { Store } from './store.js';
+
+
+export const Storage = (() => {
   const PREFIX = 'iptv_';
   let _dbPromise = null;
 

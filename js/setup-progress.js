@@ -1,7 +1,7 @@
 /**
  * setup-progress.js — Popup de progreso para la pantalla de configuración
  */
-const SetupProgress = (() => {
+export const SetupProgress = (() => {
   let _steps = [];
   let _doneSet = new Set();
 

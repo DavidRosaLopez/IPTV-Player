@@ -1,4 +1,4 @@
-const Sync = (() => {
+export const Sync = (() => {
   let peer = null;
   let pin = '';
   let qrCode = null;

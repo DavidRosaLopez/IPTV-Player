@@ -1,7 +1,13 @@
 /**
  * player-osd.js — On-Screen Display logic for the player
  */
-const PlayerOSD = (() => {
+import { Favorites } from './favorites.js';
+import { EPG } from './epg.js';
+import { VirtualList } from './virtual-list.js';
+import { Player } from './player.js';
+
+
+export const PlayerOSD = (() => {
   let _osdTimer = null;
 
   function show(currentCh) {

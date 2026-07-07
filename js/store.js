@@ -1,7 +1,7 @@
 /**
  * store.js — Centralized State Manager
  */
-const Store = (() => {
+export const Store = (() => {
   let state = {
     channels: [],
     groups: [],

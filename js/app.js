@@ -1,7 +1,21 @@
 /**
  * app.js — Main Application Orchestrator
  */
-const App = (() => {
+import { Config } from './config.js';
+import { Store } from './store.js';
+import { Storage } from './storage.js';
+import { KeyHandler } from './keyHandler.js';
+import { Router } from './router.js';
+import { Favorites } from './favorites.js';
+import { SetupProgress } from './setup-progress.js';
+import { Search } from './search.js';
+import { Playlist } from './playlist.js';
+import { Player } from './player.js';
+import { ViewChannels } from './view-channels.js';
+import { Sync } from './sync.js';
+
+
+export const App = (() => {
   let _clockTimer = null;
   let _currentAbortController = null;
   let _prefetchTimer = null;
@@ -337,6 +351,10 @@ const App = (() => {
   return { init, loadList, cancelLoad };
 })();
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+  });
+} else {
   App.init();
-});
+}

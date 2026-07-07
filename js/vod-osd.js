@@ -1,4 +1,8 @@
-const VodOSD = (() => {
+import { Player } from './player.js';
+import { InfoPopup } from './info-popup.js';
+
+
+export const VodOSD = (() => {
   let _timer = null;
   let _progressTimer = null;
   let _isVisible = false;

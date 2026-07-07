@@ -3,7 +3,7 @@
  * Only renders visible rows — handles 10,000+ channels smoothly
  * Performance: pre-cached sub-element references on card creation.
  */
-const VirtualList = (() => {
+export const VirtualList = (() => {
   let COLS        = 3;
   let ITEM_H      = 74;   // px — card height + gap
   let ITEM_GAP    = 12;

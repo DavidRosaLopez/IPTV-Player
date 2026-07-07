@@ -1,7 +1,16 @@
 /**
  * search.js — Fast debounced search using pre-built index
  */
-const Search = (() => {
+import { Store } from './store.js';
+import { KeyHandler } from './keyHandler.js';
+import { Playlist } from './playlist.js';
+import { VirtualList } from './virtual-list.js';
+import { Player } from './player.js';
+import { InfoPopup } from './info-popup.js';
+import { ViewChannels } from './view-channels.js';
+
+
+export const Search = (() => {
   let _allChannels = [];
   let _debounceTimer = null;
   let _isOpen = false;

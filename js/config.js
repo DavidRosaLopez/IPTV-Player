@@ -2,7 +2,7 @@
  * config.js — Configuration file
  * DO NOT COMMIT THIS FILE TO VERSION CONTROL
  */
-const Config = {
+export const Config = {
   defaultLists: [
     {
       id: 'predef_1',

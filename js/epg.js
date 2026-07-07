@@ -3,7 +3,10 @@
  * Fetches and parses real program guide data for live channels from Xtream Codes API
  * Performance: in-memory cache with 5-min TTL to avoid repeated HTTP requests per channel.
  */
-const EPG = (() => {
+import { Store } from './store.js';
+
+
+export const EPG = (() => {
   const EPG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   const _epgCache = new Map(); // streamId → { data, ts }
 

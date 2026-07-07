@@ -2,7 +2,11 @@
  * favorites.js — Favorite channels management (list-specific)
  * Performance: in-memory cache to avoid repeated localStorage reads.
  */
-const Favorites = (() => {
+import { Store } from './store.js';
+import { Storage } from './storage.js';
+
+
+export const Favorites = (() => {
   // In-memory cache: { key: string, ids: Set, arr: [] }
   let _cache = null;
 

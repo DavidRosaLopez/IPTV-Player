@@ -1,4 +1,13 @@
-const ViewSetup = (() => {
+import { Store } from './store.js';
+import { Storage } from './storage.js';
+import { KeyHandler } from './keyHandler.js';
+import { Router } from './router.js';
+import { Playlist } from './playlist.js';
+import { Sync } from './sync.js';
+import { App } from './app.js';
+
+
+export const ViewSetup = (() => {
   const COUNTRY_MAP = {
     'ES':    { emoji: '🇪🇸', name: 'España' },
     'US':    { emoji: '🇺🇸', name: 'USA' },

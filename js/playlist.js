@@ -2,7 +2,7 @@
  * playlist.js — Xtream Codes API
  * Performance optimized for large playlists (10k+ channels)
  */
-const Playlist = (() => {
+export const Playlist = (() => {
 
   // ── SEARCH INDEX ─────────────────────────────────────
   function _normalize(str) {

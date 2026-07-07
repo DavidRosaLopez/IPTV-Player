@@ -7,7 +7,16 @@
  *  - setPreviewMode() encoge el video al preview-box de la vista channels
  *  - Dimensiones y Hz se detectan automáticamente al arrancar
  */
-const Player = (() => {
+import { Store } from './store.js';
+import { Storage } from './storage.js';
+import { KeyHandler } from './keyHandler.js';
+import { Router } from './router.js';
+import { PlayerOSD } from './player-osd.js';
+import { VodOSD } from './vod-osd.js';
+import { InfoPopup } from './info-popup.js';
+
+
+export const Player = (() => {
   let _current         = null;
   let _onChannelChange = null;
   let _state           = 'IDLE'; // IDLE | BUFFERING | PLAYING | ERROR

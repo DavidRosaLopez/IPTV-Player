@@ -1,7 +1,12 @@
 /**
  * router.js — Visual View Routing and Overlays
  */
-const Router = (() => {
+import { Player } from './player.js';
+import { ViewChannels } from './view-channels.js';
+import { ViewSetup } from './view-setup.js';
+
+
+export const Router = (() => {
   let _toastTimer = null;
 
   let _currentView = 'setup';

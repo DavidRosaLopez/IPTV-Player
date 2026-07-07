@@ -2,7 +2,7 @@
  * keyHandler.js — Remote control key management
  * Samsung Tizen 9 / S91F
  */
-const KeyHandler = (() => {
+export const KeyHandler = (() => {
   // Key codes
   const KEYS = {
     UP: 38, DOWN: 40, LEFT: 37, RIGHT: 39,

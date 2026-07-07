@@ -1,7 +1,20 @@
 /**
  * view-channels.js — Controlador de la vista principal de Canales
  */
-const ViewChannels = (() => {
+import { Store } from './store.js';
+import { Storage } from './storage.js';
+import { KeyHandler } from './keyHandler.js';
+import { Router } from './router.js';
+import { Favorites } from './favorites.js';
+import { SetupProgress } from './setup-progress.js';
+import { Search } from './search.js';
+import { Playlist } from './playlist.js';
+import { VirtualList } from './virtual-list.js';
+import { Player } from './player.js';
+import { InfoPopup } from './info-popup.js';
+
+
+export const ViewChannels = (() => {
   const COUNTRY_MAP = {
     'ALL':   { emoji: '🌎', name: 'Todos' },
     'ES':    { emoji: '🇪🇸', name: 'España' },
@@ -282,7 +295,7 @@ const ViewChannels = (() => {
 
       // Only rebuild innerHTML if content changed (avoids forced reflow)
       const cnt = g.id === '__all__'  ? Playlist.filterByGroup(channels, '__all__', null, currentCountry).length :
-                  g.id === '__favs__' ? Favorites.getIds().length :
+                  g.id === '__favs__' ? _getFavoritesCount(channels, currentCountry) :
                   Playlist.filterByGroup(channels, g.id, null, currentCountry).length;
       const newHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
       if (li.innerHTML !== newHTML) li.innerHTML = newHTML;
@@ -309,6 +322,11 @@ const ViewChannels = (() => {
     _sidebarFocusablesCache = null;
   }
 
+  function _getFavoritesCount(channels, currentCountry) {
+    const favIds = new Set(Favorites.getIds());
+    return Playlist.filterByGroup(channels, '__favs__', favIds, currentCountry).length;
+  }
+
   function _updateGroupCounts() {
     const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
     const groups = Store.get('groups');
@@ -316,7 +334,7 @@ const ViewChannels = (() => {
 
     const cache = { 
       '__all__': Playlist.filterByGroup(channels, '__all__', null, currentCountry).length,
-      '__favs__': Favorites.getIds().length,
+      '__favs__': _getFavoritesCount(channels, currentCountry),
       '__watching__': Playlist.filterByGroup(channels, '__watching__', null, currentCountry).length
     };
     for (const ch of channels) {
