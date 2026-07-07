@@ -126,7 +126,15 @@ const Player = (() => {
                if (typeof InfoPopup !== 'undefined' && InfoPopup.isSuspended()) {
                  InfoPopup.resume();
                }
+            } else if (_current && _current.type === 'vod') {
+               // Película terminada: volver a la ficha, no relanzar en bucle
+               stop();
+               if (typeof Router !== 'undefined') Router.showView('channels');
+               if (typeof InfoPopup !== 'undefined' && InfoPopup.isSuspended()) {
+                 InfoPopup.resume();
+               }
             } else {
+               // Canal TV en directo: relanzar automáticamente
                setTimeout(() => { if (_current) play(_current); }, 1000);
             }
           };
@@ -162,7 +170,8 @@ const Player = (() => {
                  const saved = Storage.getEpisodeProgress(_current.id) || Store.get('progress_' + _current.id);
                  if (saved && saved > 10000) {
                    setTimeout(() => {
-                     try { webapis.avplay.jumpForward(saved); } catch(e){}
+                     // seekTo es posición absoluta (ms), jumpForward es relativa → seekTo es el correcto aquí
+                     try { webapis.avplay.seekTo(saved); } catch(e){}
                    }, 200);
                  }
                  _startProgressSaveTimer();
@@ -460,6 +469,26 @@ const Player = (() => {
         }
         return true;
       }
+    });
+
+    // ── TECLAS DE MEDIOS DEL MANDO FÍSICO ────────────────
+    KeyHandler.on('PLAY_PAUSE', () => {
+      if (_isActive()) { togglePlayPause(); if (typeof VodOSD !== 'undefined' && (_current?.type === 'vod' || _current?.type === 'series')) VodOSD.show(_current); return true; }
+    });
+    KeyHandler.on('PLAY', () => {
+      if (_isActive() && _state !== 'PLAYING') { togglePlayPause(); return true; }
+    });
+    KeyHandler.on('PAUSE', () => {
+      if (_isActive() && _state === 'PLAYING') { togglePlayPause(); return true; }
+    });
+    KeyHandler.on('REWIND', () => {
+      if (_isActive()) { _handleSeek('left'); return true; }
+    });
+    KeyHandler.on('FAST_FWD', () => {
+      if (_isActive()) { _handleSeek('right'); return true; }
+    });
+    KeyHandler.on('STOP', () => {
+      if (_isActive() && _current) { stop(); Router.showView('channels'); return true; }
     });
 
     KeyHandler.on('BACK', () => {
