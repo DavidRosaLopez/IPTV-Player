@@ -12,7 +12,8 @@ import { Search } from './search.js';
 import { Playlist } from './playlist.js';
 import { Player } from './player.js';
 import { ViewChannels } from './view-channels.js';
-import { Sync } from './sync.js';
+import { ViewSetup } from './view-setup.js';
+import { eventBus } from './eventBus.js';
 
 
 export const App = (() => {
@@ -21,8 +22,10 @@ export const App = (() => {
   let _prefetchTimer = null;
   let _prefetchController = null;
   let _syncTimer = null;
+  let _eventsBound = false;
 
   function init() {
+    _bindAppEvents();
     KeyHandler.init();
     Favorites.init();
 
@@ -65,6 +68,26 @@ export const App = (() => {
     }
 
     Router.showView('setup');
+  }
+
+  function _bindAppEvents() {
+    if (_eventsBound) return;
+    _eventsBound = true;
+
+    eventBus.on('list:load-requested', list => loadList(list));
+    eventBus.on('load:cancel-requested', () => cancelLoad());
+    eventBus.on('player:play-requested', ch => Player.play(ch));
+    eventBus.on('player:stop-requested', () => Player.stop());
+    eventBus.on('channels:refresh-requested', () => ViewChannels.refreshUI());
+    eventBus.on('channels:render-groups-requested', () => ViewChannels.renderGroups());
+    eventBus.on('view:shown', ({ name, fromView }) => {
+      if (name === 'channels') {
+        ViewChannels.onShow(fromView);
+      } else if (name === 'setup') {
+        Player.stop();
+        ViewSetup.onShow();
+      }
+    });
   }
 
   function _startClock() {
@@ -195,7 +218,7 @@ export const App = (() => {
 
   async function _afterLoad(list, fromCache = false) {
     Playlist.clearGroupCache();
-    const channels = Store.get('channels');
+    const channels = Store.peek('channels') || [];
     Store.set('groups', Playlist.getGroups(channels));
     Store.set('groupCountsCache', null);
     Store.set('currentGroup', '__all__');

@@ -4,7 +4,8 @@ import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
 import { Playlist } from './playlist.js';
 import { Sync } from './sync.js';
-import { App } from './app.js';
+import { eventBus } from './eventBus.js';
+import { getCountryInfo, sortCountryCodes } from './countries.js';
 
 
 export const ViewSetup = (() => {
@@ -43,6 +44,17 @@ export const ViewSetup = (() => {
 
   function _uid() { return Math.random().toString(36).substring(2, 9); }
   function _val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  function _requestLoadList(list) { eventBus.emit('list:load-requested', list); }
+  function _requestCancelLoad() { eventBus.emit('load:cancel-requested'); }
+  function _escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[ch]));
+  }
   function _setStatus(id, msg, type) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -114,13 +126,15 @@ export const ViewSetup = (() => {
     const defaultListId = Storage.getDefaultList();
     lists.forEach(list => {
       const isDefault = defaultListId === list.id;
+      const safeName = _escapeHtml(list.name || 'Lista IPTV');
+      const safeServer = _escapeHtml(list.server || '');
       const item = document.createElement('div');
       item.className = 'saved-item focusable';
       item.innerHTML = `
         <span class="saved-item-icon material-symbols-rounded">${list.type === 'xtream' ? 'key' : 'list_alt'}</span>
         <div class="saved-item-info">
-          <div class="saved-item-name">${list.name}</div>
-          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream · ' + list.server : 'M3U8'}</div>
+          <div class="saved-item-name">${safeName}</div>
+          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream · ' + safeServer : 'M3U8'}</div>
         </div>
         <div style="display:flex; gap:8px;">
           <button class="saved-item-default" data-id="${list.id}"><span class="material-symbols-rounded" style="font-size: 20px; color: ${isDefault ? 'var(--yellow)' : 'var(--text-sec)'};">${isDefault ? 'star' : 'star_border'}</span></button>
@@ -132,7 +146,7 @@ export const ViewSetup = (() => {
       item.querySelector('.saved-item-edit').addEventListener('click', e => { e.stopPropagation(); _editList(list); });
       item.querySelector('.saved-item-del').addEventListener('click', e => { e.stopPropagation(); _deleteList(list.id); });
       item.addEventListener('click', () => {
-        if (typeof App !== 'undefined') App.loadList(list);
+        _requestLoadList(list);
       });
       el.appendChild(item);
     });
@@ -196,7 +210,7 @@ export const ViewSetup = (() => {
     document.getElementById('btn-add-xtream').textContent = 'Añadir lista';
     
     if (typeof App !== 'undefined') {
-      App.loadList(list);
+      _requestLoadList(list);
     }
   }
 
@@ -223,21 +237,12 @@ export const ViewSetup = (() => {
     
     let codes = Store.get('allCountries') || [];
     if (!codes.length) {
-      const channels = Store.get('channels') || [];
+      const channels = Store.peek('channels') || [];
       const codesSet = new Set();
       for (const c of channels) {
         if (c.countryCode) codesSet.add(c.countryCode);
       }
-      codes = Array.from(codesSet).sort((a, b) => {
-        const nameA = (COUNTRY_MAP[a] || {name: a}).name;
-        const nameB = (COUNTRY_MAP[b] || {name: b}).name;
-        return nameA.localeCompare(nameB);
-      });
-      const idxOtros = codes.indexOf('OTROS');
-      if (idxOtros >= 0) {
-        codes.splice(idxOtros, 1);
-        codes.push('OTROS');
-      }
+      codes = sortCountryCodes(codesSet);
       Store.set('allCountries', codes);
     }
 
@@ -288,7 +293,7 @@ export const ViewSetup = (() => {
 
     codes.forEach(code => {
       const isChecked = visibleCountries === null || visibleCountries.includes(code);
-      const info = COUNTRY_MAP[code] || { emoji: '🏳️', name: code };
+      const info = getCountryInfo(code);
       
       const item = document.createElement('div');
       item.className = 'country-setting-item focusable' + (isChecked ? ' checked' : '');
@@ -334,7 +339,7 @@ export const ViewSetup = (() => {
       list.id = list.id || _uid();
       _saveList(list);
       if (typeof Router !== 'undefined') Router.showToast('Lista remota sincronizada', 'success');
-      if (typeof App !== 'undefined') App.loadList(list);
+      _requestLoadList(list);
     };
 
     if (typeof Sync !== 'undefined') {
@@ -379,7 +384,7 @@ export const ViewSetup = (() => {
     document.getElementById('btn-add-xtream')?.addEventListener('click', () => _addXtream());
     document.getElementById('btn-test-xtream')?.addEventListener('click', () => _testXtream());
     document.getElementById('btn-cancel-load')?.addEventListener('click', () => {
-      if (typeof App !== 'undefined') App.cancelLoad();
+      _requestCancelLoad();
     });
 
     // D-pad navigation for setup
@@ -502,7 +507,7 @@ export const ViewSetup = (() => {
       if (typeof Router === 'undefined' || !Router.isView('setup')) return;
       const progressEl = document.getElementById('setup-progress');
       if (progressEl && !progressEl.classList.contains('hidden')) {
-        if (typeof App !== 'undefined') App.cancelLoad();
+        _requestCancelLoad();
         return true;
       }
       if (_setupZone === 'exit') {
@@ -532,14 +537,14 @@ export const ViewSetup = (() => {
       if (typeof Router === 'undefined' || !Router.isView('setup')) return;
       const progressEl = document.getElementById('setup-progress');
       if (progressEl && !progressEl.classList.contains('hidden')) {
-        if (typeof App !== 'undefined') App.cancelLoad();
+        _requestCancelLoad();
         return true;
       }
       if (_setupZone === 'exit') {
         _hideExitPopup();
         return true;
       }
-      const channels = typeof Store !== 'undefined' ? Store.get('channels') : [];
+      const channels = typeof Store !== 'undefined' ? Store.peek('channels') : [];
       if (channels && channels.length > 0) {
         Router.showView('channels');
         return true;

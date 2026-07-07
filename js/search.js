@@ -7,7 +7,6 @@ import { Playlist } from './playlist.js';
 import { VirtualList } from './virtual-list.js';
 import { Player } from './player.js';
 import { InfoPopup } from './info-popup.js';
-import { ViewChannels } from './view-channels.js';
 
 
 export const Search = (() => {
@@ -15,6 +14,16 @@ export const Search = (() => {
   let _debounceTimer = null;
   let _isOpen = false;
   let _lastSearchKey = '';
+  let _view = {
+    getCurrentTab: () => 'tv',
+    renderChannels: () => {},
+    focusSearchResults: () => {},
+    setSidebarFocusToSearch: () => {}
+  };
+
+  function configure(viewApi) {
+    _view = { ..._view, ...viewApi };
+  }
 
   function init(channels) {
     _allChannels = channels;
@@ -60,22 +69,18 @@ export const Search = (() => {
     }
     KeyHandler.off('BACK', _onBack);
     // Restore full channel list
-    ViewChannels.renderChannels();
+    _view.renderChannels();
   }
 
   const _onChange = (e) => {
     _onInput(e);
-    if (typeof ViewChannels !== 'undefined' && ViewChannels.focusSearchResults) {
-      setTimeout(() => ViewChannels.focusSearchResults(), 200);
-    }
+    setTimeout(() => _view.focusSearchResults(), 200);
   };
 
   const _onNativeKeyDown = (e) => {
     if (e.keyCode === 13) {
       _onInput(e);
-      if (typeof ViewChannels !== 'undefined' && ViewChannels.focusSearchResults) {
-        setTimeout(() => ViewChannels.focusSearchResults(), 200);
-      }
+      setTimeout(() => _view.focusSearchResults(), 200);
     }
   };
 
@@ -83,8 +88,8 @@ export const Search = (() => {
     clearTimeout(_debounceTimer);
     _debounceTimer = setTimeout(() => {
       const q   = e.target.value.trim();
-      const currentTab = typeof ViewChannels !== 'undefined' ? ViewChannels.getCurrentTab() : 'tv';
-      const data = currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
+      const currentTab = _view.getCurrentTab();
+      const data = currentTab === 'tv' ? (Store.peek('channels') || []) : (Store.peek('currentData') || []);
       const cacheKey = `${currentTab}|${q}|${Store.get('currentCountry') || 'ALL'}|${Store.get('currentGroup') || ''}|${data.length}`;
       if (_lastSearchKey === cacheKey) return;
       _lastSearchKey = cacheKey;
@@ -92,14 +97,14 @@ export const Search = (() => {
       const cnt = document.getElementById('search-count');
       if (!q) {
         if (cnt) cnt.textContent = '';
-        ViewChannels.renderChannels(); // Restaura la vista filtrada por grupo
+        _view.renderChannels(); // Restaura la vista filtrada por grupo
       } else {
         if (cnt) {
            if (currentTab === 'tv') cnt.textContent = res.length + ' canales';
            else if (currentTab === 'vod') cnt.textContent = res.length + ' películas';
            else cnt.textContent = res.length + ' series';
         }
-        ViewChannels.renderChannels(res);
+        _view.renderChannels(res);
       }
     }, 120); // 120ms debounce — fast but not every keystroke
   };
@@ -112,9 +117,7 @@ export const Search = (() => {
       const input = document.getElementById('search-input');
       if (document.activeElement === input) {
         close();
-        if (typeof ViewChannels !== 'undefined' && ViewChannels.setSidebarFocusToSearch) {
-          ViewChannels.setSidebarFocusToSearch();
-        }
+        _view.setSidebarFocusToSearch();
       } else {
         if (input) input.focus();
         if (typeof VirtualList !== 'undefined') {
@@ -138,5 +141,5 @@ export const Search = (() => {
     }
   }
 
-  return { init, open, close, isOpen, reapply };
+  return { configure, init, open, close, isOpen, reapply };
 })();

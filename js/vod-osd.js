@@ -1,8 +1,8 @@
-import { Player } from './player.js';
 import { InfoPopup } from './info-popup.js';
 
 
 export const VodOSD = (() => {
+  let _player = null;
   let _timer = null;
   let _progressTimer = null;
   let _isVisible = false;
@@ -21,6 +21,9 @@ export const VodOSD = (() => {
   let _previewVisible = false;
   let _previewSeekTime = 0;
 
+  function configure(playerApi) {
+    _player = playerApi;
+  }
 
   function show(currentCh) {
     if (!currentCh) return;
@@ -78,8 +81,8 @@ export const VodOSD = (() => {
 
   function toggle() {
     if (_isVisible) hide();
-    else if (typeof Player !== 'undefined' && Player.getCurrent()) {
-      show(Player.getCurrent());
+    else if (_player && _player.getCurrent()) {
+      show(_player.getCurrent());
     }
   }
 
@@ -89,7 +92,7 @@ export const VodOSD = (() => {
     if (_focusState === 'audio-menu') return;
     
     _timer = setTimeout(() => {
-      if (typeof Player !== 'undefined' && Player.getState() === 'PLAYING') {
+      if (_player && _player.getState() === 'PLAYING') {
         hide();
       }
     }, 4000);
@@ -111,9 +114,9 @@ export const VodOSD = (() => {
   }
 
   function _updateProgress() {
-    if (typeof Player === 'undefined') return;
-    const current = Player.getCurrentTime();
-    const total = Player.getDuration();
+    if (!_player) return;
+    const current = _player.getCurrentTime();
+    const total = _player.getDuration();
     const remaining = Math.max(0, total - current);
 
     document.getElementById('vod-time-current').textContent = _formatTime(current);
@@ -147,7 +150,7 @@ export const VodOSD = (() => {
       if (key === 'ENTER') {
         const track = _audioTracks[_audioIdx];
         if (track && track.index !== -1) {
-          Player.setAudioTrack(track.index);
+          _player.setAudioTrack(track.index);
         }
         _closeAudioMenu();
         return true;
@@ -180,7 +183,7 @@ export const VodOSD = (() => {
         if (activeId === 'btn-vod-audio') {
            _openAudioMenu();
         } else if (activeId === 'btn-vod-restart') {
-           if (typeof Player !== 'undefined') Player.seekTo(0);
+           if (_player) _player.seekTo(0);
            hide();
         } else if (activeId === 'btn-vod-next') {
            if (typeof InfoPopup !== 'undefined') InfoPopup.playNextEpisode();
@@ -202,7 +205,7 @@ export const VodOSD = (() => {
       return true;
     }
     if (key === 'ENTER') {
-      Player.togglePlayPause();
+      if (_player) _player.togglePlayPause();
       _resetHideTimer(); 
       return true;
     }
@@ -222,8 +225,9 @@ export const VodOSD = (() => {
   }
 
   function _openAudioMenu() {
-    _audioTracks = Player.getAudioTracks() || [];
-    const current = Player.getCurrentAudioTrack();
+    if (!_player) return;
+    _audioTracks = _player.getAudioTracks() || [];
+    const current = _player.getCurrentAudioTrack();
     
     if (_audioTracks.length === 0) {
        _audioTracks = [{ index: -1, extra_info: { language: 'Predeterminado' } }];
@@ -252,7 +256,7 @@ export const VodOSD = (() => {
     if (!list) return;
     list.innerHTML = '';
     
-    const current = Player.getCurrentAudioTrack();
+    const current = _player ? _player.getCurrentAudioTrack() : null;
     
     _audioTracks.forEach((t, i) => {
       const li = document.createElement('li');
@@ -261,9 +265,14 @@ export const VodOSD = (() => {
       
       const lang = (t.extra_info && t.extra_info.language) ? t.extra_info.language.toUpperCase() : ('Pista ' + (i+1));
       
-      li.innerHTML = `<span>${lang}</span>`;
+      const label = document.createElement('span');
+      label.textContent = lang;
+      li.appendChild(label);
       if (current && current.index === t.index) {
-         li.innerHTML += `<span class="material-symbols-rounded">check</span>`;
+         const check = document.createElement('span');
+         check.className = 'material-symbols-rounded';
+         check.textContent = 'check';
+         li.appendChild(check);
       }
       
       list.appendChild(li);
@@ -277,5 +286,5 @@ export const VodOSD = (() => {
     return _isVisible;
   }
 
-  return { show, hide, toggle, handleKey, isVisible };
+  return { configure, show, hide, toggle, handleKey, isVisible };
 })();

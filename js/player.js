@@ -13,7 +13,8 @@ import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
 import { PlayerOSD } from './player-osd.js';
 import { VodOSD } from './vod-osd.js';
-import { InfoPopup } from './info-popup.js';
+import { Watching } from './watching.js';
+import { eventBus } from './eventBus.js';
 
 
 export const Player = (() => {
@@ -37,6 +38,17 @@ export const Player = (() => {
     _onChannelChange = onChannelChange;
     _videoLayerEl = document.getElementById('video-layer'); // cache once
     _bindKeys();
+    VodOSD.configure({
+      getCurrent,
+      getState,
+      getCurrentTime,
+      getDuration,
+      togglePlayPause,
+      seekTo,
+      getAudioTracks,
+      setAudioTrack,
+      getCurrentAudioTrack
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
@@ -130,16 +142,12 @@ export const Player = (() => {
             if (_current && _current.type === 'series') {
                stop();
                if (typeof Router !== 'undefined') Router.showView('channels');
-               if (typeof InfoPopup !== 'undefined' && InfoPopup.isSuspended()) {
-                 InfoPopup.resume();
-               }
+               eventBus.emit('info-popup:resume-requested');
             } else if (_current && _current.type === 'vod') {
                // Película terminada: volver a la ficha, no relanzar en bucle
                stop();
                if (typeof Router !== 'undefined') Router.showView('channels');
-               if (typeof InfoPopup !== 'undefined' && InfoPopup.isSuspended()) {
-                 InfoPopup.resume();
-               }
+               eventBus.emit('info-popup:resume-requested');
             } else {
                // Canal TV en directo: relanzar automáticamente
                setTimeout(() => { if (_current) play(_current); }, 1000);
@@ -629,7 +637,7 @@ export const Player = (() => {
           Store.set('progress_' + _current.id, ms);
           Storage.setEpisodeProgress(_current.id, ms);
           // Actualizar "Seguir viendo" con el minuto actual
-          if (_current.type === 'series' && _current.seriesId && typeof Watching !== 'undefined') {
+          if (_current.type === 'series' && _current.seriesId) {
             Watching.updateProgress(_current.seriesId, _current.id, ms);
           }
         }

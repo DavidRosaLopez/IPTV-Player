@@ -6,8 +6,8 @@ import { Storage } from './storage.js';
 import { Router } from './router.js';
 import { Favorites } from './favorites.js';
 import { Playlist } from './playlist.js';
-import { Player } from './player.js';
-import { ViewChannels } from './view-channels.js';
+import { Watching } from './watching.js';
+import { eventBus } from './eventBus.js';
 
 
 export const InfoPopup = (() => {
@@ -22,6 +22,35 @@ export const InfoPopup = (() => {
   let _seasons = [];
   let _episodesMap = {};
 
+  function _requestPlay(ch) { eventBus.emit('player:play-requested', ch); }
+  function _requestStop() { eventBus.emit('player:stop-requested'); }
+  function _requestChannelsRefresh() { eventBus.emit('channels:refresh-requested'); }
+  function _requestGroupsRender() { eventBus.emit('channels:render-groups-requested'); }
+  function _escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[ch]));
+  }
+  function _safeMediaUrl(value) {
+    const url = String(value || '').trim();
+    if (/^(https?:|data:image\/)/i.test(url)) return url;
+    return '';
+  }
+  function _setImage(id, url) {
+    const safe = _safeMediaUrl(url);
+    const el = document.getElementById(id);
+    if (el && safe) el.src = safe;
+  }
+  function _setBackground(id, url) {
+    const safe = _safeMediaUrl(url).replace(/["\\\r\n]/g, '');
+    const el = document.getElementById(id);
+    if (el && safe) el.style.backgroundImage = `url("${safe}")`;
+  }
+
   async function show(ch) {
     if (!ch || (ch.type !== 'vod' && ch.type !== 'series')) return;
     _current = ch;
@@ -33,8 +62,8 @@ export const InfoPopup = (() => {
     _resetUI();
     document.getElementById('info-title').textContent = ch.name || 'Cargando...';
     if (ch.logo) {
-      document.getElementById('info-poster').src = ch.logo;
-      document.getElementById('info-popup-bg').style.backgroundImage = `url('${ch.logo}')`;
+      _setImage('info-poster', ch.logo);
+      _setBackground('info-popup-bg', ch.logo);
     }
 
     const list = Store.get('currentList');
@@ -164,9 +193,9 @@ export const InfoPopup = (() => {
     document.getElementById('info-director').textContent = info.director || 'Desconocido';
     document.getElementById('info-cast').textContent = info.cast || info.actors || 'Desconocido';
 
-    if (info.movie_image) document.getElementById('info-poster').src = info.movie_image;
+    if (info.movie_image) _setImage('info-poster', info.movie_image);
     if (info.backdrop_path && info.backdrop_path.length > 0) {
-      document.getElementById('info-popup-bg').style.backgroundImage = `url('${info.backdrop_path[0]}')`;
+      _setBackground('info-popup-bg', info.backdrop_path[0]);
     }
   }
 
@@ -188,9 +217,9 @@ export const InfoPopup = (() => {
     document.getElementById('info-director').textContent = info.director || 'Desconocido';
     document.getElementById('info-cast').textContent = info.cast || 'Desconocido';
 
-    if (info.cover) document.getElementById('info-poster').src = info.cover;
+    if (info.cover) _setImage('info-poster', info.cover);
     if (info.backdrop_path && info.backdrop_path.length > 0) {
-      document.getElementById('info-popup-bg').style.backgroundImage = `url('${info.backdrop_path[0]}')`;
+      _setBackground('info-popup-bg', info.backdrop_path[0]);
     }
 
     // Series lists
@@ -245,8 +274,9 @@ export const InfoPopup = (() => {
     eps.forEach((ep, i) => {
       const li = document.createElement('li');
       const info = ep.info || {};
-      const img = info.cover ? `<img src="${info.cover}" class="info-ep-img" loading="lazy" onerror="this.style.display='none'">` : '';
-      let cleanTitle = String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim();
+      const epCover = _safeMediaUrl(info.cover);
+      const img = epCover ? `<img src="${_escapeHtml(epCover)}" class="info-ep-img" loading="lazy" onerror="this.style.display='none'">` : '';
+      let cleanTitle = _escapeHtml(String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim());
       
       // Mostrar progreso guardado si existe
       const epId = `ep_${ep.id}`;
@@ -443,21 +473,15 @@ export const InfoPopup = (() => {
     if (typeof Router !== 'undefined') {
       Router.showToast(isFav ? 'Añadido a Favoritos' : 'Eliminado de Favoritos', isFav ? 'success' : 'info');
     }
-    if (typeof ViewChannels !== 'undefined') {
-      ViewChannels.refreshUI();
-    }
+    _requestChannelsRefresh();
   }
 
   function _executeAction() {
     if (_actionIdx === 0 && _current.type === 'vod') {
-      if (typeof Watching !== 'undefined') {
-        Watching.add(_current, null);
-        if (typeof ViewChannels !== 'undefined' && ViewChannels.renderGroups) {
-           ViewChannels.renderGroups();
-        }
-      }
+      Watching.add(_current, null);
+      _requestGroupsRender();
       suspend();
-      Player.play(_current);
+      _requestPlay(_current);
     } else if (_actionIdx === 1) {
       _toggleFav();
     }
@@ -471,12 +495,8 @@ export const InfoPopup = (() => {
     const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
     
     // Guardar en seguir viendo
-    if (typeof Watching !== 'undefined') {
-      Watching.add(_current, ep);
-      if (typeof ViewChannels !== 'undefined' && ViewChannels.renderGroups) {
-         ViewChannels.renderGroups();
-      }
-    }
+    Watching.add(_current, ep);
+    _requestGroupsRender();
 
     // Create a temporary channel object for the episode
     const playCh = {
@@ -489,7 +509,7 @@ export const InfoPopup = (() => {
     };
 
     suspend();
-    Player.play(playCh);
+    _requestPlay(playCh);
   }
 
   function _getFlattenedEpisodes() {
@@ -521,7 +541,7 @@ export const InfoPopup = (() => {
     if (nextEp) {
       _playEpisode(nextEp);
     } else {
-      if (typeof Player !== 'undefined') Player.stop();
+      _requestStop();
       if (typeof Router !== 'undefined') Router.showView('channels');
       if (isSuspended()) resume();
     }
@@ -562,6 +582,10 @@ export const InfoPopup = (() => {
       _actionIdx = 1;
       _executeAction();
     });
+  });
+
+  eventBus.on('info-popup:resume-requested', () => {
+    if (isSuspended()) resume();
   });
 
   return { show, hide, handleKey, isVisible: () => _isVisible, suspend, resume, isSuspended: () => _isSuspended, playNextEpisode, setPlayingEpisode, hasNextEpisode };

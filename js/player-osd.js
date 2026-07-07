@@ -4,14 +4,15 @@
 import { Favorites } from './favorites.js';
 import { EPG } from './epg.js';
 import { VirtualList } from './virtual-list.js';
-import { Player } from './player.js';
 
 
 export const PlayerOSD = (() => {
   let _osdTimer = null;
+  let _activeChannelId = null;
 
   function show(currentCh) {
     if (!currentCh) return;
+    _activeChannelId = currentCh.id;
     const osd = document.getElementById('player-osd');
     if (!osd) return;
 
@@ -46,13 +47,13 @@ export const PlayerOSD = (() => {
 
       const targetCh = currentCh;
       EPG.fetchRealEpg(targetCh).then(listings => {
-        if (typeof Player !== 'undefined' && Player.getCurrent() && Player.getCurrent().id === targetCh.id) {
+        if (_activeChannelId === targetCh.id) {
           const realData = EPG.parseRealEpg(listings);
           _updateEPGDisplay(realData);
         }
       }).catch(err => {
         console.error('Error loading real EPG:', err);
-        if (typeof Player !== 'undefined' && Player.getCurrent() && Player.getCurrent().id === targetCh.id) {
+        if (_activeChannelId === targetCh.id) {
           _updateEPGDisplay(null);
         }
       });
@@ -69,6 +70,7 @@ export const PlayerOSD = (() => {
   }
 
   function hide() {
+    _activeChannelId = null;
     const osd = document.getElementById('player-osd');
     if (osd) osd.classList.add('hidden');
     clearTimeout(_osdTimer);

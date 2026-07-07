@@ -161,6 +161,7 @@ export const VirtualList = (() => {
   }
 
   function getItem(idx) { return _items[idx]; }
+  function getItems() { return _items; }
   function getCurrentItem() { return _items[_focusedIdx]; }
 
   // ── RENDER ───────────────────────────────────────────
@@ -379,5 +380,5 @@ export const VirtualList = (() => {
     return s ? String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
   }
 
-  return { init, update, setFocused, getFocused, move, getItem, getCurrentItem, refreshVisible };
+  return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, refreshVisible };
 })();

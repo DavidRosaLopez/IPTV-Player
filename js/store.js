@@ -21,6 +21,7 @@ export const Store = (() => {
       if (val !== null && typeof val === 'object') return { ...val };
       return val;
     },
+    peek: (key) => state[key],
     set: (key, val) => { 
       state[key] = val; 
       if (listeners[key]) {

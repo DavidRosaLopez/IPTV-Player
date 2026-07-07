@@ -2,6 +2,9 @@
  * playlist.js — Xtream Codes API
  * Performance optimized for large playlists (10k+ channels)
  */
+import { normalizeCountryCode } from './countries.js';
+import { Watching } from './watching.js';
+
 export const Playlist = (() => {
 
   // ── SEARCH INDEX ─────────────────────────────────────
@@ -88,8 +91,8 @@ export const Playlist = (() => {
     
     let match = cat.match(prefixRegex) || chName.match(prefixRegex);
     if (match) {
-      const code = match[1].toUpperCase();
-      if (COUNTRY_MAP[code]) { _countryDetectCache.set(cat, code); return code; }
+      const code = normalizeCountryCode(match[1]);
+      if (code) { _countryDetectCache.set(cat, code); return code; }
     }
     
     const catLower = cat.toLowerCase();
@@ -553,7 +556,7 @@ export const Playlist = (() => {
       return base.filter(c => favIds && favIds.has(c.id));
     }
     if (groupId === '__watching__') {
-      const watchingIds = typeof Watching !== 'undefined' ? Watching.getIds() : [];
+      const watchingIds = Watching.getIds();
       const idMap = new Map(watchingIds.map((id, index) => [id, index]));
       const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
       return base.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));

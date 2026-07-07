@@ -12,6 +12,8 @@ import { Playlist } from './playlist.js';
 import { VirtualList } from './virtual-list.js';
 import { Player } from './player.js';
 import { InfoPopup } from './info-popup.js';
+import { Watching } from './watching.js';
+import { getCountryInfo, sortCountryCodes } from './countries.js';
 
 
 export const ViewChannels = (() => {
@@ -93,25 +95,58 @@ export const ViewChannels = (() => {
     }
   }
 
+  function _getCurrentData() {
+    return (_currentTab === 'tv' ? Store.peek('channels') : Store.peek('currentData')) || [];
+  }
+
+  function _getGroupIcon(g) {
+    if (g?.icon) return g.icon;
+    const match = String(g?.name || '').match(/<span[^>]*material-symbols-rounded[^>]*>([^<]+)<\/span>/);
+    return match ? match[1].trim() : null;
+  }
+
+  function _getGroupLabel(g) {
+    return String(g?.name || '').replace(/<span[^>]*>.*?<\/span>\s*/g, '');
+  }
+
+  function _setGroupContent(li, g, count = null, folderExpanded = null) {
+    li.replaceChildren();
+
+    const label = document.createElement('span');
+    const icon = _getGroupIcon(g);
+    if (icon) {
+      const iconEl = document.createElement('span');
+      iconEl.className = 'material-symbols-rounded';
+      iconEl.textContent = icon;
+      label.appendChild(iconEl);
+      label.appendChild(document.createTextNode(' '));
+    }
+    label.appendChild(document.createTextNode(_getGroupLabel(g)));
+    li.appendChild(label);
+
+    if (folderExpanded !== null) {
+      const folderIcon = document.createElement('span');
+      folderIcon.className = 'material-symbols-rounded folder-icon';
+      folderIcon.textContent = folderExpanded ? 'expand_less' : 'expand_more';
+      li.appendChild(folderIcon);
+    } else if (count !== null) {
+      const countEl = document.createElement('span');
+      countEl.className = 'group-count';
+      countEl.textContent = count;
+      li.appendChild(countEl);
+    }
+  }
+
 
 
 
   function _updateCountriesList() {
-    const channels = _currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
+    const channels = _getCurrentData();
     const codesSet = new Set();
     for (const c of channels) {
       if (c.countryCode) codesSet.add(c.countryCode);
     }
-    const codes = Array.from(codesSet).sort((a, b) => {
-      const nameA = (COUNTRY_MAP[a] || {name: a}).name;
-      const nameB = (COUNTRY_MAP[b] || {name: b}).name;
-      return nameA.localeCompare(nameB);
-    });
-    const idxOtros = codes.indexOf('OTROS');
-    if (idxOtros >= 0) {
-      codes.splice(idxOtros, 1);
-      codes.push('OTROS');
-    }
+    const codes = sortCountryCodes(codesSet);
     
     // Store complete list for the settings screen
     Store.set('allCountries', [...codes]);
@@ -169,10 +204,10 @@ export const ViewChannels = (() => {
     const currentCountry = Store.get('currentCountry') || 'ALL';
     
     codes.forEach((code, i) => {
-      const info = COUNTRY_MAP[code] || { emoji: '🏳️', name: code };
+      const info = getCountryInfo(code);
       const el = document.createElement('div');
       el.className = 'country-item' + (i === _countryFocusIdx && _focusZone === 'countries' ? ' focused' : '') + (code === currentCountry ? ' active' : '');
-      el.innerHTML = `${info.emoji} ${info.name}`;
+      el.textContent = `${info.emoji} ${info.name}`;
       el.addEventListener('click', () => _selectCountry(code, i));
       container.appendChild(el);
     });
@@ -204,7 +239,7 @@ export const ViewChannels = (() => {
     
     Playlist.clearGroupCache();
     
-    const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
+    const channels = _getCurrentData();
     Store.set('groups', Playlist.getGroups(channels, code, _currentTab));
     
     Store.set('currentGroup', '__all__');
@@ -242,7 +277,7 @@ export const ViewChannels = (() => {
     if (!list) return;
     
     const currentCountry = Store.get('currentCountry') || 'ALL';
-    const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
+    const channels = _getCurrentData();
     
     const groups = Playlist.getGroups(channels, currentCountry, _currentTab);
     Store.set('groups', groups);
@@ -273,7 +308,7 @@ export const ViewChannels = (() => {
         }
         li.className = 'group-item folder-item' + (i === groupIdx && _focusZone === 'groups' ? ' focused' : '');
         li.dataset.idx = i;
-        li.innerHTML = `<span>${g.name}</span><span class="material-symbols-rounded folder-icon">${expandedFolders[g.id] ? 'expand_less' : 'expand_more'}</span>`;
+        _setGroupContent(li, g, null, Boolean(expandedFolders[g.id]));
         fragment.appendChild(li);
         return;
       }
@@ -293,12 +328,10 @@ export const ViewChannels = (() => {
                      (g.id === currentGroup ? ' active' : '');
       li.dataset.idx = i;
 
-      // Only rebuild innerHTML if content changed (avoids forced reflow)
       const cnt = g.id === '__all__'  ? Playlist.filterByGroup(channels, '__all__', null, currentCountry).length :
                   g.id === '__favs__' ? _getFavoritesCount(channels, currentCountry) :
                   Playlist.filterByGroup(channels, g.id, null, currentCountry).length;
-      const newHTML = `<span>${g.name}</span><span class="group-count">${cnt}</span>`;
-      if (li.innerHTML !== newHTML) li.innerHTML = newHTML;
+      _setGroupContent(li, g, cnt);
 
       fragment.appendChild(li);
     });
@@ -328,7 +361,7 @@ export const ViewChannels = (() => {
   }
 
   function _updateGroupCounts() {
-    const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
+    const channels = _getCurrentData();
     const groups = Store.get('groups');
     const currentCountry = Store.get('currentCountry') || 'ALL';
 
@@ -387,7 +420,7 @@ export const ViewChannels = (() => {
     const groups = Store.get('groups');
     const gIdx = groups.findIndex(item => item.id === g.id);
 
-    const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
+    const channels = _getCurrentData();
     const favIds = new Set(Favorites.getIds());
     const currentCountry = Store.get('currentCountry') || 'ALL';
     const items = Playlist.filterByGroup(channels, g.id, favIds, currentCountry);
@@ -427,7 +460,7 @@ export const ViewChannels = (() => {
   }
 
   function renderChannels(list) {
-    const channels = (_currentTab === 'tv' ? Store.get('channels') : Store.get('currentData')) || [];
+    const channels = _getCurrentData();
     const currentGroup = Store.get('currentGroup');
     const currentCountry = Store.get('currentCountry') || 'ALL';
     const favIds = new Set(Favorites.getIds());
@@ -450,7 +483,7 @@ export const ViewChannels = (() => {
         const groups = Store.get('groups') || [];
         const gObj = groups.find(g => g.id === currentGroup);
         if (gObj) {
-          groupNameEl.textContent = gObj.name.replace(/<span.*?<\/span>\s*/g, '');
+          groupNameEl.textContent = _getGroupLabel(gObj);
         } else {
           groupNameEl.textContent = 'Canales';
         }
@@ -493,33 +526,31 @@ export const ViewChannels = (() => {
 
     // Si estamos en "Seguir viendo" y tiene un episodio guardado
     if (Store.get('currentGroup') === '__watching__' && ch.type === 'series') {
-       if (typeof Watching !== 'undefined') {
-         const items = Watching.getItems();
-         const wItem = items.find(i => (typeof i === 'object' && i.id === ch.id));
-         if (wItem && wItem.ep) {
-            const ep = wItem.ep;
-            const list = Store.get('currentList');
-            const ext = ep.container_extension || 'mp4';
-            const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
-            const playCh = {
-              id: `ep_${ep.id}`,
-              seriesId: ch.id, // para Watching.updateProgress()
-              name: `${ch.name} - ${ep.episode_num}. ${ep.title}`,
-              url: url,
-              logo: ch.logo,
-              type: 'series'
-            };
-            if (typeof InfoPopup !== 'undefined') {
-               InfoPopup.show(ch); 
-               InfoPopup.setPlayingEpisode(ep);
-               InfoPopup.suspend(); 
-            }
-            Router.showView('player');
-            document.getElementById('view-player').focus();
-            Player.play(playCh);
-            return;
-         }
-       }
+      const items = Watching.getItems();
+      const wItem = items.find(i => (typeof i === 'object' && i.id === ch.id));
+      if (wItem && wItem.ep) {
+        const ep = wItem.ep;
+        const list = Store.get('currentList');
+        const ext = ep.container_extension || 'mp4';
+        const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
+        const playCh = {
+          id: `ep_${ep.id}`,
+          seriesId: ch.id, // para Watching.updateProgress()
+          name: `${ch.name} - ${ep.episode_num}. ${ep.title}`,
+          url,
+          logo: ch.logo,
+          type: 'series'
+        };
+        if (typeof InfoPopup !== 'undefined') {
+          InfoPopup.show(ch);
+          InfoPopup.setPlayingEpisode(ep);
+          InfoPopup.suspend();
+        }
+        Router.showView('player');
+        document.getElementById('view-player').focus();
+        Player.play(playCh);
+        return;
+      }
     }
 
     if (ch.type === 'vod' || ch.type === 'series') {
@@ -970,7 +1001,7 @@ export const ViewChannels = (() => {
 
     let data = [];
     if (tabId === 'tv') {
-      data = Store.get('channels') || [];
+      data = Store.peek('channels') || [];
     } else if (tabId === 'vod') {
       let cached = await Storage.getVodCache(list.id);
       if (_currentTab !== tabId) return;
@@ -1061,7 +1092,7 @@ export const ViewChannels = (() => {
     if (typeof Search !== 'undefined' && Search.isOpen()) return; // Maintain search state, do not sync groups
     _updateCountriesList();
     renderCountries(); // Asegurarnos de que estén renderizados
-    const channels = _currentTab === 'tv' ? (Store.get('channels') || []) : (Store.get('currentData') || []);
+    const channels = _getCurrentData();
     const favIds = new Set(Favorites.getIds());
 
     const country = (_currentTab === 'vod' || _currentTab === 'series') ? 'ALL' : (ch.countryCode || 'ALL');
@@ -1126,9 +1157,11 @@ export const ViewChannels = (() => {
     if (typeof VirtualList !== 'undefined' && VirtualList.getItems().length > 0) {
       VirtualList.setFocused(0);
       _setFocusZone('channels');
-      KeyHandler.setFocus(document.querySelector('.channel-card[data-index="0"]'), true);
+      KeyHandler.setFocus(document.querySelector('.channel-card[data-idx="0"]'), true);
     }
   }
+
+  Search.configure({ getCurrentTab, renderChannels, focusSearchResults, setSidebarFocusToSearch });
 
   return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch, focusSearchResults };
 })();

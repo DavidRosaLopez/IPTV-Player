@@ -1,9 +1,7 @@
 /**
  * router.js — Visual View Routing and Overlays
  */
-import { Player } from './player.js';
-import { ViewChannels } from './view-channels.js';
-import { ViewSetup } from './view-setup.js';
+import { eventBus } from './eventBus.js';
 
 
 export const Router = (() => {
@@ -18,16 +16,7 @@ export const Router = (() => {
     const el = document.getElementById('view-' + name);
     if (el) el.classList.add('active');
 
-    // Avisar a los controladores de vista si existen
-    if (name === 'channels' && typeof ViewChannels !== 'undefined') {
-      ViewChannels.onShow(fromView);
-    }
-    if (name === 'setup') {
-      if (typeof Player !== 'undefined') Player.stop();
-      if (typeof ViewSetup !== 'undefined') {
-        ViewSetup.onShow();
-      }
-    }
+    eventBus.emit('view:shown', { name, fromView });
   }
 
 
