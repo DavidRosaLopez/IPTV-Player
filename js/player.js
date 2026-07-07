@@ -94,10 +94,7 @@ const Player = (() => {
 
           // 1. Adaptive Info (afecta a conexiones HLS / .m3u8)
           const maxBr = is8K ? 150000000 : is4K ? 100000000 : isHD ? 50000000 : 25000000;
-          const bufMs = is8K ? 12000 : is4K ? 10000 : isHD ? 6000 : 4000;
-          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}|BUFFERLENGTH=${Math.round(bufMs / 1000)}`);
-
-          // 2. Optimizaciones para señales en Vivo (MPEG-TS / Multicast)
+          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}`);
           if (isLive) {
             try { webapis.avplay.setStreamingProperty("IS_LIVE", "true"); } catch(e) {}
           }
@@ -108,14 +105,15 @@ const Player = (() => {
             try { webapis.avplay.setStreamingProperty("SET_MIX_RESOLUTION", "4k"); } catch(e) {}
           }
 
-          // 4. Aumentar timeout de buffering para codecs pesados que tardan más en dar el primer frame
-          // También aumentamos el buffer inicial en conexiones inestables (PLAYER_SPROPERTY_SET_INITIAL_BUFFER)
+          // 4. Aumentar timeout y tamaño de buffer para codecs pesados
           if (isRaw || isHEVC || is4K || is8K) {
             try { webapis.avplay.setTimeoutForBuffering(10000); } catch(e) {}
-            try { webapis.avplay.setStreamingProperty("SET_INITIAL_BUFFER", "10000"); } catch(e) {}
+            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 10); } catch(e) {}
+            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_RESUME", "PLAYER_BUFFER_SIZE_IN_SECOND", 10); } catch(e) {}
           } else {
             try { webapis.avplay.setTimeoutForBuffering(5000); } catch(e) {}
-            try { webapis.avplay.setStreamingProperty("SET_INITIAL_BUFFER", "5000"); } catch(e) {}
+            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 5); } catch(e) {}
+            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_RESUME", "PLAYER_BUFFER_SIZE_IN_SECOND", 5); } catch(e) {}
           }
         } catch(e) {}
 
@@ -197,10 +195,11 @@ const Player = (() => {
     const vl = _videoLayerEl || document.getElementById('video-layer');
     if (_mode === 'FULLSCREEN') {
       if (vl) { vl.style.left='0px'; vl.style.top='0px'; vl.style.width='1920px'; vl.style.height='1080px'; }
-      // Use FULL_SCREEN for UHD/4K/8K so the TV hardware scaler handles downscaling
-      // (avoids blurry software scaling that LETTER_BOX triggers with high-bitrate HEVC streams)
+      // Use FULL_SCREEN for UHD/4K/8K Live TV so the TV hardware scaler handles downscaling
+      // Para VOD/Series mantenemos LETTER_BOX para no distorsionar películas en formato panorámico (ej. 21:9).
       const _isUHD = _current && ((_current.name||'').toUpperCase().match(/4K|UHD|2160|8K|HEVC|H265/));
-      const _dispMethod = _isUHD ? 'PLAYER_DISPLAY_MODE_FULL_SCREEN' : 'PLAYER_DISPLAY_MODE_LETTER_BOX';
+      const _isLive = _current && _current.type !== 'vod' && _current.type !== 'series';
+      const _dispMethod = (_isUHD && _isLive) ? 'PLAYER_DISPLAY_MODE_FULL_SCREEN' : 'PLAYER_DISPLAY_MODE_LETTER_BOX';
       try { webapis.avplay.setDisplayMethod(_dispMethod); } catch(e) {}
       try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
     } else if (_mode === 'PIP') {
@@ -285,9 +284,8 @@ const Player = (() => {
         webapis.avplay.open(url);
         _applyDisplayRect();
         try {
-          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO',
-            'STARTBITRATE=LOWEST|MAXBITRATE=3000000|BUFFERLENGTH=3');
-          webapis.avplay.setStreamingProperty("SET_INITIAL_BUFFER", "3000");
+          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=LOWEST|MAXBITRATE=3000000');
+          try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 3); } catch(e) {}
         } catch(e) {}
         webapis.avplay.setListener({
           onbufferingstart:    () => _setState('BUFFERING'),
