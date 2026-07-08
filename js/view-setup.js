@@ -1,4 +1,4 @@
-import { Store } from './store.js';
+﻿import { Store } from './store.js';
 import { Storage } from './storage.js';
 import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
@@ -231,7 +231,7 @@ export const ViewSetup = (() => {
         <span class="saved-item-icon material-symbols-rounded">${list.type === 'xtream' ? 'key' : 'list_alt'}</span>
         <div class="saved-item-info">
           <div class="saved-item-name">${safeName}</div>
-          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream · ' + safeServer : 'M3U8'}</div>
+          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream Â· ' + safeServer : 'M3U8'}</div>
         </div>
         <div style="display:flex; gap:8px;">
           <button class="saved-item-default" data-id="${list.id}"><span class="material-symbols-rounded" style="font-size: 20px; color: ${isDefault ? 'var(--yellow)' : 'var(--text-sec)'};">${isDefault ? 'star' : 'star_border'}</span></button>
@@ -304,7 +304,7 @@ export const ViewSetup = (() => {
     const list = { id: _editingListId || _uid(), name, type: 'xtream', server, user, pass };
     _saveList(list);
     _editingListId = null;
-    document.getElementById('btn-add-xtream').textContent = 'Añadir lista';
+    document.getElementById('btn-add-xtream').textContent = 'AÃ±adir lista';
     
     if (typeof App !== 'undefined') {
       _requestLoadList(list);
@@ -324,109 +324,10 @@ export const ViewSetup = (() => {
       const r  = await fetch(`${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`);
       const d  = await r.json();
       const ok = d?.user_info?.auth === 1;
-      _setStatus('xt-status', ok ? '✓ Credenciales correctas' : '✗ Credenciales incorrectas', ok ? 'success' : 'error');
-    } catch { _setStatus('xt-status', '✗ No se puede conectar', 'error'); }
+      _setStatus('xt-status', ok ? 'âœ“ Credenciales correctas' : 'âœ— Credenciales incorrectas', ok ? 'success' : 'error');
+    } catch { _setStatus('xt-status', 'âœ— No se puede conectar', 'error'); }
   }
 
-  function _renderCountrySettingsLegacy() {
-    const container = document.getElementById('country-settings-list');
-    if (!container) return;
-    
-    let codes = Store.get('allCountries') || [];
-    if (!codes.length) {
-      const channels = Store.peek('channels') || [];
-      const codesSet = new Set();
-      for (const c of channels) {
-        if (c.countryCode) codesSet.add(c.countryCode);
-      }
-      codes = sortCountryCodes(codesSet);
-      Store.set('allCountries', codes);
-    }
-
-    if (!codes.length) {
-      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de país</p>';
-      return;
-    }
-
-    const existingItems = container.querySelectorAll('.country-setting-item');
-    const visibleCountries = Storage.getVisibleCountries();
-    const isAllChecked = visibleCountries === null || visibleCountries.length === codes.length;
-
-    if (existingItems.length > 0) {
-      existingItems.forEach(item => {
-        const code = item.dataset.code;
-        if (code === 'ALL') {
-          item.classList.toggle('checked', isAllChecked);
-        } else {
-          const isChecked = visibleCountries === null || visibleCountries.includes(code);
-          item.classList.toggle('checked', isChecked);
-        }
-      });
-      return;
-    }
-
-    container.innerHTML = '';
-
-    // Fila "Seleccionar todos"
-    const allItem = document.createElement('div');
-    allItem.className = 'country-setting-item focusable' + (isAllChecked ? ' checked' : '');
-    allItem.dataset.code = 'ALL';
-    allItem.innerHTML = `
-      <div class="checkbox-box">
-        <span class="material-symbols-rounded">check</span>
-      </div>
-      <span class="country-setting-label" style="font-weight: 700;">🌎 Seleccionar todos</span>
-    `;
-    allItem.addEventListener('click', () => {
-      const currentlyChecked = allItem.classList.contains('checked');
-      if (currentlyChecked) {
-        Storage.setVisibleCountries([]);
-      } else {
-        Storage.setVisibleCountries(null);
-      }
-      _renderCountrySettings();
-    });
-    container.appendChild(allItem);
-
-    codes.forEach(code => {
-      const isChecked = visibleCountries === null || visibleCountries.includes(code);
-      const info = getCountryInfo(code);
-      
-      const item = document.createElement('div');
-      item.className = 'country-setting-item focusable' + (isChecked ? ' checked' : '');
-      item.dataset.code = code;
-      item.innerHTML = `
-        <div class="checkbox-box">
-          <span class="material-symbols-rounded">check</span>
-        </div>
-        <span class="country-setting-label">${info.emoji} ${info.name}</span>
-      `;
-      
-      item.addEventListener('click', () => {
-        _toggleCountryVisibility(code);
-      });
-      
-      container.appendChild(item);
-    });
-  }
-
-  function _toggleCountryVisibilityLegacy(code) {
-    let visibleCountries = Storage.getVisibleCountries();
-    let codes = Store.get('allCountries') || [];
-
-    if (visibleCountries === null) {
-      visibleCountries = codes.filter(c => c !== code);
-    } else {
-      if (visibleCountries.includes(code)) {
-        visibleCountries = visibleCountries.filter(c => c !== code);
-      } else {
-        visibleCountries.push(code);
-      }
-    }
-    
-    Storage.setVisibleCountries(visibleCountries);
-    _renderCountrySettings();
-  }
 
   function _getAllCountryCodes() {
     let codes = Store.get('allCountries') || [];
@@ -490,7 +391,7 @@ export const ViewSetup = (() => {
     if (!container) return;
     const codes = _getAllCountryCodes();
     if (!codes.length) {
-      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de país</p>';
+      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de paÃ­s</p>';
       return;
     }
 
@@ -499,7 +400,7 @@ export const ViewSetup = (() => {
 
     container.innerHTML = '';
     const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
-    const allItem = _createCountrySettingItem('ALL', '🌎 Seleccionar todos', allChecked, () => {
+    const allItem = _createCountrySettingItem('ALL', 'ðŸŒŽ Seleccionar todos', allChecked, () => {
       const currentlyChecked = allItem.classList.contains('checked');
       Storage.setVisibleCountries(currentlyChecked ? [] : null);
       _renderCountrySettings();
@@ -582,3 +483,4 @@ export const ViewSetup = (() => {
 
   return { onShow };
 })();
+
