@@ -5,6 +5,7 @@ export function createFocusController(deps) {
   let prevFocusZone = 'channels';
   let prevFocusedEl = null;
   let tabFocusIdx = 0;
+  let channelFocusToken = 0;
 
   function _clearPrevFocused() {
     if (prevFocusedEl) {
@@ -13,12 +14,20 @@ export function createFocusController(deps) {
     }
   }
 
+  function _clearZoneFocus() {
+    document
+      .querySelectorAll('.sidebar-tab-btn.focused, .country-item.focused, .group-item.focused, .channel-card.focused')
+      .forEach(el => el.classList.remove('focused'));
+    _clearPrevFocused();
+  }
+
   function setZone(zone, restoreActive = true) {
     const isEnteringGroups = zone === 'groups' && focusZone !== 'groups';
     focusZone = zone;
+    channelFocusToken++;
     const viewEl = document.getElementById('view-channels');
     if (viewEl) viewEl.setAttribute('data-focus', zone);
-    _clearPrevFocused();
+    _clearZoneFocus();
 
     if (zone === 'groups') {
       const els = deps.getSidebarFocusables();
@@ -41,8 +50,10 @@ export function createFocusController(deps) {
         prevFocusedEl = tabs[tabFocusIdx];
       }
     } else if (zone === 'channels') {
+      const token = channelFocusToken;
       deps.focusCurrentChannel();
       setTimeout(() => {
+        if (token !== channelFocusToken || focusZone !== 'channels') return;
         const card = document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
         if (card) prevFocusedEl = card;
         deps.setChannelFocus(card);

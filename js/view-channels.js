@@ -183,7 +183,7 @@ export const ViewChannels = (() => {
         _setFocusZone(pending);
         return;
       }
-      const landingZone = _currentTab === 'tv' ? 'countries' : 'groups';
+      const landingZone = _currentTab === 'tv' ? 'groups' : 'groups';
       if (_focusZone === 'channels' || _focusZone === 'tabs' || !_focusZone) {
         _setFocusZone(landingZone);
       } else {
@@ -202,6 +202,7 @@ export const ViewChannels = (() => {
   });
 
   function _syncFocusStateFromController() {
+    _focusZone = _focus.getZone();
     _sidebarFocusIdx = _focus.getSidebarFocusIdx();
     _tabFocusIdx = _focus.getTabFocusIdx();
     _exitFocusIdx = _focus.getExitFocusIdx();
@@ -757,18 +758,22 @@ export const ViewChannels = (() => {
 
   function _showExitPopup() {
     _focus.showExit();
+    _syncFocusStateFromController();
   }
 
   function _hideExitPopup() {
     _focus.hideExit();
+    _syncFocusStateFromController();
   }
 
   function _moveExit(dir) {
     _focus.moveExit(dir);
+    _syncFocusStateFromController();
   }
 
   function _updateExitFocus() {
     _focus.updateExit();
+    _syncFocusStateFromController();
   }
 
   function refreshUI() {

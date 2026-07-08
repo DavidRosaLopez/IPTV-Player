@@ -56,7 +56,7 @@ export function createViewState(deps) {
       deps.focusGroupById(g.id);
       deps.updateGroupClasses();
       if (autoFocusChannels && items.length > 0) {
-        if (deps.isTvTab()) deps.focusChannels();
+        if (deps.isTvTab()) deps.focusGroups();
         else deps.focusGroups();
       }
       return;
@@ -68,7 +68,7 @@ export function createViewState(deps) {
     deps.updateGroupClasses();
     deps.clearVirtualList();
     deps.refreshChannels();
-    if (items.length > 0 && deps.isTvTab()) deps.focusChannels();
+    if (items.length > 0 && deps.isTvTab()) deps.focusGroups();
     else deps.focusGroups();
   }
 
