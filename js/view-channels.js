@@ -6,7 +6,6 @@ import { Storage } from './storage.js';
 import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
 import { Favorites } from './favorites.js';
-import { SetupProgress } from './setup-progress.js';
 import { Search } from './search.js';
 import { Playlist } from './playlist.js';
 import { VirtualList } from './virtual-list.js';
@@ -435,11 +434,12 @@ export const ViewChannels = (() => {
   function _updateCountryClasses() {
     const codes = Store.get('countries') || ['ALL'];
     const currentCountry = Store.get('currentCountry') || 'ALL';
+    const focusZone = _focus?.getZone?.() || _focusZone;
     const els = document.querySelectorAll('.country-item');
     let focusedEl = null;
 
     els.forEach((el, i) => {
-      const isFocused = i === _countryFocusIdx && _focusZone === 'countries';
+      const isFocused = i === _countryFocusIdx && focusZone === 'countries';
       el.classList.toggle('focused', isFocused);
       el.classList.toggle('active', codes[i] === currentCountry);
       if (isFocused) focusedEl = el;
@@ -918,7 +918,7 @@ export const ViewChannels = (() => {
           if (domZone === 'channels') return 'groups';
           if (domZone === 'groups') return _currentTab === 'tv' ? 'countries' : 'tabs';
           if (domZone === 'countries') return 'tabs';
-          if (domZone === 'tabs') return _currentTab === 'tv' ? 'countries' : 'groups';
+          if (domZone === 'tabs') return null;
           return null;
         })();
         if (targetZone === 'tabs') {
@@ -1035,10 +1035,7 @@ export const ViewChannels = (() => {
     let data = [];
     try {
       if (tabId === 'vod') {
-        const steps = [{ id: 'vod', label: 'Descargando Películas...' }];
-        SetupProgress.show('Películas', list.name, steps);
-        data = await loadTabData(tabId, list, signal, p => SetupProgress.progress(p));
-        SetupProgress.hide();
+        data = await loadTabData(tabId, list, signal);
       } else if (tabId === 'series') {
         data = await loadTabData(tabId, list, signal);
       } else {
@@ -1048,7 +1045,6 @@ export const ViewChannels = (() => {
       if (e.name === 'AbortError') return;
       Router.showToast(tabId === 'vod' ? 'Error cargando películas' : (tabId === 'series' ? 'Error cargando series' : 'Error cargando canales'), 'error');
       data = [];
-      SetupProgress.hide();
     }
 
     // Guardar en store y recargar
