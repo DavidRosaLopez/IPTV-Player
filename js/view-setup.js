@@ -9,31 +9,6 @@ import { getCountryInfo, sortCountryCodes } from './countries.js';
 
 
 export const ViewSetup = (() => {
-  const COUNTRY_MAP = {
-    'ES':    { emoji: '🇪🇸', name: 'España' },
-    'US':    { emoji: '🇺🇸', name: 'USA' },
-    'UK':    { emoji: '🇬🇧', name: 'UK' },
-    'FR':    { emoji: '🇫🇷', name: 'Francia' },
-    'DE':    { emoji: '🇩🇪', name: 'Alemania' },
-    'IT':    { emoji: '🇮🇹', name: 'Italia' },
-    'PT':    { emoji: '🇵🇹', name: 'Portugal' },
-    'AR':    { emoji: '🇸🇦', name: 'Árabe' },
-    'MX':    { emoji: '🇲🇽', name: 'México' },
-    'CO':    { emoji: '🇨🇴', name: 'Colombia' },
-    'CL':    { emoji: '🇨🇱', name: 'Chile' },
-    'PE':    { emoji: '🇵🇪', name: 'Perú' },
-    'VE':    { emoji: '🇻🇪', name: 'Venezuela' },
-    'BR':    { emoji: '🇧🇷', name: 'Brasil' },
-    'LAT':   { emoji: '🌎', name: 'Latino' },
-    'TR':    { emoji: '🇹🇷', name: 'Turquía' },
-    'PL':    { emoji: '🇵🇱', name: 'Polonia' },
-    'RO':    { emoji: '🇷🇴', name: 'Rumania' },
-    'NL':    { emoji: '🇳🇱', name: 'Holanda' },
-    'BE':    { emoji: '🇧🇪', name: 'Bélgica' },
-    'CH':    { emoji: '🇨🇭', name: 'Suiza' },
-    'OTROS': { emoji: '🌐', name: 'Otros' }
-  };
-
   let _setupEventsBound = false;
   let _setupZone = 'tabs'; // 'tabs' | 'content' | 'exit'
   let _setupTabIdx = 0;
