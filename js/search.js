@@ -10,7 +10,6 @@ import { InfoPopup } from './info-popup.js';
 
 
 export const Search = (() => {
-  let _allChannels = [];
   let _debounceTimer = null;
   let _isOpen = false;
   let _lastSearchKey = '';
@@ -26,8 +25,19 @@ export const Search = (() => {
   }
 
   function init(channels) {
-    _allChannels = channels;
     _lastSearchKey = '';
+  }
+
+  function _getDataForTab(currentTab) {
+    return currentTab === 'tv'
+      ? (Store.peek('channels') || [])
+      : (Store.peek('currentData') || []);
+  }
+
+  function _getResultLabel(tab, count) {
+    if (tab === 'tv') return `${count} canales`;
+    if (tab === 'vod') return `${count} películas`;
+    return `${count} series`;
   }
 
   function open() {
@@ -68,7 +78,6 @@ export const Search = (() => {
       input.value = ''; 
     }
     KeyHandler.off('BACK', _onBack);
-    // Restore full channel list
     _view.renderChannels();
   }
 
@@ -89,7 +98,7 @@ export const Search = (() => {
     _debounceTimer = setTimeout(() => {
       const q   = e.target.value.trim();
       const currentTab = _view.getCurrentTab();
-      const data = currentTab === 'tv' ? (Store.peek('channels') || []) : (Store.peek('currentData') || []);
+      const data = _getDataForTab(currentTab);
       const cacheKey = `${currentTab}|${q}|${Store.get('currentCountry') || 'ALL'}|${Store.get('currentGroup') || ''}|${data.length}`;
       if (_lastSearchKey === cacheKey) return;
       _lastSearchKey = cacheKey;
@@ -99,19 +108,14 @@ export const Search = (() => {
         if (cnt) cnt.textContent = '';
         _view.renderChannels(); // Restaura la vista filtrada por grupo
       } else {
-        if (cnt) {
-           if (currentTab === 'tv') cnt.textContent = res.length + ' canales';
-           else if (currentTab === 'vod') cnt.textContent = res.length + ' películas';
-           else cnt.textContent = res.length + ' series';
-        }
+        if (cnt) cnt.textContent = _getResultLabel(currentTab, res.length);
         _view.renderChannels(res);
       }
-    }, 120); // 120ms debounce — fast but not every keystroke
+    }, 120);
   };
 
   const _onBack = () => {
     if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) return;
-    // Solo procesar BACK si la vista de canales está activa
     const viewChannels = document.getElementById('view-channels');
     if (_isOpen && viewChannels && viewChannels.classList.contains('active')) { 
       const input = document.getElementById('search-input');

@@ -40,6 +40,17 @@ export const InfoPopup = (() => {
     if (/^(https?:|data:image\/)/i.test(url)) return url;
     return '';
   }
+  function _getMediaTypeId(ch) {
+    return ch.type === 'vod'
+      ? ch.id.replace('vod_', '')
+      : ch.id.replace('series_', '');
+  }
+  async function _loadMetadata(list, ch) {
+    const typeId = _getMediaTypeId(ch);
+    return ch.type === 'vod'
+      ? Playlist.getVodInfo(list.server, list.user, list.pass, typeId)
+      : Playlist.getSeriesInfo(list.server, list.user, list.pass, typeId);
+  }
   function _setImage(id, url) {
     const safe = _safeMediaUrl(url);
     const el = document.getElementById(id);
@@ -70,24 +81,13 @@ export const InfoPopup = (() => {
     if (!list) return hide();
 
     try {
-      if (ch.type === 'vod') {
-        const idStr = ch.id.replace('vod_', '');
-        const data = await Playlist.getVodInfo(list.server, list.user, list.pass, idStr);
-        if (_current !== ch) return; // Prevent race condition if user closed/changed before load
-        _data = data;
-        _renderVodData(_data);
-        if (_data && _data.info && _data.info.name) {
-          document.getElementById('info-title').textContent = _data.info.name;
-        }
-      } else if (ch.type === 'series') {
-        const idStr = ch.id.replace('series_', '');
-        const data = await Playlist.getSeriesInfo(list.server, list.user, list.pass, idStr);
-        if (_current !== ch) return; // Prevent race condition if user closed/changed before load
-        _data = data;
-        _renderSeriesData(_data);
-        if (_data && _data.info && _data.info.name) {
-          document.getElementById('info-title').textContent = _data.info.name;
-        }
+      const data = await _loadMetadata(list, ch);
+      if (_current !== ch) return; // Prevent race condition if user closed/changed before load
+      _data = data;
+      if (ch.type === 'vod') _renderVodData(_data);
+      else _renderSeriesData(_data);
+      if (_data && _data.info && _data.info.name) {
+        document.getElementById('info-title').textContent = _data.info.name;
       }
     } catch (e) {
       console.error(e);
