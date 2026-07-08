@@ -32,6 +32,8 @@ export function createViewState(deps) {
     }
 
     deps.setCurrentCountry(code);
+    deps.renderCountries();
+    deps.updateCountryClasses();
     deps.clearGroupCache();
     deps.setGroups(deps.getGroupsForCountry(code));
     deps.setCurrentGroup('__all__');
