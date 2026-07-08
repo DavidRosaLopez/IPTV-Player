@@ -14,6 +14,8 @@ import { Player } from './player.js';
 import { InfoPopup } from './info-popup.js';
 import { Watching } from './watching.js';
 import { getCountryInfo, sortCountryCodes } from './countries.js';
+import { loadTabData } from './services/tab-data-loader.js';
+import { createFocusController } from './services/focus-controller.js';
 
 
 export const ViewChannels = (() => {
@@ -59,6 +61,46 @@ export const ViewChannels = (() => {
   let _prevFocusedEl     = null;      // trackear elemento enfocado previo (evita querySelectorAll masivo)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
   let _groupCountsCache  = null;
+  const _focus = createFocusController({
+    tabs: TABS,
+    getSidebarFocusables: () => _getSidebarFocusables(),
+    updateCountryClasses: () => _updateCountryClasses(),
+    focusCurrentChannel: () => {
+      if (typeof VirtualList !== 'undefined') {
+        VirtualList.setFocused(VirtualList.getFocused());
+      }
+    },
+    setChannelFocus: (el, skipScroll = false) => KeyHandler.setFocus(el, skipScroll),
+    isVodOrSeries: () => _currentTab === 'vod' || _currentTab === 'series',
+    getCountries: () => Store.get('countries') || ['ALL'],
+    getCountryFocus: () => _countryFocusIdx,
+    setCountryFocus: (idx) => { _countryFocusIdx = idx; },
+    previewGroup: (next) => {
+      if (next.id !== 'btn-open-search' && next.id !== 'btn-open-setup') {
+        const groupId = next.dataset.groupId;
+        const groups = Store.get('groups');
+        const group = groups.find(g => g.id === groupId);
+        if (group) {
+          clearTimeout(_groupPreviewTimer);
+          _groupPreviewTimer = setTimeout(() => {
+            if (_focusZone === 'groups') {
+              _selectGroup(group, false);
+            }
+          }, 150);
+        }
+      }
+    },
+    currentChannelColStart: () => {
+      const curIdx = VirtualList.getFocused();
+      const cols = _currentTab === 'tv' ? 3 : 5;
+      return curIdx % cols === 0;
+    },
+    moveVirtualList: (dir) => VirtualList.move(dir),
+    previewCurrentChannel: () => {
+      const focused = VirtualList.getCurrentItem();
+      if (focused && typeof Player !== 'undefined') Player.schedulePreview(focused);
+    }
+  });
 
   function onShow(fromView) {
     if (fromView !== 'player') {
@@ -741,31 +783,19 @@ export const ViewChannels = (() => {
   }
 
   function _showExitPopup() {
-    _prevFocusZone = _focusZone;
-    _focusZone = 'exit';
-    _exitFocusIdx = 0;
-    const el = document.getElementById('exit-popup');
-    if (el) el.classList.remove('hidden');
-    _updateExitFocus();
+    _focus.showExit();
   }
 
   function _hideExitPopup() {
-    _focusZone = _prevFocusZone;
-    const el = document.getElementById('exit-popup');
-    if (el) el.classList.add('hidden');
+    _focus.hideExit();
   }
 
   function _moveExit(dir) {
-    if (dir === 'left') _exitFocusIdx = 0;
-    else if (dir === 'right') _exitFocusIdx = 1;
-    _updateExitFocus();
+    _focus.moveExit(dir);
   }
 
   function _updateExitFocus() {
-    const cancel = document.getElementById('btn-exit-cancel');
-    const confirm = document.getElementById('btn-exit-confirm');
-    if (cancel) cancel.classList.toggle('focused', _exitFocusIdx === 0);
-    if (confirm) confirm.classList.toggle('focused', _exitFocusIdx === 1);
+    _focus.updateExit();
   }
 
   function refreshUI() {
@@ -1007,43 +1037,22 @@ export const ViewChannels = (() => {
     if (_currentTab !== tabId) return; // Guard contra cambio rápido de pestaña
 
     let data = [];
-    if (tabId === 'tv') {
-      data = Store.peek('channels') || [];
-    } else if (tabId === 'vod') {
-      let cached = await Storage.getVodCache(list);
-      if (_currentTab !== tabId) return;
-
-      if (!cached || cached.length === 0) {
+    try {
+      if (tabId === 'vod') {
         const steps = [{ id: 'vod', label: 'Descargando Películas...' }];
         SetupProgress.show('Películas', list.name, steps);
-        try {
-          cached = await Playlist.loadVod(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
-          if (_currentTab !== tabId) return;
-          await Storage.setVodCache(list, cached);
-        } catch (e) {
-          if (e.name === 'AbortError') return; // Cancelado
-          Router.showToast('Error cargando películas', 'error');
-          cached = [];
-        }
+        data = await loadTabData(tabId, list, signal, p => SetupProgress.progress(p));
         SetupProgress.hide();
+      } else if (tabId === 'series') {
+        data = await loadTabData(tabId, list, signal);
+      } else {
+        data = await loadTabData(tabId, list, signal);
       }
-      data = cached;
-    } else if (tabId === 'series') {
-      let cached = await Storage.getSeriesCache(list);
-      if (_currentTab !== tabId) return;
-
-      if (!cached || cached.length === 0) {
-        try {
-          cached = await Playlist.loadSeries(list.server, list.user, list.pass, null, signal);
-          if (_currentTab !== tabId) return;
-          await Storage.setSeriesCache(list, cached);
-        } catch (e) {
-          if (e.name === 'AbortError') return; // Cancelado
-          Router.showToast('Error cargando series', 'error');
-          cached = [];
-        }
-      }
-      data = cached;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      Router.showToast(tabId === 'vod' ? 'Error cargando películas' : (tabId === 'series' ? 'Error cargando series' : 'Error cargando canales'), 'error');
+      data = [];
+      SetupProgress.hide();
     }
 
     // Guardar en store y recargar
