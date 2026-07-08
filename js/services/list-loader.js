@@ -136,7 +136,7 @@ export function createListLoader() {
     if (lastChannelId) {
       const ch = channels.find(c => c.id === lastChannelId);
       if (ch) {
-        ViewChannels.syncWithChannel(ch);
+        ViewChannels.syncWithChannel(ch, { focusChannels: false });
         setTimeout(() => Player.schedulePreview(ch), 300);
       } else {
         ViewChannels.renderGroups();

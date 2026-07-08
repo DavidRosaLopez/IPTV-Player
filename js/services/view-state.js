@@ -55,7 +55,10 @@ export function createViewState(deps) {
     if (deps.getCurrentGroup() === g.id) {
       deps.focusGroupById(g.id);
       deps.updateGroupClasses();
-      if (autoFocusChannels && items.length > 0) deps.focusChannels();
+      if (autoFocusChannels && items.length > 0) {
+        if (deps.isTvTab()) deps.focusChannels();
+        else deps.focusGroups();
+      }
       return;
     }
 
@@ -65,7 +68,8 @@ export function createViewState(deps) {
     deps.updateGroupClasses();
     deps.clearVirtualList();
     deps.refreshChannels();
-    deps.focusChannelsIfItems(items.length > 0);
+    if (items.length > 0 && deps.isTvTab()) deps.focusChannels();
+    else deps.focusGroups();
   }
 
   function renderData(data) {
@@ -79,7 +83,8 @@ export function createViewState(deps) {
     deps.restoreFocusAfterRender();
   }
 
-  function syncWithChannel(ch) {
+  function syncWithChannel(ch, options = {}) {
+    const focusChannels = options.focusChannels !== false;
     if (!ch || deps.isSearchOpen()) return;
     updateCountriesList();
     deps.renderCountries();
@@ -119,7 +124,8 @@ export function createViewState(deps) {
     }
     deps.refreshChannels();
     if (chIdx >= 0) deps.focusChannelIndex(chIdx);
-    deps.focusChannels();
+    if (focusChannels) deps.focusChannels();
+    else deps.focusGroups();
   }
 
   return { updateCountriesList, selectCountry, selectGroup, renderData, syncWithChannel };

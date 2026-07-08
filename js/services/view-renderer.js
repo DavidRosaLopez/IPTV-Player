@@ -38,8 +38,11 @@ function _setGroupContent(li, g, count = null, folderExpanded = null) {
 export function renderCountryItems({ container, codes, currentCountry, focusedIdx, onSelect }) {
   if (!container) return;
   container.innerHTML = '';
-  codes.forEach((code, i) => {
-    const info = code === 'ALL' ? { emoji: '🌎', name: 'Todos' } : code;
+  codes.forEach((entry, i) => {
+    const code = typeof entry === 'string' ? entry : (entry.code || 'ALL');
+    const info = typeof entry === 'string'
+      ? (code === 'ALL' ? { emoji: '🌎', name: 'Todos' } : { emoji: '', name: String(entry) })
+      : entry;
     const el = document.createElement('div');
     el.className = 'country-item' + (i === focusedIdx ? ' focused' : '') + (code === currentCountry ? ' active' : '');
     el.textContent = typeof info === 'string' ? info : `${info.emoji} ${info.name}`;
