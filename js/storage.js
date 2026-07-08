@@ -38,7 +38,8 @@ export const Storage = (() => {
   const setLastList = (id)    => set('last_list', id);
   const getDefaultList = ()   => get('default_list', null);
   const setDefaultList = (id) => set('default_list', id);
-  const _getCurrentListId = () => {
+  const _getCurrentListId = (listId = null) => {
+    if (listId) return listId;
     if (typeof Store !== 'undefined') {
       const list = Store.get('currentList');
       if (list && list.id) return list.id;
@@ -46,8 +47,8 @@ export const Storage = (() => {
     return 'default';
   };
 
-  const getLastChannel = ()   => get('last_channel_' + _getCurrentListId(), null);
-  const setLastChannel = (id) => set('last_channel_' + _getCurrentListId(), id);
+  const getLastChannel = (listId = null) => get('last_channel_' + _getCurrentListId(listId), null);
+  const setLastChannel = (id, listId = null) => set('last_channel_' + _getCurrentListId(listId), id);
 
   const getVisibleCountries = ()      => get('visible_countries', null);
   const setVisibleCountries = (list)  => set('visible_countries', list);

@@ -132,7 +132,7 @@ export function createListLoader() {
 
     Router.showView('channels');
 
-    const lastChannelId = Storage.getLastChannel();
+    const lastChannelId = Storage.getLastChannel(list.id);
     if (lastChannelId) {
       const ch = channels.find(c => c.id === lastChannelId);
       if (ch) {

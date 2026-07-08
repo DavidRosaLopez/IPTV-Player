@@ -567,7 +567,7 @@ export const ViewChannels = (() => {
 
   function _playChannel(ch) {
     if (!ch) return;
-    Storage.setLastChannel(ch.id);
+    Storage.setLastChannel(ch.id, Store.get('currentList')?.id);
 
     // Si estamos en "Seguir viendo" y tiene un episodio guardado
     if (Store.get('currentGroup') === '__watching__' && ch.type === 'series') {
