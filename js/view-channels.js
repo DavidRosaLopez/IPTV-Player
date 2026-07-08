@@ -1033,10 +1033,8 @@ export const ViewChannels = (() => {
       if (_currentTab !== tabId) return;
 
       if (!cached || cached.length === 0) {
-        const steps = [{ id: 'series', label: 'Descargando Series...' }];
-        SetupProgress.show('Series', list.name, steps);
         try {
-          cached = await Playlist.loadSeries(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
+          cached = await Playlist.loadSeries(list.server, list.user, list.pass, null, signal);
           if (_currentTab !== tabId) return;
           await Storage.setSeriesCache(list, cached);
         } catch (e) {
@@ -1044,7 +1042,6 @@ export const ViewChannels = (() => {
           Router.showToast('Error cargando series', 'error');
           cached = [];
         }
-        SetupProgress.hide();
       }
       data = cached;
     }
