@@ -167,6 +167,53 @@ export const ViewSetup = (() => {
     return true;
   }
 
+  function _handleSetupEnter() {
+    if (typeof Router === 'undefined' || !Router.isView('setup')) return;
+    if (_isSetupBusy()) {
+      _requestCancelLoad();
+      return true;
+    }
+    if (_setupZone === 'exit') {
+      if (_exitFocusIdx === 0) _hideExitPopup();
+      else {
+        try { tizen?.application?.getCurrentApplication()?.exit(); } catch(e) {}
+      }
+      return true;
+    }
+    if (_setupZone === 'tabs') {
+      _getSetupTabs()[_setupTabIdx]?.click();
+      _setupZone = 'content';
+      _setupContentIdx = 0;
+      _updateSetupFocus();
+      return true;
+    }
+    const el = _getSetupContent()[_setupContentIdx];
+    if (el) {
+      if (el.tagName === 'INPUT') el.focus();
+      else el.click();
+    }
+    return true;
+  }
+
+  function _handleSetupBack() {
+    if (typeof Router === 'undefined' || !Router.isView('setup')) return;
+    if (_isSetupBusy()) {
+      _requestCancelLoad();
+      return true;
+    }
+    if (_setupZone === 'exit') {
+      _hideExitPopup();
+      return true;
+    }
+    const channels = Store.peek('channels') || [];
+    if (channels.length > 0) {
+      Router.showView('channels');
+      return true;
+    }
+    _showExitPopup();
+    return true;
+  }
+
   function _renderSavedLists() {
     const lists = Storage.getLists();
     const el = document.getElementById('saved-list');
@@ -443,55 +490,8 @@ export const ViewSetup = (() => {
     KeyHandler.on('DOWN', () => _handleSetupDirection('down'));
     KeyHandler.on('UP', () => _handleSetupDirection('up'));
 
-    KeyHandler.on('ENTER', () => {
-      if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-      const progressEl = document.getElementById('setup-progress');
-      if (progressEl && !progressEl.classList.contains('hidden')) {
-        _requestCancelLoad();
-        return true;
-      }
-      if (_setupZone === 'exit') {
-        if (_exitFocusIdx === 0) {
-          _hideExitPopup();
-        } else {
-          try { tizen?.application?.getCurrentApplication()?.exit(); } catch(e) {}
-        }
-        return true;
-      }
-      if (_setupZone === 'tabs') {
-        _getSetupTabs()[_setupTabIdx]?.click();
-        _setupZone = 'content';
-        _setupContentIdx = 0;
-        _updateSetupFocus();
-      } else {
-        const el = _getSetupContent()[_setupContentIdx];
-        if (el) {
-          if (el.tagName === 'INPUT') el.focus();
-          else el.click();
-        }
-      }
-      return true;
-    });
-
-    KeyHandler.on('BACK', () => {
-      if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-      const progressEl = document.getElementById('setup-progress');
-      if (progressEl && !progressEl.classList.contains('hidden')) {
-        _requestCancelLoad();
-        return true;
-      }
-      if (_setupZone === 'exit') {
-        _hideExitPopup();
-        return true;
-      }
-      const channels = typeof Store !== 'undefined' ? Store.peek('channels') : [];
-      if (channels && channels.length > 0) {
-        Router.showView('channels');
-        return true;
-      }
-      _showExitPopup();
-      return true;
-    });
+    KeyHandler.on('ENTER', () => _handleSetupEnter());
+    KeyHandler.on('BACK', () => _handleSetupBack());
   }
 
   return { onShow };

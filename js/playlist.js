@@ -6,7 +6,7 @@ import { loadXtream as _loadXtream, loadVod as _loadVod, loadSeries as _loadSeri
 
 export const Playlist = (() => {
   const VOD_GROUPS = [
-    { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> PelÃ­culas' },
+    { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> Películas' },
     { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
     { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
   ];
@@ -16,19 +16,19 @@ export const Playlist = (() => {
     { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
   ];
   const GLOBAL_GROUPS = new Set([
-    'âœ¨ Ãšltimos Estrenos',
-    'ðŸ’Ž Calidad 4K / UHD',
-    'ðŸ’Ž Series en 4K / UHD',
+    '✨ Últimos Estrenos',
+    '💎 Calidad 4K / UHD',
+    '💎 Series en 4K / UHD',
     '__folder_plataformas__',
-    'ðŸ¿ Plataformas',
-    'ðŸŸ¥ Netflix',
-    'ðŸŸ£ HBO Max',
-    'ðŸŸ¦ Amazon Prime',
-    'âœ¨ Disney+',
-    'ðŸ Apple TV+',
-    'â“‚ï¸ Movistar+',
-    'â›°ï¸ Paramount+',
-    'ðŸ“º Nacionales / Otras Apps'
+    '🍿 Plataformas',
+    '🟥 Netflix',
+    '🟣 HBO Max',
+    '🟦 Amazon Prime',
+    '✨ Disney+',
+    '🍏 Apple TV+',
+    'Ⓜ️ Movistar+',
+    '⛰️ Paramount+',
+    '📺 Nacionales / Otras Apps'
   ]);
 
   function _normalize(str) {
@@ -37,6 +37,7 @@ export const Playlist = (() => {
 
   let _groupIndex = new Map();
   let _indexedChannels = null;
+
   function _buildGroupIndex(channels) {
     if (_indexedChannels === channels) return;
     _groupIndex = new Map();
@@ -46,7 +47,10 @@ export const Playlist = (() => {
     }
     _indexedChannels = channels;
   }
-  function invalidateIndex() { _indexedChannels = null; }
+
+  function invalidateIndex() {
+    _indexedChannels = null;
+  }
 
   function _groupsForTab(tabId) {
     if (tabId === 'vod') return VOD_GROUPS;
@@ -64,21 +68,7 @@ export const Playlist = (() => {
   }
 
   function isGlobalGroup(groupName) {
-    return new Set([
-      '✨ Últimos Estrenos',
-      '💎 Calidad 4K / UHD',
-      '💎 Series en 4K / UHD',
-      '__folder_plataformas__',
-      '🍿 Plataformas',
-      '🟥 Netflix',
-      '🟣 HBO Max',
-      '🟦 Amazon Prime',
-      '✨ Disney+',
-      '🍏 Apple TV+',
-      'Ⓜ️ Movistar+',
-      '⛰️ Paramount+',
-      '📺 Nacionales / Otras Apps'
-    ]).has(groupName);
+    return GLOBAL_GROUPS.has(groupName);
   }
 
   function isItemVisibleInCountry(ch, countryCode) {
@@ -91,23 +81,10 @@ export const Playlist = (() => {
   }
 
   let _groupCache = {};
+
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
     const tabGroups = _groupsForTab(tabId);
     if (tabGroups) return tabGroups;
-    if (tabId === 'vod') {
-      return [
-        { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> Películas' },
-        { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
-        { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
-      ];
-    }
-    if (tabId === 'series') {
-      return [
-        { id: '__all__', name: '<span class="material-symbols-rounded">live_tv</span> Series' },
-        { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
-        { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
-      ];
-    }
 
     const cacheKey = `${countryCode}_${tabId}`;
     if (_groupCache[cacheKey]) return _groupCache[cacheKey];
@@ -118,6 +95,7 @@ export const Playlist = (() => {
         children: ['🟥 Netflix', '🟣 HBO Max', '🟦 Amazon Prime', '✨ Disney+', '🍏 Apple TV+', 'Ⓜ️ Movistar+', '⛰️ Paramount+', '📺 Nacionales / Otras Apps']
       }
     };
+
     const childToFolder = {};
     for (const [fId, f] of Object.entries(FOLDERS)) {
       f.children.forEach(c => childToFolder[c] = fId);
@@ -164,12 +142,14 @@ export const Playlist = (() => {
       const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
       return base.filter(c => favIds && favIds.has(c.id));
     }
+
     if (groupId === '__watching__') {
       const watchingIds = Watching.getIds();
       const idMap = new Map(watchingIds.map((id, index) => [id, index]));
       const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
       return base.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
     }
+
     if (groupId === '__all__') {
       return countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
     }
@@ -197,6 +177,7 @@ export const Playlist = (() => {
       has(key) { return cache.has(key); }
     };
   }
+
   const _infoCache = { vod: _makeLRU(), series: _makeLRU() };
 
   async function _fetchInfo(cache, url, signal) {
