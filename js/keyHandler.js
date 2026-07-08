@@ -2,6 +2,8 @@
  * keyHandler.js — Remote control key management
  * Samsung Tizen 9 / S91F
  */
+import { DeviceProfile } from './device-profile.js';
+
 export const KeyHandler = (() => {
   // Key codes
   const KEYS = {
@@ -44,7 +46,7 @@ export const KeyHandler = (() => {
   let _okLongPressed = false;
 
   let _lastNavTime = 0;
-  const NAV_THROTTLE_MS = 90; // Limitamos a ~11 FPS la navegación direccional para Smart TVs
+  const NAV_THROTTLE_MS = DeviceProfile.key.navThrottleMs;
 
   function _handleKeyDown(e) {
     const code = e.keyCode;
@@ -68,7 +70,7 @@ export const KeyHandler = (() => {
         _okTimeout = setTimeout(() => {
           _okLongPressed = true;
           _dispatch(KEYS.LONG_OK, { preventDefault: () => {}, stopPropagation: () => {} });
-        }, 600); // 600ms para pulsación larga
+        }, DeviceProfile.key.longOkMs);
       }
       // NOTA: Tizen SÍ necesita que no hagamos preventDefault siempre en keydown, 
       // porque puede tragarse el evento completo. Lo quitamos.
@@ -150,8 +152,7 @@ export const KeyHandler = (() => {
     _focusedEl = el;
     el.classList.add('focused');
     if (!skipScroll) {
-      // Usar behavior 'instant' o omitirlo, ya que 'smooth' en Tizen es muy lento y laguea la navegación
-      el.scrollIntoView({ block: 'nearest' });
+      el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
   }
 

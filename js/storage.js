@@ -52,6 +52,21 @@ export const Storage = (() => {
   const getVisibleCountries = ()      => get('visible_countries', null);
   const setVisibleCountries = (list)  => set('visible_countries', list);
 
+  function _listSignature(listOrId) {
+    if (!listOrId || typeof listOrId === 'string') return '';
+    const type = listOrId.type || 'list';
+    const source = listOrId.type === 'xtream'
+      ? [listOrId.server || '', listOrId.user || '', listOrId.pass || ''].join('|')
+      : [listOrId.url || ''].join('|');
+    return `${type}:${source}`;
+  }
+
+  function _cacheKey(prefix, listOrId) {
+    const id = typeof listOrId === 'string' ? listOrId : (listOrId?.id || 'default');
+    const sig = _listSignature(listOrId);
+    return sig ? `${prefix}_${id}_${sig}` : `${prefix}_${id}`;
+  }
+
   // ── IndexedDB for large data (Channel cache) ────────────
   const CHANNEL_TTL = 6 * 3600 * 1000;
   const DB_NAME = 'IPTV_DB_V11';
@@ -119,17 +134,35 @@ export const Storage = (() => {
     } catch { return false; }
   };
 
-  const getChannelCache = (listId) => _getFromDB('ch_cache_' + listId, CHANNEL_TTL);
-  const setChannelCache = (listId, data) => _setToDB('ch_cache_' + listId, data);
-  const clearChannelCache = (listId) => _delFromDB('ch_cache_' + listId);
+  const _clearByPrefix = async (prefix) => {
+    try {
+      const db = await _getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) { resolve(true); return; }
+          if (String(cursor.key).startsWith(prefix)) cursor.delete();
+          cursor.continue();
+        };
+        req.onerror = () => resolve(false);
+      });
+    } catch { return false; }
+  };
 
-  const getVodCache = (listId) => _getFromDB('vod_cache_' + listId, CHANNEL_TTL);
-  const setVodCache = (listId, data) => _setToDB('vod_cache_' + listId, data);
-  const clearVodCache = (listId) => _delFromDB('vod_cache_' + listId);
+  const getChannelCache = (list) => _getFromDB(_cacheKey('ch_cache', list), CHANNEL_TTL);
+  const setChannelCache = (list, data) => _setToDB(_cacheKey('ch_cache', list), data);
+  const clearChannelCache = (list) => (typeof list === 'string' ? _clearByPrefix(`ch_cache_${list}`) : _delFromDB(_cacheKey('ch_cache', list)));
 
-  const getSeriesCache = (listId) => _getFromDB('series_cache_' + listId, CHANNEL_TTL);
-  const setSeriesCache = (listId, data) => _setToDB('series_cache_' + listId, data);
-  const clearSeriesCache = (listId) => _delFromDB('series_cache_' + listId);
+  const getVodCache = (list) => _getFromDB(_cacheKey('vod_cache', list), CHANNEL_TTL);
+  const setVodCache = (list, data) => _setToDB(_cacheKey('vod_cache', list), data);
+  const clearVodCache = (list) => (typeof list === 'string' ? _clearByPrefix(`vod_cache_${list}`) : _delFromDB(_cacheKey('vod_cache', list)));
+
+  const getSeriesCache = (list) => _getFromDB(_cacheKey('series_cache', list), CHANNEL_TTL);
+  const setSeriesCache = (list, data) => _setToDB(_cacheKey('series_cache', list), data);
+  const clearSeriesCache = (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_${list}`) : _delFromDB(_cacheKey('series_cache', list)));
 
   // ── Progreso de episodios (localStorage, persiste entre reinicios) ───
   const EP_PROG_PREFIX = 'ep_prog_';

@@ -1,6 +1,6 @@
 /**
  * player.js — AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
- * Samsung Tizen 9 / S91F OLED
+ * Samsung 83" SF93 OLED
  *
  * Arquitectura:
  *  - view-player activa cuando se reproduce en pantalla completa
@@ -15,6 +15,7 @@ import { PlayerOSD } from './player-osd.js';
 import { VodOSD } from './vod-osd.js';
 import { Watching } from './watching.js';
 import { eventBus } from './eventBus.js';
+import { DeviceProfile, getDisplayRect } from './device-profile.js';
 
 
 export const Player = (() => {
@@ -31,6 +32,39 @@ export const Player = (() => {
   let _progressSaveTimer = null; // guardado periódico de progreso (series/vod)
 
   let _initialized = false;
+  function _getStreamMode(ch = _current) {
+    const name = String(ch?.name || '').toUpperCase();
+    return {
+      is8K: /(8K)/.test(name),
+      is4K: /(4K|UHD|2160)/.test(name),
+      isHD: /(FHD|HD|1080)/.test(name),
+      isHEVC: /(HEVC|H265)/.test(name),
+      isRaw: /(RAW|DIRECT)/.test(name),
+      isLive: !!ch && ch.type !== 'vod' && ch.type !== 'series'
+    };
+  }
+
+  function _applyPlaybackTuning(ch, pipMode = false) {
+    const mode = _getStreamMode(ch);
+    const limits = DeviceProfile.player.liveMaxBitrate;
+    const maxBr = mode.is8K ? limits.uhd8k : mode.is4K ? limits.uhd : mode.isHD ? limits.hd : limits.raw;
+    const adaptive = pipMode ? DeviceProfile.player.pipAdaptiveInfo : `${DeviceProfile.player.defaultAdaptiveInfo}|MAXBITRATE=${maxBr}`;
+
+    try { webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', adaptive); } catch(e) {}
+    if (mode.isLive) {
+      try { webapis.avplay.setStreamingProperty('IS_LIVE', 'true'); } catch(e) {}
+    }
+    if (mode.is4K || mode.is8K || mode.isHEVC || mode.isRaw) {
+      try { webapis.avplay.setStreamingProperty('SET_MIX_RESOLUTION', DeviceProfile.player.resolutionMarker); } catch(e) {}
+      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.heavyBufferingTimeoutMs); } catch(e) {}
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highBufferSeconds); } catch(e) {}
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highBufferSeconds); } catch(e) {}
+    } else {
+      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutMs); } catch(e) {}
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowBufferSeconds); } catch(e) {}
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowBufferSeconds); } catch(e) {}
+    }
+  }
   // ── INIT ─────────────────────────────────────────────
   function init(onChannelChange) {
     if (_initialized) return;
@@ -104,39 +138,7 @@ export const Player = (() => {
         // ── CONFIGURACIÓN SEGÚN MODO ──
         _applyDisplayRect();
 
-        try {
-          const name = (_current.name || '').toUpperCase();
-          const is8K = name.includes('8K');
-          const is4K = name.includes('4K') || name.includes('UHD') || name.includes('2160');
-          const isHD = name.includes('FHD') || name.includes('HD') || name.includes('1080');
-          const isHEVC = name.includes('HEVC') || name.includes('H265');
-          const isRaw = name.includes('RAW') || name.includes('DIRECT');
-          const isLive = _current.type !== 'vod' && _current.type !== 'series';
-
-          // 1. Adaptive Info (afecta a conexiones HLS / .m3u8)
-          const maxBr = is8K ? 150000000 : is4K ? 100000000 : isHD ? 50000000 : 25000000;
-          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', `STARTBITRATE=HIGHEST|MAXBITRATE=${maxBr}`);
-          if (isLive) {
-            try { webapis.avplay.setStreamingProperty("IS_LIVE", "true"); } catch(e) {}
-          }
-
-          // 3. Forzar plano de decodificación de hardware para Ultra Alta Definición 
-          // (Evita que el sistema base de Tizen downscalee HEVC/RAW antes de mostrarlo)
-          if (is4K || is8K || isHEVC || isRaw) {
-            try { webapis.avplay.setStreamingProperty("SET_MIX_RESOLUTION", "4k"); } catch(e) {}
-          }
-
-          // 4. Aumentar timeout y tamaño de buffer para codecs pesados
-          if (isRaw || isHEVC || is4K || is8K) {
-            try { webapis.avplay.setTimeoutForBuffering(10000); } catch(e) {}
-            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 10); } catch(e) {}
-            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_RESUME", "PLAYER_BUFFER_SIZE_IN_SECOND", 10); } catch(e) {}
-          } else {
-            try { webapis.avplay.setTimeoutForBuffering(5000); } catch(e) {}
-            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 5); } catch(e) {}
-            try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_RESUME", "PLAYER_BUFFER_SIZE_IN_SECOND", 5); } catch(e) {}
-          }
-        } catch(e) {}
+        _applyPlaybackTuning(_current, false);
 
           const handleStreamEnd = () => {
             if (_current && _current.type === 'series') {
@@ -203,26 +205,21 @@ export const Player = (() => {
     }, 150);
   }
 
-  // Coordenadas fijas calculadas del CSS de .pip-box
-  // .pip-box { bottom:40; right:40; width:480; height:270 } en viewport 1920x1080
-  // No usamos getBoundingClientRect() porque puede fallar si la vista está oculta.
-  const PIP_X = 1400, PIP_Y = 770, PIP_W = 480, PIP_H = 270;
-
   function _applyDisplayRect() {
     const vl = _videoLayerEl || document.getElementById('video-layer');
+    const rect = getDisplayRect(_mode);
     if (_mode === 'FULLSCREEN') {
-      if (vl) { vl.style.left='0px'; vl.style.top='0px'; vl.style.width='1920px'; vl.style.height='1080px'; }
-      // Use FULL_SCREEN for UHD/4K/8K Live TV so the TV hardware scaler handles downscaling
-      // Para VOD/Series mantenemos LETTER_BOX para no distorsionar películas en formato panorámico (ej. 21:9).
-      const _isUHD = _current && ((_current.name||'').toUpperCase().match(/4K|UHD|2160|8K|HEVC|H265/));
-      const _isLive = _current && _current.type !== 'vod' && _current.type !== 'series';
+      if (vl) { vl.style.left=rect.x+'px'; vl.style.top=rect.y+'px'; vl.style.width=rect.width+'px'; vl.style.height=rect.height+'px'; }
+      const mode = _getStreamMode();
+      const _isUHD = mode.is4K || mode.is8K || mode.isHEVC || mode.isRaw;
+      const _isLive = mode.isLive;
       const _dispMethod = (_isUHD && _isLive) ? 'PLAYER_DISPLAY_MODE_FULL_SCREEN' : 'PLAYER_DISPLAY_MODE_LETTER_BOX';
       try { webapis.avplay.setDisplayMethod(_dispMethod); } catch(e) {}
-      try { webapis.avplay.setDisplayRect(0, 0, 1920, 1080); } catch(e) {}
+      try { webapis.avplay.setDisplayRect(rect.x, rect.y, rect.width, rect.height); } catch(e) {}
     } else if (_mode === 'PIP') {
-      if (vl) { vl.style.left=PIP_X+'px'; vl.style.top=PIP_Y+'px'; vl.style.width=PIP_W+'px'; vl.style.height=PIP_H+'px'; }
+      if (vl) { vl.style.left=rect.x+'px'; vl.style.top=rect.y+'px'; vl.style.width=rect.width+'px'; vl.style.height=rect.height+'px'; }
       try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch(e) {}
-      try { webapis.avplay.setDisplayRect(PIP_X, PIP_Y, PIP_W, PIP_H); } catch(e) {}
+      try { webapis.avplay.setDisplayRect(rect.x, rect.y, rect.width, rect.height); } catch(e) {}
     }
   }
 
@@ -300,10 +297,7 @@ export const Player = (() => {
         if (url.includes('|')) url = url.split('|')[0];
         webapis.avplay.open(url);
         _applyDisplayRect();
-        try {
-          webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=LOWEST|MAXBITRATE=3000000');
-          try { webapis.avplay.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 3); } catch(e) {}
-        } catch(e) {}
+        _applyPlaybackTuning(ch, true);
         webapis.avplay.setListener({
           onbufferingstart:    () => _setState('BUFFERING'),
           onbufferingcomplete: () => {

@@ -14,6 +14,7 @@ import { Player } from './player.js';
 import { ViewChannels } from './view-channels.js';
 import { ViewSetup } from './view-setup.js';
 import { eventBus } from './eventBus.js';
+import { DeviceProfile } from './device-profile.js';
 
 
 export const App = (() => {
@@ -25,6 +26,15 @@ export const App = (() => {
   let _eventsBound = false;
 
   function init() {
+    const rootStyle = document.documentElement?.style;
+    if (rootStyle) {
+      rootStyle.setProperty('--screen-w', `${DeviceProfile.layoutResolution.width}px`);
+      rootStyle.setProperty('--screen-h', `${DeviceProfile.layoutResolution.height}px`);
+      rootStyle.setProperty('--pip-x', `${DeviceProfile.pip.x}px`);
+      rootStyle.setProperty('--pip-y', `${DeviceProfile.pip.y}px`);
+      rootStyle.setProperty('--pip-w', `${DeviceProfile.pip.width}px`);
+      rootStyle.setProperty('--pip-h', `${DeviceProfile.pip.height}px`);
+    }
     _bindAppEvents();
     KeyHandler.init();
     Favorites.init();
@@ -122,7 +132,7 @@ export const App = (() => {
     SetupProgress.step('cache');
     SetupProgress.progress(0);
 
-    const cached = await Storage.getChannelCache(list.id);
+    const cached = await Storage.getChannelCache(list);
     
     // Si el usuario le dio a cancelar durante la lectura asíncrona de IndexedDB
     if (!_currentAbortController || _currentAbortController.signal.aborted) {
@@ -175,7 +185,7 @@ export const App = (() => {
       Store.set('currentList', list);
       Storage.setLastList(list.id);
       Store.set('channels', loadedChannels);
-      await Storage.setChannelCache(list.id, loadedChannels);
+      await Storage.setChannelCache(list, loadedChannels);
 
       await new Promise(r => setTimeout(r, 400));
       SetupProgress.hide();
@@ -264,14 +274,15 @@ export const App = (() => {
         _prefetchTimer = null;
         // No competir con el stream activo de vídeo
         if (typeof Player !== 'undefined' && Player.getMode() !== 'IDLE') return;
+        if (document.hidden || !Router.isView('channels')) return;
         if (_prefetchController) _prefetchController.abort();
         _prefetchController = new AbortController();
         const signal = _prefetchController.signal;
         try {
           // Lanzar VOD y Series en paralelo (antes era secuencial — el doble de tiempo)
           const [vodCached, serCached] = await Promise.all([
-            Storage.getVodCache(list.id),
-            Storage.getSeriesCache(list.id)
+            Storage.getVodCache(list),
+            Storage.getSeriesCache(list)
           ]);
           if (signal.aborted) return;
 
@@ -279,14 +290,14 @@ export const App = (() => {
           if (!vodCached || vodCached.length === 0) {
             tasks.push(
               Playlist.loadVod(list.server, list.user, list.pass, null, signal)
-                .then(vData => { if (!signal.aborted && vData && vData.length > 0) return Storage.setVodCache(list.id, vData); })
+                .then(vData => { if (!signal.aborted && vData && vData.length > 0) return Storage.setVodCache(list, vData); })
                 .catch(e => { if (e.name !== 'AbortError') console.error('Prefetch VOD error', e); })
             );
           }
           if (!serCached || serCached.length === 0) {
             tasks.push(
               Playlist.loadSeries(list.server, list.user, list.pass, null, signal)
-                .then(sData => { if (!signal.aborted && sData && sData.length > 0) return Storage.setSeriesCache(list.id, sData); })
+                .then(sData => { if (!signal.aborted && sData && sData.length > 0) return Storage.setSeriesCache(list, sData); })
                 .catch(e => { if (e.name !== 'AbortError') console.error('Prefetch Series error', e); })
             );
           }
@@ -296,7 +307,7 @@ export const App = (() => {
         } finally {
           _prefetchController = null;
         }
-      }, 5000); // 5s — más margen para la UI inicial
+      }, DeviceProfile.prefetch.delayMs);
     }
 
     // Comprobar actualización silenciosa
@@ -324,6 +335,7 @@ export const App = (() => {
       _syncTimer = setTimeout(() => { _syncTimer = null; _backgroundSync(list); }, 30000);
       return;
     }
+    if (document.hidden || !Router.isView('channels')) return;
     const controller = new AbortController();
     try {
       console.log('Background Sync: Buscando actualizaciones silenciosas...');
@@ -338,11 +350,11 @@ export const App = (() => {
       if (controller.signal.aborted) return;
       if (newChannels.length > 0) {
         Store.set('channels', newChannels);
-        await Storage.setChannelCache(list.id, newChannels);
+        await Storage.setChannelCache(list, newChannels);
         localStorage.setItem(`sync_${list.id}`, Date.now().toString());
         
         Playlist.clearGroupCache();
-        Store.set('groups', Playlist.getGroups(newChannels));
+        Store.set('groups', Playlist.getGroups(newChannels, Store.get('currentCountry') || 'ALL', 'tv'));
         Store.set('groupCountsCache', null);
         
         if (Router.isView('channels') && typeof ViewChannels !== 'undefined') {

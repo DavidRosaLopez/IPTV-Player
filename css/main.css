@@ -27,12 +27,18 @@
   --sidebar-w:  440px;
   --info-w:     340px;
   --font:       'Inter', sans-serif;
+  --screen-w:   1920px;
+  --screen-h:   1080px;
+  --pip-x:      1400px;
+  --pip-y:      770px;
+  --pip-w:      480px;
+  --pip-h:      270px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  width: 1920px; height: 1080px;
+  width: var(--screen-w); height: var(--screen-h);
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
@@ -41,7 +47,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-#app { width: 1920px; height: 1080px; position: relative; }
+#app { width: var(--screen-w); height: var(--screen-h); position: relative; }
 
 /* ── VIEWS ── */
 .view { 
@@ -438,8 +444,8 @@ html, body {
 
 .channels-layout {
   display: flex;
-  width: 1920px;
-  height: 1080px;
+  width: var(--screen-w);
+  height: var(--screen-h);
 }
 
 /* Sidebar */

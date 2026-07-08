@@ -272,10 +272,10 @@
    exactamente sobre este elemento usando setDisplayRect */
 .pip-box {
   position: absolute;
-  bottom: 40px;
-  right: 40px;
-  width: 480px;
-  height: 270px;
+  left: var(--pip-x);
+  top: var(--pip-y);
+  width: var(--pip-w);
+  height: var(--pip-h);
   border-radius: 0;  /* el vídeo nativo de AVPlay ignora border-radius */
   border: 2px solid rgba(255,255,255,0.3);
   overflow: visible;
@@ -306,7 +306,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 440px;
+  max-width: calc(var(--pip-w) - 40px);
 }
 
 /* Animación de entrada del PiP */

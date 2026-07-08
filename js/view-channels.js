@@ -58,6 +58,7 @@ export const ViewChannels = (() => {
   let _prevCountryCodes  = null;      // cache para reconciliación DOM de países
   let _prevFocusedEl     = null;      // trackear elemento enfocado previo (evita querySelectorAll masivo)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
+  let _groupCountsCache  = null;
 
   function onShow(fromView) {
     if (fromView !== 'player') {
@@ -281,6 +282,7 @@ export const ViewChannels = (() => {
     
     const groups = Playlist.getGroups(channels, currentCountry, _currentTab);
     Store.set('groups', groups);
+    const counts = _getGroupCounts(channels, currentCountry);
     
     const currentGroup = Store.get('currentGroup');
     const groupIdx = Store.get('groupIdx') || 0;
@@ -328,9 +330,7 @@ export const ViewChannels = (() => {
                      (g.id === currentGroup ? ' active' : '');
       li.dataset.idx = i;
 
-      const cnt = g.id === '__all__'  ? Playlist.filterByGroup(channels, '__all__', null, currentCountry).length :
-                  g.id === '__favs__' ? _getFavoritesCount(channels, currentCountry) :
-                  Playlist.filterByGroup(channels, g.id, null, currentCountry).length;
+      const cnt = counts[g.id] || 0;
       _setGroupContent(li, g, cnt);
 
       fragment.appendChild(li);
@@ -355,26 +355,33 @@ export const ViewChannels = (() => {
     _sidebarFocusablesCache = null;
   }
 
-  function _getFavoritesCount(channels, currentCountry) {
-    const favIds = new Set(Favorites.getIds());
-    return Playlist.filterByGroup(channels, '__favs__', favIds, currentCountry).length;
+  function _getGroupCounts(channels, currentCountry) {
+    const favIds = Favorites.getIds();
+    const watchingIds = Watching.getIds();
+    const cacheKey = `${currentCountry}|${_currentTab}|${favIds.join(',')}|${watchingIds.join(',')}`;
+    if (_groupCountsCache && _groupCountsCache.channelsRef === channels && _groupCountsCache.key === cacheKey) return _groupCountsCache.counts;
+
+    const favSet = new Set(favIds);
+    const watchingSet = new Set(watchingIds);
+    const counts = { '__all__': 0, '__favs__': 0, '__watching__': 0 };
+    for (const ch of channels) {
+      if (!Playlist.isItemVisibleInCountry(ch, currentCountry)) continue;
+      counts.__all__++;
+      counts[ch.group] = (counts[ch.group] || 0) + 1;
+      if (favSet.has(ch.id)) counts.__favs__++;
+      if (watchingSet.has(ch.id)) counts.__watching__++;
+    }
+
+    _groupCountsCache = { channelsRef: channels, key: cacheKey, counts };
+    Store.set('groupCountsCache', counts);
+    return counts;
   }
 
   function _updateGroupCounts() {
     const channels = _getCurrentData();
     const groups = Store.get('groups');
     const currentCountry = Store.get('currentCountry') || 'ALL';
-
-    const cache = { 
-      '__all__': Playlist.filterByGroup(channels, '__all__', null, currentCountry).length,
-      '__favs__': _getFavoritesCount(channels, currentCountry),
-      '__watching__': Playlist.filterByGroup(channels, '__watching__', null, currentCountry).length
-    };
-    for (const ch of channels) {
-      if (Playlist.isItemVisibleInCountry(ch, currentCountry)) {
-        cache[ch.group] = (cache[ch.group] || 0) + 1;
-      }
-    }
+    const cache = _getGroupCounts(channels, currentCountry);
 
     const els = document.querySelectorAll('.group-item');
     if (!els.length || !groups.length) return;
@@ -1003,7 +1010,7 @@ export const ViewChannels = (() => {
     if (tabId === 'tv') {
       data = Store.peek('channels') || [];
     } else if (tabId === 'vod') {
-      let cached = await Storage.getVodCache(list.id);
+      let cached = await Storage.getVodCache(list);
       if (_currentTab !== tabId) return;
 
       if (!cached || cached.length === 0) {
@@ -1012,7 +1019,7 @@ export const ViewChannels = (() => {
         try {
           cached = await Playlist.loadVod(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
           if (_currentTab !== tabId) return;
-          await Storage.setVodCache(list.id, cached);
+          await Storage.setVodCache(list, cached);
         } catch (e) {
           if (e.name === 'AbortError') return; // Cancelado
           Router.showToast('Error cargando películas', 'error');
@@ -1022,7 +1029,7 @@ export const ViewChannels = (() => {
       }
       data = cached;
     } else if (tabId === 'series') {
-      let cached = await Storage.getSeriesCache(list.id);
+      let cached = await Storage.getSeriesCache(list);
       if (_currentTab !== tabId) return;
 
       if (!cached || cached.length === 0) {
@@ -1031,7 +1038,7 @@ export const ViewChannels = (() => {
         try {
           cached = await Playlist.loadSeries(list.server, list.user, list.pass, (p) => SetupProgress.progress(p), signal);
           if (_currentTab !== tabId) return;
-          await Storage.setSeriesCache(list.id, cached);
+          await Storage.setSeriesCache(list, cached);
         } catch (e) {
           if (e.name === 'AbortError') return; // Cancelado
           Router.showToast('Error cargando series', 'error');
