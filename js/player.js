@@ -632,7 +632,7 @@ export const Player = (() => {
           Storage.setEpisodeProgress(_current.id, ms);
           // Actualizar "Seguir viendo" con el minuto actual
           if (_current.type === 'series' && _current.seriesId) {
-            Watching.updateProgress(_current.seriesId, _current.id, ms);
+            Watching.updateProgress(_current.seriesId, _current.id, ms, Store.get('currentList')?.id);
           }
         }
       }

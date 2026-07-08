@@ -422,7 +422,7 @@ export const ViewChannels = (() => {
 
   function _getGroupCounts(channels, currentCountry) {
     const favIds = Favorites.getIds();
-    const watchingIds = Watching.getIds();
+    const watchingIds = Watching.getIds(Store.get('currentList')?.id);
     const cacheKey = `${currentCountry}|${_currentTab}|${favIds.join(',')}|${watchingIds.join(',')}`;
     if (_groupCountsCache && _groupCountsCache.channelsRef === channels && _groupCountsCache.key === cacheKey) return _groupCountsCache.counts;
 

@@ -5,15 +5,34 @@ import { Watching } from './watching.js';
 import { loadXtream as _loadXtream, loadVod as _loadVod, loadSeries as _loadSeries, loadM3U as _loadM3U } from './services/playlist-service.js';
 
 export const Playlist = (() => {
+  const VOD_GROUPS = [
+    { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> PelÃ­culas' },
+    { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
+    { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
+  ];
+  const SERIES_GROUPS = [
+    { id: '__all__', name: '<span class="material-symbols-rounded">live_tv</span> Series' },
+    { id: '__favs__', name: '<span class="material-symbols-rounded">favorite</span> Favoritos' },
+    { id: '__watching__', name: '<span class="material-symbols-rounded">play_circle</span> Seguir viendo' }
+  ];
+  const GLOBAL_GROUPS = new Set([
+    'âœ¨ Ãšltimos Estrenos',
+    'ðŸ’Ž Calidad 4K / UHD',
+    'ðŸ’Ž Series en 4K / UHD',
+    '__folder_plataformas__',
+    'ðŸ¿ Plataformas',
+    'ðŸŸ¥ Netflix',
+    'ðŸŸ£ HBO Max',
+    'ðŸŸ¦ Amazon Prime',
+    'âœ¨ Disney+',
+    'ðŸ Apple TV+',
+    'â“‚ï¸ Movistar+',
+    'â›°ï¸ Paramount+',
+    'ðŸ“º Nacionales / Otras Apps'
+  ]);
+
   function _normalize(str) {
     return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  }
-
-  function _toArray(obj) {
-    if (!obj) return [];
-    if (Array.isArray(obj)) return obj;
-    if (typeof obj === 'object') return Object.values(obj);
-    return [];
   }
 
   let _groupIndex = new Map();
@@ -28,6 +47,12 @@ export const Playlist = (() => {
     _indexedChannels = channels;
   }
   function invalidateIndex() { _indexedChannels = null; }
+
+  function _groupsForTab(tabId) {
+    if (tabId === 'vod') return VOD_GROUPS;
+    if (tabId === 'series') return SERIES_GROUPS;
+    return null;
+  }
 
   function search(channels, query) {
     if (!query) return channels;
@@ -67,6 +92,8 @@ export const Playlist = (() => {
 
   let _groupCache = {};
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
+    const tabGroups = _groupsForTab(tabId);
+    if (tabGroups) return tabGroups;
     if (tabId === 'vod') {
       return [
         { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> Películas' },

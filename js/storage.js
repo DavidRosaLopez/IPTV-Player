@@ -22,22 +22,27 @@ export const Storage = (() => {
 
   const del = (key) => localStorage.removeItem(PREFIX + key);
 
-  const getLists    = ()      => get('lists', []);
-  const saveLists   = (lists) => set('lists', lists);
-  const getFavs     = (listId) => {
-    if (!listId) return get('favorites', []);
-    return get('favorites_' + listId, []);
-  };
-  const saveFavs    = (listId, favs) => {
-    if (!listId) return set('favorites', favs);
-    return set('favorites_' + listId, favs);
+  const Prefs = {
+    getLists: () => get('lists', []),
+    saveLists: (lists) => set('lists', lists),
+    getFavs: (listId) => {
+      if (!listId) return get('favorites', []);
+      return get('favorites_' + listId, []);
+    },
+    saveFavs: (listId, favs) => {
+      if (!listId) return set('favorites', favs);
+      return set('favorites_' + listId, favs);
+    },
+    getLastList: () => get('last_list', null),
+    setLastList: (id) => set('last_list', id),
+    getDefaultList: () => get('default_list', null),
+    setDefaultList: (id) => set('default_list', id),
+    getLastChannel: (listId = null) => get('last_channel_' + _getCurrentListId(listId), null),
+    setLastChannel: (id, listId = null) => set('last_channel_' + _getCurrentListId(listId), id),
+    getVisibleCountries: () => get('visible_countries', null),
+    setVisibleCountries: (list) => set('visible_countries', list),
   };
 
-
-  const getLastList = ()      => get('last_list', null);
-  const setLastList = (id)    => set('last_list', id);
-  const getDefaultList = ()   => get('default_list', null);
-  const setDefaultList = (id) => set('default_list', id);
   const _getCurrentListId = (listId = null) => {
     if (listId) return listId;
     if (typeof Store !== 'undefined') {
@@ -46,12 +51,6 @@ export const Storage = (() => {
     }
     return 'default';
   };
-
-  const getLastChannel = (listId = null) => get('last_channel_' + _getCurrentListId(listId), null);
-  const setLastChannel = (id, listId = null) => set('last_channel_' + _getCurrentListId(listId), id);
-
-  const getVisibleCountries = ()      => get('visible_countries', null);
-  const setVisibleCountries = (list)  => set('visible_countries', list);
 
   function _listSignature(listOrId) {
     if (!listOrId || typeof listOrId === 'string') return '';
@@ -153,24 +152,36 @@ export const Storage = (() => {
     } catch { return false; }
   };
 
-  const getChannelCache = (list) => _getFromDB(_cacheKey('ch_cache', list), CHANNEL_TTL);
-  const setChannelCache = (list, data) => _setToDB(_cacheKey('ch_cache', list), data);
-  const clearChannelCache = (list) => (typeof list === 'string' ? _clearByPrefix(`ch_cache_${list}`) : _delFromDB(_cacheKey('ch_cache', list)));
-
-  const getVodCache = (list) => _getFromDB(_cacheKey('vod_cache', list), CHANNEL_TTL);
-  const setVodCache = (list, data) => _setToDB(_cacheKey('vod_cache', list), data);
-  const clearVodCache = (list) => (typeof list === 'string' ? _clearByPrefix(`vod_cache_${list}`) : _delFromDB(_cacheKey('vod_cache', list)));
-
-  const getSeriesCache = (list) => _getFromDB(_cacheKey('series_cache', list), CHANNEL_TTL);
-  const setSeriesCache = (list, data) => _setToDB(_cacheKey('series_cache', list), data);
-  const clearSeriesCache = (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_${list}`) : _delFromDB(_cacheKey('series_cache', list)));
+  const Cache = {
+    getChannelCache: (list) => _getFromDB(_cacheKey('ch_cache', list), CHANNEL_TTL),
+    setChannelCache: (list, data) => _setToDB(_cacheKey('ch_cache', list), data),
+    clearChannelCache: (list) => (typeof list === 'string' ? _clearByPrefix(`ch_cache_${list}`) : _delFromDB(_cacheKey('ch_cache', list))),
+    getVodCache: (list) => _getFromDB(_cacheKey('vod_cache', list), CHANNEL_TTL),
+    setVodCache: (list, data) => _setToDB(_cacheKey('vod_cache', list), data),
+    clearVodCache: (list) => (typeof list === 'string' ? _clearByPrefix(`vod_cache_${list}`) : _delFromDB(_cacheKey('vod_cache', list))),
+    getSeriesCache: (list) => _getFromDB(_cacheKey('series_cache', list), CHANNEL_TTL),
+    setSeriesCache: (list, data) => _setToDB(_cacheKey('series_cache', list), data),
+    clearSeriesCache: (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_${list}`) : _delFromDB(_cacheKey('series_cache', list))),
+  };
 
   // ── Progreso de episodios (localStorage, persiste entre reinicios) ───
   const EP_PROG_PREFIX = 'ep_prog_';
-  const getEpisodeProgress = (epId) => get(EP_PROG_PREFIX + epId, null);
-  const setEpisodeProgress = (epId, ms) => set(EP_PROG_PREFIX + epId, ms);
-  const clearEpisodeProgress = (epId) => del(EP_PROG_PREFIX + epId);
+  const Progress = {
+    getEpisodeProgress: (epId) => get(EP_PROG_PREFIX + epId, null),
+    setEpisodeProgress: (epId, ms) => set(EP_PROG_PREFIX + epId, ms),
+    clearEpisodeProgress: (epId) => del(EP_PROG_PREFIX + epId),
+  };
 
-  return { get, set, del, getLists, saveLists, getFavs, saveFavs, getLastList, setLastList, getDefaultList, setDefaultList, getLastChannel, setLastChannel, getChannelCache, setChannelCache, clearChannelCache, getVodCache, setVodCache, clearVodCache, getSeriesCache, setSeriesCache, clearSeriesCache, getVisibleCountries, setVisibleCountries, getEpisodeProgress, setEpisodeProgress, clearEpisodeProgress };
+  return {
+    get,
+    set,
+    del,
+    ...Prefs,
+    ...Cache,
+    ...Progress,
+    Prefs,
+    Cache,
+    Progress,
+  };
 })();
 

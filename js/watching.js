@@ -2,23 +2,22 @@ import { Store } from './store.js';
 import { Storage } from './storage.js';
 
 export const Watching = (() => {
-  function _getKey() {
-    const list = Store.get('currentList');
-    const listId = list ? list.id : 'default';
-    return `${listId}_watching_series`;
+  function _getKey(listId = null) {
+    const resolvedListId = listId || (Store.get('currentList')?.id || 'default');
+    return `${resolvedListId}_watching_series`;
   }
 
-  function getItems() {
-    return Storage.get(_getKey()) || [];
+  function getItems(listId = null) {
+    return Storage.get(_getKey(listId)) || [];
   }
 
-  function getIds() {
-    return getItems().map(item => typeof item === 'string' ? item : item.id);
+  function getIds(listId = null) {
+    return getItems(listId).map(item => typeof item === 'string' ? item : item.id);
   }
 
-  function add(ch, ep = null) {
-    const key = _getKey();
-    let items = getItems();
+  function add(ch, ep = null, listId = null) {
+    const key = _getKey(listId);
+    let items = getItems(listId);
     const idToFind = typeof ch === 'string' ? ch : ch.id;
 
     items = items.filter(item => {
@@ -38,9 +37,9 @@ export const Watching = (() => {
     Storage.set(key, items);
   }
 
-  function updateProgress(seriesId, epId, ms) {
-    const key = _getKey();
-    const items = getItems();
+  function updateProgress(seriesId, epId, ms, listId = null) {
+    const key = _getKey(listId);
+    const items = getItems(listId);
     const idx = items.findIndex(item => {
       const id = typeof item === 'string' ? item : item.id;
       return id === seriesId;
@@ -53,8 +52,8 @@ export const Watching = (() => {
     }
   }
 
-  function isWatching(id) {
-    return getIds().includes(id);
+  function isWatching(id, listId = null) {
+    return getIds(listId).includes(id);
   }
 
   return { getIds, getItems, add, isWatching, updateProgress };

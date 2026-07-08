@@ -478,7 +478,7 @@ export const InfoPopup = (() => {
 
   function _executeAction() {
     if (_actionIdx === 0 && _current.type === 'vod') {
-      Watching.add(_current, null);
+      Watching.add(_current, null, Store.get('currentList')?.id);
       _requestGroupsRender();
       suspend();
       _requestPlay(_current);
@@ -495,7 +495,7 @@ export const InfoPopup = (() => {
     const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
     
     // Guardar en seguir viendo
-    Watching.add(_current, ep);
+    Watching.add(_current, ep, Store.get('currentList')?.id);
     _requestGroupsRender();
 
     // Create a temporary channel object for the episode

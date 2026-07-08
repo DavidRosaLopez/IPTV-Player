@@ -92,6 +92,81 @@ export const ViewSetup = (() => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-content-' + tab));
   }
 
+  function _isSetupBusy() {
+    const progressEl = document.getElementById('setup-progress');
+    return !!(progressEl && !progressEl.classList.contains('hidden'));
+  }
+
+  function _getActiveSetupTab() {
+    return document.querySelector('#view-setup .tab-btn.active')?.dataset.tab;
+  }
+
+  function _moveSavedGrid(dir) {
+    const row = Math.floor(_setupContentIdx / 4);
+    const col = _setupContentIdx % 4;
+    const listsCount = Storage.getLists().length;
+    if (dir === 'right') _setupContentIdx = row * 4 + Math.min(3, col + 1);
+    else if (dir === 'left') _setupContentIdx = row * 4 + Math.max(0, col - 1);
+    else if (dir === 'down' && row < listsCount - 1) _setupContentIdx = (row + 1) * 4 + col;
+    else if (dir === 'up' && row > 0) _setupContentIdx = (row - 1) * 4 + col;
+  }
+
+  function _handleSetupDirection(dir) {
+    if (typeof Router === 'undefined' || !Router.isView('setup')) return;
+    if (_isSetupBusy()) return true;
+    if (_setupZone === 'exit') {
+      if (dir === 'right') _exitFocusIdx = 1;
+      else if (dir === 'left') _exitFocusIdx = 0;
+      _updateExitFocus();
+      return true;
+    }
+    if (_setupZone === 'tabs') {
+      if (dir === 'right') {
+        _setupTabIdx = Math.min(_getSetupTabs().length - 1, _setupTabIdx + 1);
+        _getSetupTabs()[_setupTabIdx]?.click();
+      } else if (dir === 'left') {
+        _setupTabIdx = Math.max(0, _setupTabIdx - 1);
+        _getSetupTabs()[_setupTabIdx]?.click();
+      } else if (dir === 'down') {
+        _setupZone = 'content';
+        _setupContentIdx = 0;
+      }
+      if (dir !== 'up') _updateSetupFocus();
+      return true;
+    }
+
+    const activeTab = _getActiveSetupTab();
+    if (activeTab === 'settings') {
+      if (dir === 'right') {
+        _setupTabIdx = (_setupTabIdx + 1) % _getSetupTabs().length;
+        _setupZone = 'tabs';
+        _getSetupTabs()[_setupTabIdx]?.click();
+      } else if (dir === 'left') {
+        _setupTabIdx = _setupTabIdx === 0 ? _getSetupTabs().length - 1 : _setupTabIdx - 1;
+        _setupZone = 'tabs';
+        _getSetupTabs()[_setupTabIdx]?.click();
+      }
+      return true;
+    }
+
+    if (activeTab === 'saved') {
+      _moveSavedGrid(dir);
+      _updateSetupFocus();
+      return true;
+    }
+
+    if (dir === 'right' || dir === 'down') {
+      _setupContentIdx = Math.min(_getSetupContent().length - 1, _setupContentIdx + 1);
+    } else if (dir === 'left') {
+      _setupContentIdx = Math.max(0, _setupContentIdx - 1);
+    } else if (dir === 'up') {
+      if (_setupContentIdx === 0) _setupZone = 'tabs';
+      else _setupContentIdx--;
+    }
+    _updateSetupFocus();
+    return true;
+  }
+
   function _renderSavedLists() {
     const lists = Storage.getLists();
     const el = document.getElementById('saved-list');
@@ -363,120 +438,10 @@ export const ViewSetup = (() => {
     });
 
     // D-pad navigation for setup
-    KeyHandler.on('RIGHT', () => {
-      if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-      const progressEl = document.getElementById('setup-progress');
-      if (progressEl && !progressEl.classList.contains('hidden')) return true;
-      if (_setupZone === 'exit') {
-        _exitFocusIdx = 1;
-        _updateExitFocus();
-        return true;
-      }
-      if (_setupZone === 'tabs') {
-        _setupTabIdx = Math.min(_getSetupTabs().length - 1, _setupTabIdx + 1);
-        _getSetupTabs()[_setupTabIdx]?.click();
-      } else {
-        const activeTab = document.querySelector('#view-setup .tab-btn.active')?.dataset.tab;
-        if (activeTab === 'settings') {
-          _setupTabIdx = (_setupTabIdx + 1) % _getSetupTabs().length;
-          _setupZone = 'tabs';
-          _getSetupTabs()[_setupTabIdx]?.click();
-          return true;
-        }
-        if (activeTab === 'saved') {
-          const row = Math.floor(_setupContentIdx / 4);
-          const col = _setupContentIdx % 4;
-          const newCol = Math.min(3, col + 1);
-          _setupContentIdx = row * 4 + newCol;
-        } else {
-          _setupContentIdx = Math.min(_getSetupContent().length - 1, _setupContentIdx + 1);
-        }
-        _updateSetupFocus();
-      }
-      return true;
-    });
-
-    KeyHandler.on('LEFT', () => {
-      if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-      const progressEl = document.getElementById('setup-progress');
-      if (progressEl && !progressEl.classList.contains('hidden')) return true;
-      if (_setupZone === 'exit') {
-        _exitFocusIdx = 0;
-        _updateExitFocus();
-        return true;
-      }
-      if (_setupZone === 'tabs') {
-        _setupTabIdx = Math.max(0, _setupTabIdx - 1);
-        _getSetupTabs()[_setupTabIdx]?.click();
-      } else {
-        const activeTab = document.querySelector('#view-setup .tab-btn.active')?.dataset.tab;
-        if (activeTab === 'settings') {
-          _setupTabIdx = _setupTabIdx === 0 ? _getSetupTabs().length - 1 : _setupTabIdx - 1;
-          _setupZone = 'tabs';
-          _getSetupTabs()[_setupTabIdx]?.click();
-          return true;
-        }
-        if (activeTab === 'saved') {
-          const row = Math.floor(_setupContentIdx / 4);
-          const col = _setupContentIdx % 4;
-          const newCol = Math.max(0, col - 1);
-          _setupContentIdx = row * 4 + newCol;
-        } else {
-          _setupContentIdx = Math.max(0, _setupContentIdx - 1);
-        }
-        _updateSetupFocus();
-      }
-      return true;
-    });
-
-    KeyHandler.on('DOWN', () => {
-      if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-      const progressEl = document.getElementById('setup-progress');
-      if (progressEl && !progressEl.classList.contains('hidden')) return true;
-      if (_setupZone === 'exit') return true;
-      if (_setupZone === 'tabs') {
-        _setupZone = 'content';
-        _setupContentIdx = 0;
-      } else {
-        const activeTab = document.querySelector('#view-setup .tab-btn.active')?.dataset.tab;
-        if (activeTab === 'saved') {
-          const listsCount = Storage.getLists().length;
-          const row = Math.floor(_setupContentIdx / 4);
-          const col = _setupContentIdx % 4;
-          if (row < listsCount - 1) {
-            _setupContentIdx = (row + 1) * 4 + col;
-          }
-        } else {
-          _setupContentIdx = Math.min(_getSetupContent().length - 1, _setupContentIdx + 1);
-        }
-      }
-      _updateSetupFocus();
-      return true;
-    });
-
-    KeyHandler.on('UP', () => {
-      if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-      const progressEl = document.getElementById('setup-progress');
-      if (progressEl && !progressEl.classList.contains('hidden')) return true;
-      if (_setupZone === 'exit') return true;
-      if (_setupZone === 'content') {
-        const activeTab = document.querySelector('#view-setup .tab-btn.active')?.dataset.tab;
-        if (activeTab === 'saved') {
-          const row = Math.floor(_setupContentIdx / 4);
-          const col = _setupContentIdx % 4;
-          if (row > 0) {
-            _setupContentIdx = (row - 1) * 4 + col;
-          } else {
-            _setupZone = 'tabs';
-          }
-        } else {
-          if (_setupContentIdx === 0) _setupZone = 'tabs';
-          else _setupContentIdx--;
-        }
-        _updateSetupFocus();
-      }
-      return true;
-    });
+    KeyHandler.on('RIGHT', () => _handleSetupDirection('right'));
+    KeyHandler.on('LEFT', () => _handleSetupDirection('left'));
+    KeyHandler.on('DOWN', () => _handleSetupDirection('down'));
+    KeyHandler.on('UP', () => _handleSetupDirection('up'));
 
     KeyHandler.on('ENTER', () => {
       if (typeof Router === 'undefined' || !Router.isView('setup')) return;
