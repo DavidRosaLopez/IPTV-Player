@@ -16,6 +16,7 @@ import { Watching } from './watching.js';
 import { getCountryInfo, sortCountryCodes } from './countries.js';
 import { loadTabData } from './services/tab-data-loader.js';
 import { createFocusController } from './services/focus-controller.js';
+import { renderCountryItems, renderGroupList, setChannelHeader } from './services/view-renderer.js';
 
 
 export const ViewChannels = (() => {
@@ -238,6 +239,17 @@ export const ViewChannels = (() => {
     }
     container.style.display = '';
     const codes = Store.get('countries') || ['ALL'];
+    const _currentCountry = Store.get('currentCountry') || 'ALL';
+    renderCountryItems({
+      container,
+      codes: codes.map(code => code === 'ALL' ? { emoji: '🌎', name: 'Todos' } : getCountryInfo(code)),
+      currentCountry: _currentCountry,
+      focusedIdx: _countryFocusIdx,
+      onSelect: _selectCountry
+    });
+    _prevCountryCodes = codes.join(',');
+    _updateCountryClasses();
+    return;
 
     // ── Reconciliación DOM: solo re-renderizar si la lista cambió ──
     const codesKey = codes.join(',');
@@ -330,6 +342,18 @@ export const ViewChannels = (() => {
     const groups = Playlist.getGroups(channels, currentCountry, _currentTab);
     Store.set('groups', groups);
     const counts = _getGroupCounts(channels, currentCountry);
+    renderGroupList({
+      list,
+      groups,
+      counts,
+      currentGroup: Store.get('currentGroup'),
+      groupIdx: Store.get('groupIdx') || 0,
+      focusZone: _focusZone,
+      expandedFolders: Store.get('expandedFolders') || {},
+      onFolderClick: (g, i) => { Store.set('groupIdx', i); _selectGroup(g, true); },
+      onGroupClick: (g, li) => { Store.set('groupIdx', parseInt(li.dataset.idx)); _selectGroup(g, true); }
+    });
+    return;
     
     const currentGroup = Store.get('currentGroup');
     const groupIdx = Store.get('groupIdx') || 0;
@@ -525,35 +549,7 @@ export const ViewChannels = (() => {
       items = Playlist.filterByGroup(channels, currentGroup, favIds, currentCountry);
     }
 
-    const groupNameEl = document.getElementById('current-group-name');
-    if (groupNameEl) {
-      if (!currentGroup) {
-        groupNameEl.textContent = _currentTab === 'tv' ? 'TV' : (_currentTab === 'vod' ? 'Películas' : 'Series');
-      } else if (currentGroup === '__all__') {
-        groupNameEl.textContent = _currentTab === 'tv' ? 'Canales' : (_currentTab === 'vod' ? 'Películas' : 'Series');
-      } else if (currentGroup === '__favs__') {
-        groupNameEl.textContent = 'Favoritos';
-      } else {
-        const groups = Store.get('groups') || [];
-        const gObj = groups.find(g => g.id === currentGroup);
-        if (gObj) {
-          groupNameEl.textContent = _getGroupLabel(gObj);
-        } else {
-          groupNameEl.textContent = 'Canales';
-        }
-      }
-    }
-
-    const cnt = document.getElementById('channel-count');
-    if (cnt) {
-      if (!currentGroup) {
-        cnt.textContent = '';
-        cnt.style.display = 'none';
-      } else {
-        cnt.style.display = '';
-        cnt.textContent = items.length + (_currentTab === 'tv' ? ' canales' : (_currentTab === 'vod' ? ' películas' : ' series'));
-      }
-    }
+    setChannelHeader({ currentGroup, currentTab: _currentTab, count: items.length });
 
     const newLayout = _currentTab === 'tv' ? 'tv' : 'poster';
     if (_currentLayoutMode !== newLayout) {
