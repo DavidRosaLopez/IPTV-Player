@@ -49,7 +49,6 @@ export const ViewChannels = (() => {
   let _sidebarFocusIdx = 2; // 0=search, 1=setup, 2+=groups
   let _focusZone = 'channels'; // 'groups' | 'channels' | 'exit' | 'countries'
   let _exitFocusIdx = 0; // 0 = Cancel, 1 = Exit
-  let _prevFocusZone = 'channels';
   let _sidebarFocusablesCache = null;
   let _countryFocusIdx = 0;
   let _currentTab = 'tv';
@@ -101,6 +100,12 @@ export const ViewChannels = (() => {
       if (focused && typeof Player !== 'undefined') Player.schedulePreview(focused);
     }
   });
+
+  function _syncFocusStateFromController() {
+    _sidebarFocusIdx = _focus.getSidebarFocusIdx();
+    _tabFocusIdx = _focus.getTabFocusIdx();
+    _exitFocusIdx = _focus.getExitFocusIdx();
+  }
 
   function onShow(fromView) {
     if (fromView !== 'player') {
@@ -621,165 +626,17 @@ export const ViewChannels = (() => {
 
   
   function _moveActive(dir) {
-    if (_focusZone === 'tabs') {
-      if (dir === 'left') {
-        _tabFocusIdx = Math.max(0, _tabFocusIdx - 1);
-        _setFocusZone('tabs');
-      } else if (dir === 'right') {
-        if (_tabFocusIdx === TABS.length - 1) {
-          _setFocusZone('channels');
-        } else {
-          _tabFocusIdx = Math.min(TABS.length - 1, _tabFocusIdx + 1);
-          _setFocusZone('tabs');
-        }
-      } else if (dir === 'down') {
-        if (_currentTab === 'vod' || _currentTab === 'series') {
-          _sidebarFocusIdx = 2; // primer grupo
-          _setFocusZone('groups');
-        } else {
-          _setFocusZone('countries');
-        }
-      } else if (dir === 'up') {
-        _sidebarFocusIdx = 0;
-        _setFocusZone('groups', false); // Setup / search buttons
-      }
-      return;
-    }
-    if (_focusZone === 'countries') {
-      const codes = Store.get('countries') || ['ALL'];
-      if (dir === 'up') {
-        _setFocusZone('tabs');
-      } else if (dir === 'down') {
-        _sidebarFocusIdx = 2; // Focus first category (Todos los canales)
-        _setFocusZone('groups');
-      } else if (dir === 'left') {
-        _countryFocusIdx = Math.max(0, _countryFocusIdx - 1);
-        _updateCountryClasses();
-      } else if (dir === 'right') {
-        _countryFocusIdx = Math.min(codes.length - 1, _countryFocusIdx + 1);
-        _updateCountryClasses();
-      }
-      return;
-    }
-
-    if (_focusZone === 'groups') {
-      const els = _getSidebarFocusables();
-      if (!els.length) return;
-      els[_sidebarFocusIdx]?.classList.remove('focused');
-
-      if (dir === 'left') {
-        if (_sidebarFocusIdx === 1) _sidebarFocusIdx = 0;
-      } else if (dir === 'right') {
-        if (_sidebarFocusIdx === 0) {
-          _sidebarFocusIdx = 1;
-        } else {
-          _setFocusZone('channels');
-          return;
-        }
-      } else if (dir === 'up') {
-        if (_sidebarFocusIdx === 2) {
-          if (_currentTab === 'vod' || _currentTab === 'series') {
-            _setFocusZone('tabs');
-          } else {
-            _setFocusZone('countries');
-          }
-          return;
-        } else if (_sidebarFocusIdx > 2) {
-          _sidebarFocusIdx--;
-        }
-      } else if (dir === 'down') {
-        if (_sidebarFocusIdx === 0 || _sidebarFocusIdx === 1) {
-          _setFocusZone('tabs');
-          return;
-        } else {
-          _sidebarFocusIdx = Math.min(els.length - 1, _sidebarFocusIdx + 1);
-        }
-      }
-
-      const next = els[_sidebarFocusIdx];
-      if (next) {
-        next.classList.add('focused');
-        _prevFocusedEl = next;
-        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-        
-        if (next.id !== 'btn-open-search' && next.id !== 'btn-open-setup') {
-          const groupId = next.dataset.groupId;
-          const groups = Store.get('groups');
-          const group = groups.find(g => g.id === groupId);
-          if (group) {
-             clearTimeout(_groupPreviewTimer);
-             _groupPreviewTimer = setTimeout(() => {
-                if (_focusZone === 'groups') {
-                   _selectGroup(group, false);
-                }
-             }, 150);
-          }
-        }
-      }
-    } else {
-      const curIdx = VirtualList.getFocused();
-      const cols = _currentTab === 'tv' ? 3 : 5;
-
-      if (dir === 'left' && curIdx % cols === 0) {
-        _setFocusZone('groups');
-        return;
-      }
-
-      VirtualList.move(dir);
-      KeyHandler.setFocus(document.querySelector('.channel-card.focused'), true);
-      
-      const focused = VirtualList.getCurrentItem();
-      if (focused && typeof Player !== 'undefined') Player.schedulePreview(focused);
-    }
+    _focus.setSidebarFocusIdx(_sidebarFocusIdx);
+    _focus.setTabFocusIdx(_tabFocusIdx);
+    _focus.move(dir);
+    _syncFocusStateFromController();
   }
 
   function _setFocusZone(zone, restoreActive = true) {
-    const isEnteringGroups = zone === 'groups' && _focusZone !== 'groups';
-    _focusZone = zone;
-    const viewEl = document.getElementById('view-channels');
-    if (viewEl) {
-      viewEl.setAttribute('data-focus', zone);
-      // O(1): dequeue previous focused element instead of querySelectorAll('.focused')
-      if (_prevFocusedEl) {
-        _prevFocusedEl.classList.remove('focused');
-        _prevFocusedEl = null;
-      }
-    }
-    
-    if (zone === 'groups') {
-      const els = _getSidebarFocusables();
-      if (isEnteringGroups && restoreActive) {
-        const activeIdx = els.findIndex(el => el.classList.contains('active'));
-        if (activeIdx !== -1) {
-          _sidebarFocusIdx = activeIdx;
-        }
-      }
-      const next = els[_sidebarFocusIdx];
-      if (next) {
-        next.classList.add('focused');
-        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-        _prevFocusedEl = next;
-      }
-    } else if (zone === 'countries') {
-      _updateCountryClasses();
-    } else if (zone === 'tabs') {
-      const tabs = document.querySelectorAll('.sidebar-tab-btn');
-      if (tabs[_tabFocusIdx]) {
-        tabs[_tabFocusIdx].classList.add('focused');
-        _prevFocusedEl = tabs[_tabFocusIdx];
-      }
-    } else if (zone === 'channels') {
-      if (typeof VirtualList !== 'undefined') {
-        VirtualList.setFocused(VirtualList.getFocused());
-        const ch = VirtualList.getCurrentItem();
-        if (ch && typeof Player !== 'undefined') Player.schedulePreview(ch);
-      }
-      setTimeout(() => {
-        const card = document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
-        if (card) _prevFocusedEl = card;
-        KeyHandler.setFocus(card, true);
-      }, 50);
-    }
+    _focus.setSidebarFocusIdx(_sidebarFocusIdx);
+    _focus.setTabFocusIdx(_tabFocusIdx);
+    _focus.setZone(zone, restoreActive);
+    _syncFocusStateFromController();
   }
 
   function _showExitPopup() {
