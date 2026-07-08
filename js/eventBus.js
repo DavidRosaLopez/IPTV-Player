@@ -3,31 +3,42 @@
  */
 class EventBus {
   constructor() {
-    this.listeners = {};
+    this.listeners = new Map();
   }
 
   on(event, callback) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(callback);
+    const list = this.listeners.get(event) || [];
+    list.push(callback);
+    this.listeners.set(event, list);
     return () => this.off(event, callback);
   }
 
   off(event, callback) {
-    if (!this.listeners[event]) return;
-    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    const list = this.listeners.get(event);
+    if (!list) return;
+    const next = list.filter(cb => cb !== callback);
+    if (next.length) this.listeners.set(event, next);
+    else this.listeners.delete(event);
   }
 
   emit(event, data) {
-    if (!this.listeners[event]) return;
-    this.listeners[event].forEach(callback => {
+    const list = this.listeners.get(event);
+    if (!list) return;
+    list.slice().forEach(callback => {
       try {
         callback(data);
       } catch (e) {
         console.error(`Error executing event ${event}:`, e);
       }
     });
+  }
+
+  clear(event = null) {
+    if (event === null) {
+      this.listeners.clear();
+      return;
+    }
+    this.listeners.delete(event);
   }
 }
 

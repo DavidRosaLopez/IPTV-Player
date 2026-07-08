@@ -328,7 +328,7 @@ export const ViewSetup = (() => {
     } catch { _setStatus('xt-status', '✗ No se puede conectar', 'error'); }
   }
 
-  function _renderCountrySettings() {
+  function _renderCountrySettingsLegacy() {
     const container = document.getElementById('country-settings-list');
     if (!container) return;
     
@@ -410,7 +410,7 @@ export const ViewSetup = (() => {
     });
   }
 
-  function _toggleCountryVisibility(code) {
+  function _toggleCountryVisibilityLegacy(code) {
     let visibleCountries = Storage.getVisibleCountries();
     let codes = Store.get('allCountries') || [];
 
@@ -426,6 +426,92 @@ export const ViewSetup = (() => {
     
     Storage.setVisibleCountries(visibleCountries);
     _renderCountrySettings();
+  }
+
+  function _getAllCountryCodes() {
+    let codes = Store.get('allCountries') || [];
+    if (codes.length) return codes;
+    const channels = Store.peek('channels') || [];
+    const codesSet = new Set();
+    for (const c of channels) {
+      if (c.countryCode) codesSet.add(c.countryCode);
+    }
+    codes = sortCountryCodes(codesSet);
+    Store.set('allCountries', codes);
+    return codes;
+  }
+
+  function _syncCountrySettingChecks(container, codes, visibleCountries) {
+    const items = container.querySelectorAll('.country-setting-item');
+    if (!items.length) return false;
+    const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
+    items.forEach(item => {
+      const code = item.dataset.code;
+      const checked = code === 'ALL'
+        ? allChecked
+        : (visibleCountries === null || visibleCountries.includes(code));
+      item.classList.toggle('checked', checked);
+    });
+    return true;
+  }
+
+  function _createCountrySettingItem(code, label, checked, onClick) {
+    const item = document.createElement('div');
+    item.className = 'country-setting-item focusable' + (checked ? ' checked' : '');
+    item.dataset.code = code;
+    item.innerHTML = `
+      <div class="checkbox-box">
+        <span class="material-symbols-rounded">check</span>
+      </div>
+      <span class="country-setting-label">${label}</span>
+    `;
+    item.addEventListener('click', onClick);
+    return item;
+  }
+
+  function _toggleCountryVisibility(code) {
+    const codes = _getAllCountryCodes();
+    let visibleCountries = Storage.getVisibleCountries();
+
+    if (visibleCountries === null) {
+      visibleCountries = codes.filter(c => c !== code);
+    } else if (visibleCountries.includes(code)) {
+      visibleCountries = visibleCountries.filter(c => c !== code);
+    } else {
+      visibleCountries.push(code);
+    }
+
+    Storage.setVisibleCountries(visibleCountries);
+    _renderCountrySettings();
+  }
+
+  function _renderCountrySettings() {
+    const container = document.getElementById('country-settings-list');
+    if (!container) return;
+    const codes = _getAllCountryCodes();
+    if (!codes.length) {
+      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de país</p>';
+      return;
+    }
+
+    const visibleCountries = Storage.getVisibleCountries();
+    if (_syncCountrySettingChecks(container, codes, visibleCountries)) return;
+
+    container.innerHTML = '';
+    const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
+    const allItem = _createCountrySettingItem('ALL', '🌎 Seleccionar todos', allChecked, () => {
+      const currentlyChecked = allItem.classList.contains('checked');
+      Storage.setVisibleCountries(currentlyChecked ? [] : null);
+      _renderCountrySettings();
+    });
+    allItem.querySelector('.country-setting-label').style.fontWeight = '700';
+    container.appendChild(allItem);
+
+    codes.forEach(code => {
+      const info = getCountryInfo(code);
+      const checked = visibleCountries === null || visibleCountries.includes(code);
+      container.appendChild(_createCountrySettingItem(code, `${info.emoji} ${info.name}`, checked, () => _toggleCountryVisibility(code)));
+    });
   }
 
   function onShow() {

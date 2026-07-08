@@ -2,7 +2,7 @@
  * store.js — Centralized State Manager
  */
 export const Store = (() => {
-  let state = {
+  const state = {
     channels: [],
     groups: [],
     currentGroup: '__all__',
@@ -12,38 +12,48 @@ export const Store = (() => {
     countries: []
   };
 
-  let listeners = {};
+  const listeners = new Map();
+
+  function _clone(val) {
+    if (Array.isArray(val)) return [...val];
+    if (val !== null && typeof val === 'object') return { ...val };
+    return val;
+  }
+
+  function _notify(key, val) {
+    const list = listeners.get(key);
+    if (!list) return;
+    list.slice().forEach(cb => {
+      try { cb(val); } catch (e) { console.error(e); }
+    });
+  }
 
   return {
     get: (key) => {
-      const val = state[key];
-      if (Array.isArray(val)) return [...val];
-      if (val !== null && typeof val === 'object') return { ...val };
-      return val;
+      return _clone(state[key]);
     },
     peek: (key) => state[key],
     set: (key, val) => { 
       state[key] = val; 
-      if (listeners[key]) {
-        listeners[key].forEach(cb => { try { cb(val); } catch(e) { console.error(e); } });
-      }
+      _notify(key, val);
     },
     subscribe: (key, cb) => {
-      if (!listeners[key]) listeners[key] = [];
-      listeners[key].push(cb);
+      const list = listeners.get(key) || [];
+      list.push(cb);
+      listeners.set(key, list);
       return () => {
-        listeners[key] = listeners[key].filter(item => item !== cb);
+        const next = (listeners.get(key) || []).filter(item => item !== cb);
+        if (next.length) listeners.set(key, next);
+        else listeners.delete(key);
       };
     },
     getAll: () => {
       const copy = {};
       for (const k in state) {
-        const val = state[k];
-        if (Array.isArray(val)) copy[k] = [...val];
-        else if (val !== null && typeof val === 'object') copy[k] = { ...val };
-        else copy[k] = val;
+        copy[k] = _clone(state[k]);
       }
       return copy;
-    }
+    },
+    clearListeners: () => listeners.clear()
   };
 })();
