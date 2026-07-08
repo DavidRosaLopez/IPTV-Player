@@ -14,7 +14,7 @@ export const ViewSetup = (() => {
   let _setupTabIdx = 0;
   let _setupContentIdx = 0;
   let _editingListId = null;
-  let _prevSetupZone = 'tabs';
+  let _lastSetupZone = 'tabs';
   let _exitFocusIdx = 0;
 
   function _uid() { return Math.random().toString(36).substring(2, 9); }
@@ -65,7 +65,7 @@ export const ViewSetup = (() => {
   }
 
   function _showExitPopup() {
-    _prevSetupZone = _setupZone;
+    _lastSetupZone = _setupZone;
     _setupZone = 'exit';
     _exitFocusIdx = 0;
     const el = document.getElementById('exit-popup');
@@ -74,7 +74,7 @@ export const ViewSetup = (() => {
   }
 
   function _hideExitPopup() {
-    _setupZone = _prevSetupZone;
+    _setupZone = _lastSetupZone;
     const el = document.getElementById('exit-popup');
     if (el) el.classList.add('hidden');
     _updateSetupFocus();
@@ -231,7 +231,7 @@ export const ViewSetup = (() => {
         <span class="saved-item-icon material-symbols-rounded">${list.type === 'xtream' ? 'key' : 'list_alt'}</span>
         <div class="saved-item-info">
           <div class="saved-item-name">${safeName}</div>
-          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream Â· ' + safeServer : 'M3U8'}</div>
+          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream · ' + safeServer : 'M3U8'}</div>
         </div>
         <div style="display:flex; gap:8px;">
           <button class="saved-item-default" data-id="${list.id}"><span class="material-symbols-rounded" style="font-size: 20px; color: ${isDefault ? 'var(--yellow)' : 'var(--text-sec)'};">${isDefault ? 'star' : 'star_border'}</span></button>
@@ -304,7 +304,7 @@ export const ViewSetup = (() => {
     const list = { id: _editingListId || _uid(), name, type: 'xtream', server, user, pass };
     _saveList(list);
     _editingListId = null;
-    document.getElementById('btn-add-xtream').textContent = 'AÃ±adir lista';
+    document.getElementById('btn-add-xtream').textContent = 'Añadir lista';
     
     if (typeof App !== 'undefined') {
       _requestLoadList(list);
@@ -391,7 +391,7 @@ export const ViewSetup = (() => {
     if (!container) return;
     const codes = _getAllCountryCodes();
     if (!codes.length) {
-      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de paÃ­s</p>';
+      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de país</p>';
       return;
     }
 
@@ -471,7 +471,6 @@ export const ViewSetup = (() => {
       _requestCancelLoad();
     });
 
-    // D-pad navigation for setup
     KeyHandler.on('RIGHT', () => _handleSetupDirection('right'));
     KeyHandler.on('LEFT', () => _handleSetupDirection('left'));
     KeyHandler.on('DOWN', () => _handleSetupDirection('down'));
