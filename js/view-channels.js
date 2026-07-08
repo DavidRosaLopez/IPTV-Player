@@ -17,6 +17,7 @@ import { getCountryInfo, sortCountryCodes } from './countries.js';
 import { loadTabData } from './services/tab-data-loader.js';
 import { createFocusController } from './services/focus-controller.js';
 import { renderCountryItems, renderGroupList, setChannelHeader } from './services/view-renderer.js';
+import { createViewState } from './services/view-state.js';
 
 
 export const ViewChannels = (() => {
@@ -61,6 +62,7 @@ export const ViewChannels = (() => {
   let _prevFocusedEl     = null;      // trackear elemento enfocado previo (evita querySelectorAll masivo)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
   let _groupCountsCache  = null;
+  let _suppressNextTabClick = false;
   const _focus = createFocusController({
     tabs: TABS,
     getSidebarFocusables: () => _getSidebarFocusables(),
@@ -100,6 +102,85 @@ export const ViewChannels = (() => {
       const focused = VirtualList.getCurrentItem();
       if (focused && typeof Player !== 'undefined') Player.schedulePreview(focused);
     }
+  });
+
+  const _viewState = createViewState({
+    getCurrentData: () => _getCurrentData(),
+    sortCountryCodes,
+    setAllCountries: list => Store.set('allCountries', list),
+    getVisibleCountries: () => Storage.getVisibleCountries(),
+    setCountries: list => Store.set('countries', list),
+    getCurrentCountry: () => Store.get('currentCountry'),
+    setCurrentCountry: value => Store.set('currentCountry', value),
+    setCountryFocusIdx: value => { _countryFocusIdx = value; },
+    getCountryFocusIdx: () => _countryFocusIdx,
+    onCountryInvalidated: () => {
+      const channels = _getCurrentData();
+      Playlist.clearGroupCache();
+      Store.set('groups', Playlist.getGroups(channels, 'ALL', _currentTab));
+      Store.set('currentGroup', '__all__');
+      Store.set('groupIdx', 0);
+      _sidebarFocusIdx = 2;
+    },
+    restoreGroupFocus: () => {
+      const gIdx = Store.get('groupIdx') || 0;
+      const groups = Store.get('groups');
+      const curG = groups[gIdx];
+      _updateCountryClasses();
+      const focusables = _getSidebarFocusables();
+      let newIdx = 2;
+      if (curG) {
+        const found = focusables.findIndex(el => el.dataset && el.dataset.groupId === curG.id);
+        if (found !== -1) newIdx = found;
+      }
+      _sidebarFocusIdx = newIdx;
+      _setFocusZone('groups');
+    },
+    clearGroupCache: () => Playlist.clearGroupCache(),
+    setGroups: list => Store.set('groups', list),
+    getGroupsForCountry: code => Playlist.getGroups(_getCurrentData(), code, _currentTab),
+    setCurrentGroup: value => Store.set('currentGroup', value),
+    setGroupIdx: value => Store.set('groupIdx', value),
+    setSidebarFocusIdx: value => { _sidebarFocusIdx = value; },
+    refreshGroups: () => renderGroups(),
+    refreshChannels: () => renderChannels(),
+    focusGroups: () => _setFocusZone('groups'),
+    toggleExpandedFolder: id => {
+      const expanded = Store.get('expandedFolders') || {};
+      expanded[id] = !expanded[id];
+      Store.set('expandedFolders', expanded);
+    },
+    focusGroupById: id => {
+      const focusables = _getSidebarFocusables();
+      const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === id);
+      if (newIdx !== -1) _sidebarFocusIdx = newIdx;
+    },
+    getCurrentGroup: () => Store.get('currentGroup'),
+    filterGroup: id => Playlist.filterByGroup(_getCurrentData(), id, new Set(Favorites.getIds()), Store.get('currentCountry') || 'ALL'),
+    updateGroupClasses: () => _updateGroupClasses(),
+    clearVirtualList: () => VirtualList.update([]),
+    focusChannelsIfItems: hasItems => { if (hasItems) _setFocusZone('channels'); else _setFocusZone('groups'); },
+    getGroupsForData: data => Playlist.getGroups(data, Store.get('currentCountry'), _currentTab),
+    getInitialGroup: data => (Playlist.getGroups(data, Store.get('currentCountry'), _currentTab)[0]?.id || null),
+    setCurrentData: data => Store.set('currentData', data),
+    hideLoader: () => {
+      const grid = document.getElementById('channel-grid');
+      const loader = document.getElementById('tab-loader');
+      if (loader) loader.classList.add('hidden');
+      if (grid) grid.classList.remove('hidden');
+    },
+    restoreFocusAfterRender: () => {
+      if (!_focusZone) _setFocusZone('groups');
+      else _setFocusZone(_focusZone);
+    },
+    isSearchOpen: () => typeof Search !== 'undefined' && Search.isOpen(),
+    renderCountries: () => renderCountries(),
+    getFavIds: () => Favorites.getIds(),
+    getCurrentTab: () => _currentTab,
+    getCountries: () => Store.get('countries') || ['ALL'],
+    setSidebarFocusIdxFromGroup: idx => { _sidebarFocusIdx = idx; },
+    updateCountryClasses: () => _updateCountryClasses(),
+    focusChannelIndex: idx => { if (typeof VirtualList !== 'undefined') VirtualList.setFocused(idx); }
   });
 
   function _syncFocusStateFromController() {
@@ -190,6 +271,7 @@ export const ViewChannels = (() => {
 
 
   function _updateCountriesList() {
+    return _viewState.updateCountriesList();
     const channels = _getCurrentData();
     const codesSet = new Set();
     for (const c of channels) {
@@ -274,6 +356,7 @@ export const ViewChannels = (() => {
   }
 
   function _selectCountry(code, idx) {
+    return _viewState.selectCountry(code, idx);
     const prevCountry = Store.get('currentCountry');
     _countryFocusIdx = idx;
     
@@ -477,6 +560,7 @@ export const ViewChannels = (() => {
   }
 
   function _selectGroup(g, autoFocusChannels = true) {
+    return _viewState.selectGroup(g, autoFocusChannels);
     if (g.isFolder) {
       if (autoFocusChannels) {
         const expanded = Store.get('expandedFolders') || {};
@@ -701,18 +785,12 @@ export const ViewChannels = (() => {
       if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('ENTER'); }
       if (!Router.isView('channels')) return;
       if (_focusZone === 'tabs') {
-        const tabs = document.querySelectorAll('.sidebar-tab-btn');
-        const tab = tabs[_tabFocusIdx];
-        if (tab) {
-           if (tab.dataset.type !== _currentTab) {
-             _switchTab(tab.dataset.type);
-           }
-           if (tab.dataset.type === 'vod' || tab.dataset.type === 'series') {
-             _sidebarFocusIdx = 2;
-             _setFocusZone('groups');
-           } else {
-             _setFocusZone('countries');
-           }
+        _suppressNextTabClick = true;
+        if (_currentTab === 'tv') {
+          _setFocusZone('countries');
+        } else {
+          _sidebarFocusIdx = 2;
+          _setFocusZone('groups');
         }
         return true;
       }
@@ -784,20 +862,12 @@ export const ViewChannels = (() => {
       if (Router.isView('channels')) {
         if (Search.isOpen()) { Search.close(); return true; }
         if (_focusZone === 'exit') { _hideExitPopup(); return true; }
-        
-        if (_focusZone === 'channels') {
-          _setFocusZone('groups');
-        } else if (_focusZone === 'groups') {
-          if (_currentTab === 'vod' || _currentTab === 'series') {
-            _setFocusZone('tabs');
-          } else {
-            _setFocusZone('countries');
-          }
-        } else if (_focusZone === 'countries') {
-          _setFocusZone('tabs');
-        } else {
-          _showExitPopup();
-        }
+        const isTv = _currentTab === 'tv';
+        if (_focusZone === 'channels') return _setFocusZone('groups') || true;
+        if (_focusZone === 'groups') return _setFocusZone(isTv ? 'countries' : 'tabs') || true;
+        if (_focusZone === 'countries') return _setFocusZone('tabs') || true;
+        if (_focusZone === 'tabs') return _setFocusZone(isTv ? 'countries' : 'groups') || true;
+        _showExitPopup();
         return true;
       }
     });
@@ -805,9 +875,18 @@ export const ViewChannels = (() => {
     
     document.querySelectorAll('.sidebar-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (_suppressNextTabClick) {
+          _suppressNextTabClick = false;
+          return;
+        }
         _tabFocusIdx = TABS.indexOf(btn.dataset.type);
         if (btn.dataset.type === _currentTab) {
-          _setFocusZone('countries');
+          if (_currentTab === 'tv') {
+            _setFocusZone('countries');
+          } else {
+            _sidebarFocusIdx = 2;
+            _setFocusZone('groups');
+          }
         } else {
           _setFocusZone('tabs');
           _switchTab(btn.dataset.type);
@@ -915,6 +994,7 @@ export const ViewChannels = (() => {
   }
 
   function _renderData(data) {
+    return _viewState.renderData(data);
     const grid = document.getElementById('channel-grid');
     const loader = document.getElementById('tab-loader');
     if (loader) loader.classList.add('hidden');
@@ -954,6 +1034,7 @@ export const ViewChannels = (() => {
   }
 
   function syncWithChannel(ch) {
+    return _viewState.syncWithChannel(ch);
     if (!ch) return;
     if (typeof Search !== 'undefined' && Search.isOpen()) return; // Maintain search state, do not sync groups
     _updateCountriesList();
