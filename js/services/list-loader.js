@@ -17,6 +17,9 @@ export function createListLoader() {
   let _prefetchController = null;
   let _syncTimer = null;
   let _loadSeq = 0;
+  let _loadingListId = null;
+  let _lastCancelledListId = null;
+  let _ignoreCancelledReloadUntil = 0;
 
   function _throwIfCancelled(controller, isCurrentLoad) {
     if (controller.signal.aborted || !isCurrentLoad()) {
@@ -48,10 +51,16 @@ export function createListLoader() {
   }
 
   async function loadList(list) {
+    if (list?.id && list.id === _lastCancelledListId && Date.now() < _ignoreCancelledReloadUntil) {
+      SetupProgress.hide();
+      Router.showView('setup');
+      return;
+    }
     if (_currentAbortController) _currentAbortController.abort();
     const loadSeq = ++_loadSeq;
     const controller = new AbortController();
     _currentAbortController = controller;
+    _loadingListId = list?.id || null;
     const isCurrentLoad = () => _currentAbortController === controller && _loadSeq === loadSeq;
 
     const prevList = Store.peek('currentList');
@@ -116,12 +125,18 @@ export function createListLoader() {
       }
       Router.showView('setup');
     } finally {
-      if (isCurrentLoad()) _currentAbortController = null;
+      if (isCurrentLoad()) {
+        _currentAbortController = null;
+        _loadingListId = null;
+      }
     }
   }
 
   function cancelLoad() {
     _loadSeq++;
+    Store.set('loadCancelledAt', Date.now());
+    _lastCancelledListId = _loadingListId;
+    _ignoreCancelledReloadUntil = Date.now() + 1500;
     if (_currentAbortController) {
       _currentAbortController.abort();
       _currentAbortController = null;

@@ -25,6 +25,9 @@ export const ViewSetup = (() => {
     _suppressEnterUntil = Date.now() + 900;
     eventBus.emit('load:cancel-requested');
   }
+  function _getSuppressEnterUntil() {
+    return Math.max(_suppressEnterUntil, (Store.peek('loadCancelledAt') || 0) + 900);
+  }
   function _escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, ch => ({
       '&': '&amp;',
@@ -185,7 +188,7 @@ export const ViewSetup = (() => {
 
   function _handleSetupEnter() {
     if (typeof Router === 'undefined' || !Router.isView('setup')) return;
-    if (Date.now() < _suppressEnterUntil) return true;
+    if (Date.now() < _getSuppressEnterUntil()) return true;
     if (_isSetupBusy()) {
       _requestCancelLoad();
       return true;
@@ -450,7 +453,7 @@ export const ViewSetup = (() => {
     const tabs = Array.from(_getSetupTabs());
     const lists = Storage.getLists();
 
-    if (Date.now() < _suppressEnterUntil) {
+    if (Date.now() < _getSuppressEnterUntil()) {
       _setupZone = 'tabs';
       _setupTabIdx = Math.max(0, tabs.findIndex(t => t.dataset.tab === 'saved'));
       if (tabs[_setupTabIdx]) _switchTab(tabs[_setupTabIdx].dataset.tab);
