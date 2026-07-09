@@ -145,8 +145,12 @@ export const ViewSetup = (() => {
         _setupTabIdx = _setupTabIdx === 0 ? _getSetupTabs().length - 1 : _setupTabIdx - 1;
         _setupZone = 'tabs';
         _getSetupTabs()[_setupTabIdx]?.click();
+      } else if (dir === 'down') {
+        _setupContentIdx = Math.min(_getSetupContent().length - 1, _setupContentIdx + 1);
+        _updateSetupFocus();
       } else if (dir === 'up') {
-        _setupZone = 'tabs';
+        if (_setupContentIdx === 0) _setupZone = 'tabs';
+        else _setupContentIdx--;
         _updateSetupFocus();
       }
       return true;

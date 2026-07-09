@@ -15,10 +15,14 @@ export function createListLoader() {
   let _prefetchTimer = null;
   let _prefetchController = null;
   let _syncTimer = null;
+  let _loadSeq = 0;
 
   async function loadList(list) {
     if (_currentAbortController) _currentAbortController.abort();
-    _currentAbortController = new AbortController();
+    const loadSeq = ++_loadSeq;
+    const controller = new AbortController();
+    _currentAbortController = controller;
+    const isCurrentLoad = () => _currentAbortController === controller && _loadSeq === loadSeq;
 
     const prevList = Store.peek('currentList');
     const steps = [
@@ -32,14 +36,14 @@ export function createListLoader() {
     SetupProgress.step('cache');
     SetupProgress.progress(0);
 
-    const cached = await Storage.getChannelCache(list);
-    if (!_currentAbortController || _currentAbortController.signal.aborted) return;
-
     try {
+      const cached = await Storage.getChannelCache(list);
+      if (controller.signal.aborted || !isCurrentLoad()) throw new DOMException('Aborted', 'AbortError');
+
       if (cached && cached.length > 0) {
         SetupProgress.progress(100);
         await new Promise(r => setTimeout(r, 400));
-        if (!_currentAbortController || _currentAbortController.signal.aborted) return;
+        if (controller.signal.aborted || !isCurrentLoad()) throw new DOMException('Aborted', 'AbortError');
 
         SetupProgress.hide();
         Store.set('currentList', list);
@@ -53,13 +57,13 @@ export function createListLoader() {
       SetupProgress.step('connect');
       if (list.type === 'xtream') _preconnect(list.server);
       SetupProgress.step('download');
-      const loadedChannels = await ensureTabData('tv', list, _currentAbortController.signal, pct => {
+      const loadedChannels = await ensureTabData('tv', list, controller.signal, pct => {
         SetupProgress.progress(Math.round(pct * 0.8));
         if (pct > 50) SetupProgress.step('parse');
       }, { forceReload: false });
 
       SetupProgress.progress(100);
-      if (_currentAbortController.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (controller.signal.aborted || !isCurrentLoad()) throw new DOMException('Aborted', 'AbortError');
 
       Store.set('currentList', list);
       Storage.setLastList(list.id);
@@ -81,15 +85,18 @@ export function createListLoader() {
       }
       Router.showView('setup');
     } finally {
-      _currentAbortController = null;
+      if (isCurrentLoad()) _currentAbortController = null;
     }
   }
 
   function cancelLoad() {
+    _loadSeq++;
     if (_currentAbortController) {
       _currentAbortController.abort();
       _currentAbortController = null;
     }
+    SetupProgress.hide();
+    Router.showView('setup');
     if (_prefetchController) {
       _prefetchController.abort();
       _prefetchController = null;
