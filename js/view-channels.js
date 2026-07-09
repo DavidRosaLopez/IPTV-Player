@@ -16,12 +16,12 @@ import { getCountryInfo, sortCountryCodes } from './countries.js';
 import { getGroupCounts, invalidateGroupCounts } from './services/group-counts.js';
 import { createFocusController } from './services/focus-controller.js';
 import { createTabViewController } from './services/tab-view-controller.js';
+import { createChannelsInputController } from './services/channels-input-controller.js';
 import { renderCountryItems, renderGroupList, setChannelHeader } from './services/view-renderer.js';
 import { createViewState } from './services/view-state.js';
 
 
 export const ViewChannels = (() => {
-  let _keysBound = false;
   let _sidebarFocusIdx = 2; // 0=search, 1=setup, 2+=groups
   let _focusZone = 'channels'; // 'groups' | 'channels' | 'exit' | 'countries'
   let _exitFocusIdx = 0; // 0 = Cancel, 1 = Exit
@@ -32,7 +32,6 @@ export const ViewChannels = (() => {
   const TABS = ['tv', 'vod', 'series'];
   let _groupPreviewTimer = null;      // local: era window._groupPreviewTimer (contaminaba global)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
-  let _suppressNextTabClick = false;
   let _pendingFocusAfterRender = null;
   const _tabs = createTabViewController({
     virtualList: VirtualList,
@@ -179,20 +178,41 @@ export const ViewChannels = (() => {
     updateCountryClasses: () => _updateCountryClasses(),
     focusChannelIndex: idx => { if (typeof VirtualList !== 'undefined') VirtualList.setFocused(idx); }
   });
+  const _input = createChannelsInputController({
+    getTabs: () => TABS,
+    getCurrentTab: () => _currentTab,
+    getFocusZone: () => _focusZone,
+    getVisibleFocusZone: () => _getVisibleFocusZone(),
+    getSidebarFocusIdx: () => _sidebarFocusIdx,
+    setSidebarFocusIdx: value => { _sidebarFocusIdx = value; },
+    getTabFocusIdx: () => _tabFocusIdx,
+    setTabFocusIdx: value => { _tabFocusIdx = value; },
+    getExitFocusIdx: () => _exitFocusIdx,
+    getCountryFocusIdx: () => _countryFocusIdx,
+    setCountryFocusIdx: value => { _countryFocusIdx = value; },
+    getCurrentCountry: () => _getCurrentCountry(),
+    getCurrentGroup: () => _getCurrentGroup(),
+    getSidebarFocusables: () => _getSidebarFocusables(),
+    setPendingFocusAfterRender: value => { _pendingFocusAfterRender = value; },
+    moveActive: dir => _moveActive(dir),
+    moveExit: dir => _moveExit(dir),
+    setFocusZone: (zone, restoreActive) => _setFocusZone(zone, restoreActive),
+    showExitPopup: () => _showExitPopup(),
+    hideExitPopup: () => _hideExitPopup(),
+    selectCountry: (code, idx) => _selectCountry(code, idx),
+    selectGroup: (group, autoFocusChannels) => _selectGroup(group, autoFocusChannels),
+    playChannel: ch => _playChannel(ch),
+    switchTab: tabId => _switchTab(tabId),
+    updateGroupCounts: () => _updateGroupCounts(),
+    renderChannels: () => renderChannels(),
+    renderCountries: () => renderCountries()
+  });
 
   function _syncFocusStateFromController() {
     _focusZone = _focus.getZone();
     _sidebarFocusIdx = _focus.getSidebarFocusIdx();
     _tabFocusIdx = _focus.getTabFocusIdx();
     _exitFocusIdx = _focus.getExitFocusIdx();
-  }
-
-  function _getBackTargetZone() {
-    if (_focusZone === 'channels') return 'groups';
-    if (_focusZone === 'groups') return _currentTab === 'tv' ? 'countries' : 'tabs';
-    if (_focusZone === 'countries') return 'tabs';
-    if (_focusZone === 'tabs') return _currentTab === 'tv' ? 'countries' : 'groups';
-    return null;
   }
 
   function _getVisibleFocusZone() {
@@ -535,11 +555,6 @@ export const ViewChannels = (() => {
     _syncFocusStateFromController();
   }
 
-  function _updateExitFocus() {
-    _focus.updateExit();
-    _syncFocusStateFromController();
-  }
-
   function refreshUI() {
     _updateGroupCounts();
     if (typeof VirtualList !== 'undefined') {
@@ -548,182 +563,7 @@ export const ViewChannels = (() => {
   }
 
   function initKeys() {
-    if (_keysBound) return;
-    _keysBound = true;
-
-    KeyHandler.on('LEFT',  () => { 
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('LEFT'); }
-      if (Router.isView('channels')) { 
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
-        if (_focusZone === 'exit') { _moveExit('left'); return true; }
-        _moveActive('left'); return true; 
-      } 
-    });
-    KeyHandler.on('RIGHT', () => { 
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('RIGHT'); }
-      if (Router.isView('channels')) { 
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
-        if (_focusZone === 'exit') { _moveExit('right'); return true; }
-        _moveActive('right'); return true; 
-      } 
-    });
-    KeyHandler.on('UP',    () => { 
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('UP'); }
-      if (Router.isView('channels') && _focusZone !== 'exit') { 
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
-        _moveActive('up'); return true; 
-      } 
-    });
-    KeyHandler.on('DOWN',  () => { 
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('DOWN'); }
-      if (Router.isView('channels') && _focusZone !== 'exit') { 
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-          document.activeElement.blur();
-          _setFocusZone('channels');
-          return true;
-        }
-        _moveActive('down'); return true; 
-      } 
-    });
-
-    KeyHandler.on('ENTER', () => {
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('ENTER'); }
-      if (!Router.isView('channels')) return;
-      if (_focusZone === 'tabs') {
-        _suppressNextTabClick = true;
-        const tabs = document.querySelectorAll('.sidebar-tab-btn');
-        const tab = tabs[_tabFocusIdx];
-        if (tab) {
-          const selectedTab = tab.dataset.type;
-          if (selectedTab !== _currentTab) {
-            _pendingFocusAfterRender = selectedTab === 'tv' ? 'countries' : 'groups';
-            _switchTab(selectedTab);
-          } else {
-            if (_currentTab === 'tv') {
-              _setFocusZone('countries');
-            } else {
-              _sidebarFocusIdx = 2;
-              _setFocusZone('groups');
-            }
-          }
-        }
-        return true;
-      }
-
-      if (_focusZone === 'countries') {
-        const codes = Store.get('countries') || ['ALL'];
-        const code = codes[_countryFocusIdx];
-        if (code) {
-          _selectCountry(code, _countryFocusIdx);
-        }
-        return true;
-      }
-
-      if (_focusZone === 'groups') {
-        const els = _getSidebarFocusables();
-        const el = els[_sidebarFocusIdx];
-        if (!el) return;
-        if (el.id === 'btn-open-search') {
-          Search.open();
-        } else if (el.id === 'btn-open-setup') {
-          Router.showView('setup');
-        } else {
-          const groupId = el.dataset.groupId;
-          const groups = Store.get('groups');
-          const group = groups.find(g => g.id === groupId);
-          if (group) _selectGroup(group, true);
-        }
-        return true;
-      }
-      
-      if (_focusZone === 'channels') {
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') return false;
-        const ch = VirtualList.getCurrentItem();
-        if (ch) _playChannel(ch);
-        return true;
-      }
-
-      if (_focusZone === 'exit') {
-        if (_exitFocusIdx === 0) {
-          _hideExitPopup();
-        } else {
-          try { tizen?.application?.getCurrentApplication()?.exit(); } catch(e) {}
-        }
-        return true;
-      }
-
-    });
-
-    KeyHandler.on('LONG_OK', () => {
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return true; }
-      if (Router.isView('channels') && _focusZone === 'channels') {
-        const ch = VirtualList.getCurrentItem();
-        if (ch) { 
-          Favorites.toggle(ch.id); 
-          _updateGroupCounts();
-          
-          if (_getCurrentGroup() === '__favs__') {
-            renderChannels(); 
-          } else {
-            VirtualList.refreshVisible(); 
-          }
-        }
-      }
-      return true;
-    });
-
-    KeyHandler.on('BACK', () => {
-      if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) { return InfoPopup.handleKey('BACK'); }
-      if (Router.isView('channels')) {
-        if (Search.isOpen()) { Search.close(); return true; }
-        if (_focusZone === 'exit') { _hideExitPopup(); return true; }
-        const domZone = _getVisibleFocusZone();
-        const targetZone = (() => {
-          if (domZone === 'channels') return 'groups';
-          if (domZone === 'groups') return _currentTab === 'tv' ? 'countries' : 'tabs';
-          if (domZone === 'countries') return 'tabs';
-          if (domZone === 'tabs') return null;
-          return null;
-        })();
-        if (targetZone === 'tabs') {
-          _tabFocusIdx = TABS.indexOf(_currentTab);
-          renderCountries();
-        } else if (targetZone === 'countries') {
-          const codes = Store.get('countries') || ['ALL'];
-          _countryFocusIdx = Math.max(0, codes.indexOf(_getCurrentCountry()));
-          renderCountries();
-        }
-        if (targetZone) return _setFocusZone(targetZone) || true;
-        _showExitPopup();
-        return true;
-      }
-    });
-
-    
-    document.querySelectorAll('.sidebar-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (_suppressNextTabClick) {
-          _suppressNextTabClick = false;
-          return;
-        }
-        _tabFocusIdx = TABS.indexOf(btn.dataset.type);
-        if (btn.dataset.type === _currentTab) {
-          if (_currentTab === 'tv') {
-            _setFocusZone('countries');
-          } else {
-            _sidebarFocusIdx = 2;
-            _setFocusZone('groups');
-          }
-        } else {
-          _pendingFocusAfterRender = btn.dataset.type === 'tv' ? 'countries' : 'groups';
-          _setFocusZone('tabs');
-          _switchTab(btn.dataset.type);
-        }
-      });
-    });
-
-    document.getElementById('btn-open-search')?.addEventListener('click', () => Search.open());
-    document.getElementById('btn-open-setup')?.addEventListener('click', () => { Router.showView('setup'); });
+    _input.init();
   }
 
   
