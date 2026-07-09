@@ -20,6 +20,24 @@ function normalizeStr(str) {
   return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
+function detectStreamMeta(...values) {
+  const raw = values.filter(Boolean).join(' ').toUpperCase();
+  const heightMatch = raw.match(/\b(4320|2160|1440|1080|720|576|480)P?\b/);
+  const height = heightMatch ? parseInt(heightMatch[1], 10) : 0;
+  const is8K = /\b(8K|4320P?)\b/.test(raw) || height >= 4320;
+  const is4K = /\b(4K|UHD|ULTRA\s*HD|2160P?|3840P?)\b/.test(raw) || height >= 2160;
+  const isFhd = /\b(FHD|FULL\s*HD|1080P?)\b/.test(raw) || height >= 1080;
+  const isHd = isFhd || /\b(HD|720P?)\b/.test(raw) || height >= 720;
+  const isHevc = /\b(HEVC|H\.?265|X265|H265)\b/.test(raw);
+  const isRaw = /\b(RAW|DIRECT|REMUX|BLURAY|BDREMUX|LOSSLESS)\b/.test(raw);
+  return {
+    quality: is8K ? '8k' : is4K ? 'uhd' : isFhd ? 'fhd' : isHd ? 'hd' : 'sd',
+    codec: isHevc ? 'hevc' : /\b(AVC|H\.?264|X264|H264)\b/.test(raw) ? 'h264' : '',
+    isRaw,
+    height
+  };
+}
+
 function cleanTvCategoryName(rawName) {
   if (!rawName) return 'Sin categoría';
   let n = rawName;
@@ -94,10 +112,14 @@ function parseM3U(m3uText) {
       currentChannel._search = normalizeStr(rawName);
       currentChannel.countryCode = detectCountry(rawName, groupName);
       currentChannel.type = 'm3u';
+      currentChannel.streamMeta = detectStreamMeta(line, rawName, groupName);
+      currentChannel._streamMetaText = line;
       
     } else if (line.startsWith('http')) {
       if (currentChannel) {
         currentChannel.url = line;
+        currentChannel.streamMeta = detectStreamMeta(currentChannel._streamMetaText, currentChannel.name, currentChannel.group, line);
+        delete currentChannel._streamMetaText;
         channels.push(currentChannel);
         currentChannel = null;
       }

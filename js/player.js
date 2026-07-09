@@ -62,12 +62,15 @@ export const Player = (() => {
 
   function _getStreamMode(ch = _current) {
     const name = String(ch?.name || '').toUpperCase();
+    const meta = ch?.streamMeta || {};
+    const quality = String(meta.quality || '').toLowerCase();
+    const codec = String(meta.codec || '').toLowerCase();
     return {
-      is8K: /(8K)/.test(name),
-      is4K: /(4K|UHD|2160)/.test(name),
-      isHD: /(FHD|HD|1080)/.test(name),
-      isHEVC: /(HEVC|H265)/.test(name),
-      isRaw: /(RAW|DIRECT)/.test(name),
+      is8K: quality === '8k' || meta.height >= 4320 || /(8K|4320)/.test(name),
+      is4K: quality === 'uhd' || meta.height >= 2160 || /(4K|UHD|2160|3840)/.test(name),
+      isHD: quality === 'fhd' || quality === 'hd' || meta.height >= 720 || /(FHD|HD|1080|720)/.test(name),
+      isHEVC: codec === 'hevc' || /(HEVC|H\.?265|H265|X265)/.test(name),
+      isRaw: meta.isRaw || /(RAW|DIRECT|REMUX|BLURAY|BDREMUX|LOSSLESS)/.test(name),
       isLive: !!ch && ch.type !== 'vod' && ch.type !== 'series'
     };
   }

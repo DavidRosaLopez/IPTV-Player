@@ -125,6 +125,24 @@ function _extractYear(item) {
   return 0;
 }
 
+function _detectStreamMeta(...values) {
+  const raw = values.filter(Boolean).join(' ').toUpperCase();
+  const heightMatch = raw.match(/\b(4320|2160|1440|1080|720|576|480)P?\b/);
+  const height = heightMatch ? parseInt(heightMatch[1], 10) : 0;
+  const is8K = /\b(8K|4320P?)\b/.test(raw) || height >= 4320;
+  const is4K = /\b(4K|UHD|ULTRA\s*HD|2160P?|3840P?)\b/.test(raw) || height >= 2160;
+  const isFhd = /\b(FHD|FULL\s*HD|1080P?)\b/.test(raw) || height >= 1080;
+  const isHd = isFhd || /\b(HD|720P?)\b/.test(raw) || height >= 720;
+  const isHevc = /\b(HEVC|H\.?265|X265|H265)\b/.test(raw);
+  const isRaw = /\b(RAW|DIRECT|REMUX|BLURAY|BDREMUX|LOSSLESS)\b/.test(raw);
+  return {
+    quality: is8K ? '8k' : is4K ? 'uhd' : isFhd ? 'fhd' : isHd ? 'hd' : 'sd',
+    codec: isHevc ? 'hevc' : /\b(AVC|H\.?264|X264|H264)\b/.test(raw) ? 'h264' : '',
+    isRaw,
+    height
+  };
+}
+
 async function _fetchJson(url, signal, noCache = false) {
   try {
     const res = await fetch(url, { cache: noCache ? 'no-store' : 'default', signal });
@@ -157,7 +175,8 @@ export async function loadXtream(server, user, pass, onProgress, signal) {
     group: _cleanTvCategoryName(catMap[s.category_id]),
     countryCode: detectCountry(s.name, catMap[s.category_id] || 'Sin categoría'),
     url: `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.ts`,
-    streamId: s.stream_id
+    streamId: s.stream_id,
+    streamMeta: _detectStreamMeta(s.name, catMap[s.category_id], s.stream_type, s.container_extension, s.direct_source)
   }));
   if (onProgress) onProgress(100);
   return { channels, serverInfo: info.server_info };
@@ -192,7 +211,8 @@ export async function loadVod(server, user, pass, onProgress, signal) {
     countryCode: detectCountry(s.name, catMap[s.category_id]),
     url: `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
     streamId: s.stream_id,
-    type: 'vod'
+    type: 'vod',
+    streamMeta: _detectStreamMeta(s.name, catMap[s.category_id], s.container_extension, s.stream_type)
   }));
   if (onProgress) onProgress(100);
   return movies;
