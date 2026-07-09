@@ -29,25 +29,33 @@ export const VirtualList = (() => {
 
   const ImageQueue = (() => {
     const queue = [];
+    const activeRequests = new Set();
     let active = 0;
+    let generation = 0;
     const MAX = 4;
     const process = () => {
       while(active < MAX && queue.length > 0) {
-        const { imgEl, src } = queue.shift();
-        if (imgEl.dataset.targetSrc !== src) continue;
+        const { imgEl, src, gen } = queue.shift();
+        if (gen !== generation || imgEl.dataset.targetSrc !== src) continue;
         active++;
         
         const loader = new Image();
-        const finish = () => { active--; process(); };
+        const request = { loader };
+        activeRequests.add(request);
+        const finish = () => {
+          if (!activeRequests.delete(request)) return;
+          active--;
+          process();
+        };
         
         loader.onload = () => {
-          if (imgEl.dataset.targetSrc === src) {
+          if (gen === generation && imgEl.dataset.targetSrc === src) {
             imgEl.src = src;
           }
           finish();
         };
         loader.onerror = () => {
-          if (imgEl.dataset.targetSrc === src) {
+          if (gen === generation && imgEl.dataset.targetSrc === src) {
             imgEl.dataset.targetSrc = ''; // Allow retry later
             imgEl.style.display = 'none';
           }
@@ -57,20 +65,33 @@ export const VirtualList = (() => {
       }
     };
     return {
-      add: (imgEl, src) => {
-        if (imgEl.dataset.targetSrc === src) return;
+      add: (imgEl, src, priority = 0) => {
+        if (imgEl.dataset.targetSrc === src && Number(imgEl.dataset.logoPriority || 0) >= priority) return;
         
         imgEl.dataset.targetSrc = src;
+        imgEl.dataset.logoPriority = String(priority);
         if (imgEl.src && !imgEl.src.startsWith('data:')) {
           imgEl.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         }
-        queue.push({ imgEl, src });
+        for (let i = queue.length - 1; i >= 0; i--) {
+          if (queue[i].imgEl === imgEl) queue.splice(i, 1);
+        }
+        queue.push({ imgEl, src, priority, gen: generation });
+        queue.sort((a, b) => b.priority - a.priority);
         process();
       },
-      // Discard pending requests from previous list so new icons aren't queued behind stale ones
+      // Discard pending requests so new icons aren't queued behind stale ones.
       flush: () => {
         queue.length = 0;
-        active = 0;
+        generation++;
+        for (const request of Array.from(activeRequests)) {
+          activeRequests.delete(request);
+          request.loader.onload = null;
+          request.loader.onerror = null;
+          try { request.loader.src = ''; } catch(e) {}
+          active--;
+        }
+        if (active < 0) active = 0;
       }
     };
   })();
@@ -173,6 +194,18 @@ export const VirtualList = (() => {
     return el;
   }
 
+  function _getLogoPriority(idx) {
+    if (idx === _focusedIdx) return 3;
+    const row = Math.floor(idx / COLS);
+    const y = PADDING + row * (ITEM_H + ITEM_GAP);
+    if (y + ITEM_H >= _scrollTop && y <= _scrollTop + _vH) return 2;
+    return 1;
+  }
+
+  function _queueLogo(img, src, idx) {
+    ImageQueue.add(img, src, _getLogoPriority(idx));
+  }
+
   // ── RENDER ───────────────────────────────────────────
   function _render() {
     if (!_container) return;
@@ -231,7 +264,10 @@ export const VirtualList = (() => {
         _ensureRefs(el);
         // Clear stale targetSrc so ImageQueue doesn't skip re-loading on reuse
         const recycledImg = el._img;
-        if (recycledImg) recycledImg.dataset.targetSrc = '';
+        if (recycledImg) {
+          recycledImg.dataset.targetSrc = '';
+          recycledImg.dataset.logoPriority = '';
+        }
       } else {
         el = document.createElement('div');
         // Pre-build structure ONLY once per new node
@@ -265,11 +301,12 @@ export const VirtualList = (() => {
         if (ch.logo) {
           const src = _safeStr(ch.logo);
           // Route through ImageQueue so broken/stale images are retried properly
-          if (img.dataset.targetSrc !== src) ImageQueue.add(img, src);
+          if (img.dataset.targetSrc !== src) _queueLogo(img, src, i);
           img.style.display = '';
         } else {
           img.removeAttribute('src');
           img.dataset.targetSrc = '';
+          img.dataset.logoPriority = '';
           img.style.display = 'none';
         }
       }
@@ -303,18 +340,20 @@ export const VirtualList = (() => {
           // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
           // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
           img.dataset.targetSrc = '';
+          img.dataset.logoPriority = '';
           img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
           img.style.display = '';
         } else {
           // Solo actualizar src si cambia para evitar parpadeos de red
           if (img.getAttribute('src') !== ch.logo) {
-            ImageQueue.add(img, _safeStr(ch.logo));
+            _queueLogo(img, _safeStr(ch.logo), i);
           }
           img.style.display = '';
         }
       } else {
         img.removeAttribute('src');
         img.dataset.targetSrc = '';
+        img.dataset.logoPriority = '';
         img.style.display = 'none';
       }
     }
@@ -327,7 +366,13 @@ export const VirtualList = (() => {
 
   function _focus(idx) {
     const el = _domCache[idx];
-    if (el) el.classList.add('focused');
+    if (!el) return;
+    el.classList.add('focused');
+    const ch = _items[idx];
+    const img = el._img;
+    if (!_scrolling && img && ch?.logo && img.getAttribute('src') !== ch.logo) {
+      _queueLogo(img, _safeStr(ch.logo), idx);
+    }
   }
   function _unfocus(idx) {
     const el = _domCache[idx];
@@ -352,6 +397,7 @@ export const VirtualList = (() => {
   function _onScroll() {
     _scrollTop = _container.scrollTop; // Actualizar el caché real cuando ocurre el evento
     _lastScrollAt = performance.now();
+    ImageQueue.flush();
     _scrolling = true;
     if (_scrollSettleRaf) return;
     const checkSettled = () => {
@@ -383,7 +429,7 @@ export const VirtualList = (() => {
       if (img && ch.logo) {
         const src = _safeStr(ch.logo);
         if (img.getAttribute('src') !== src && img.dataset.targetSrc !== src) {
-          ImageQueue.add(img, src);
+          _queueLogo(img, src, i);
           img.style.display = '';
         }
       }
