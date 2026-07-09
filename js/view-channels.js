@@ -574,6 +574,7 @@ export const ViewChannels = (() => {
   async function _switchTab(tabId) {
     if (_currentTab === tabId) return;
     _tabs.abortPendingLoad();
+    _tabFocusIdx = Math.max(0, TABS.indexOf(tabId));
 
     if (_currentTab === 'tv') {
       _lastTvCountry = _getCurrentCountry();
@@ -601,8 +602,16 @@ export const ViewChannels = (() => {
     renderCountries();
     
     _tabs.activate(tabId);
+    _setFocusZone('tabs');
 
     const list = Store.peek('currentList');
+    if (tabId === 'tv') {
+      Store.set('currentData', Store.peek('channels') || []);
+      Store.set('currentGroup', null);
+      _renderData(Store.peek('channels') || []);
+      return;
+    }
+
     if (!list || list.type !== 'xtream') {
       Router.showToast('VOD y Series solo disponibles en cuentas Xtream Codes', 'info');
       return;
