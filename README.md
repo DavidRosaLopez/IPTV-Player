@@ -19,6 +19,7 @@ Aplicacion IPTV nativa para Samsung Smart TV basada en Tizen, pensada para naveg
 | UI TV-first | Diseno pensado para mando, foco visible, overlays y PiP |
 | Sincronizacion remota | Web remota para enviar listas a la TV mediante PeerJS |
 | Cache local | Cache de canales, VOD y series para acelerar arranques |
+| Perfil TV | Ajustes centralizados para el modelo objetivo, PiP, mando, prefetch y lista virtual |
 
 ## Estructura
 
@@ -57,6 +58,7 @@ IPTV-Player/
 |   |-- vod-osd.js
 |   |-- watching.js
 |   `-- services/
+|       |-- channels-input-controller.js
 |       |-- focus-controller.js
 |       |-- list-loader.js
 |       |-- playlist-service.js
@@ -99,7 +101,11 @@ IPTV-Player/
 
 ## Arquitectura actual
 
-- `view-channels.js` coordina la vista principal de canales.
+- `view-channels.js` coordina la vista principal de canales y delega estado, foco, input y render en servicios.
+- `services/channels-input-controller.js` concentra teclado, OK largo, Back, tabs y clicks principales de la vista de canales.
+- `services/focus-controller.js` gestiona zonas de foco para mando: tabs, paises, grupos, canales y salida.
+- `services/view-state.js` aplica cambios de pais, grupo y sincronizacion con el canal activo.
+- `services/view-renderer.js` renderiza paises, grupos y cabeceras sin mezclar logica de navegacion.
 - `view-setup.js` gestiona listas guardadas, configuracion y navegacion por mando.
 - `player.js` encapsula AVPlay, PiP, reintentos y progreso.
 - `info-popup.js` muestra la ficha de VOD y series.
@@ -111,16 +117,32 @@ IPTV-Player/
 - `store.js` mantiene el estado de sesion de la UI.
 - `eventBus.js` centraliza eventos entre vistas y servicios.
 - `virtual-list.js` renderiza listas grandes sin perder rendimiento.
+- `device-profile.js` centraliza parametros del televisor objetivo: resolucion de layout, PiP, bitrate, buffers, throttling, prefetch y carga de logos.
 
 ## Optimizaciones visibles
 
 - Cache local de listas y contenido.
-- Carga paralela de datos Xtream cuando aplica.
+- Carga y cache de datos Xtream con prefetch prudente de VOD/Series para no competir con AVPlay.
 - Listado virtual para catalogos grandes.
+- Cola de imagenes con concurrencia limitada y pausa breve de logos durante navegacion rapida por mando.
 - Busqueda con indice normalizado y debounce.
 - Reintentos automáticos en reproduccion.
-- PiP para mantener una vista previa mientras navegas.
+- PiP con retardo configurable para evitar reinicios de AVPlay al moverse rapido por la lista.
 - Persistencia de progreso para VOD y series.
+
+## Ajustes para TV
+
+Los parametros sensibles al dispositivo viven en `js/device-profile.js`.
+
+Incluyen:
+- Resolucion de layout y posicion del PiP.
+- Throttle de navegacion y duracion de OK largo.
+- Bitrates maximos, buffers y timeout de AVPlay.
+- Retardo de preview PiP.
+- Retardo y separacion del prefetch de VOD/Series.
+- Concurrencia de logos y pausa de carga durante navegacion.
+
+Tambien se puede sobrescribir el perfil en runtime con `window.__IPTV_DEVICE_PROFILE__` antes de inicializar la app.
 
 ## Web remota
 
