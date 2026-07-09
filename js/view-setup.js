@@ -16,11 +16,15 @@ export const ViewSetup = (() => {
   let _editingListId = null;
   let _lastSetupZone = 'tabs';
   let _exitFocusIdx = 0;
+  let _suppressEnterUntil = 0;
 
   function _uid() { return Math.random().toString(36).substring(2, 9); }
   function _val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
   function _requestLoadList(list) { eventBus.emit('list:load-requested', list); }
-  function _requestCancelLoad() { eventBus.emit('load:cancel-requested'); }
+  function _requestCancelLoad() {
+    _suppressEnterUntil = Date.now() + 900;
+    eventBus.emit('load:cancel-requested');
+  }
   function _escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, ch => ({
       '&': '&amp;',
@@ -181,6 +185,7 @@ export const ViewSetup = (() => {
 
   function _handleSetupEnter() {
     if (typeof Router === 'undefined' || !Router.isView('setup')) return;
+    if (Date.now() < _suppressEnterUntil) return true;
     if (_isSetupBusy()) {
       _requestCancelLoad();
       return true;
@@ -445,7 +450,11 @@ export const ViewSetup = (() => {
     const tabs = Array.from(_getSetupTabs());
     const lists = Storage.getLists();
 
-    if (lists.length > 0) {
+    if (Date.now() < _suppressEnterUntil) {
+      _setupZone = 'tabs';
+      _setupTabIdx = Math.max(0, tabs.findIndex(t => t.dataset.tab === 'saved'));
+      if (tabs[_setupTabIdx]) _switchTab(tabs[_setupTabIdx].dataset.tab);
+    } else if (lists.length > 0) {
       const savedTabIdx = tabs.findIndex(t => t.dataset.tab === 'saved');
       if (savedTabIdx >= 0) {
         _setupTabIdx = savedTabIdx;
@@ -463,6 +472,12 @@ export const ViewSetup = (() => {
 
     if (_setupEventsBound) return;
     _setupEventsBound = true;
+
+    eventBus.on('load:cancelled', () => {
+      _suppressEnterUntil = Date.now() + 900;
+      const active = document.activeElement;
+      if (active && typeof active.blur === 'function') active.blur();
+    });
 
     document.querySelectorAll('.tab-btn').forEach((btn, idx) =>
       btn.addEventListener('click', () => {
