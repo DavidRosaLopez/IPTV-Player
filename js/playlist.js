@@ -188,7 +188,8 @@ export const Playlist = (() => {
         else if (cache.size >= LRU_MAX) cache.delete(cache.keys().next().value);
         cache.set(key, val);
       },
-      has(key) { return cache.has(key); }
+      has(key) { return cache.has(key); },
+      clear() { cache.clear(); }
     };
   }
 
