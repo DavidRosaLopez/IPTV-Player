@@ -145,11 +145,19 @@ export const ViewSetup = (() => {
         _setupTabIdx = _setupTabIdx === 0 ? _getSetupTabs().length - 1 : _setupTabIdx - 1;
         _setupZone = 'tabs';
         _getSetupTabs()[_setupTabIdx]?.click();
+      } else if (dir === 'up') {
+        _setupZone = 'tabs';
+        _updateSetupFocus();
       }
       return true;
     }
 
     if (activeTab === 'saved') {
+      if (dir === 'up' && _setupContentIdx < 4) {
+        _setupZone = 'tabs';
+        _updateSetupFocus();
+        return true;
+      }
       _moveSavedGrid(dir);
       _updateSetupFocus();
       return true;
