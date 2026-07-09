@@ -13,7 +13,7 @@ export const EPG = (() => {
   async function fetchRealEpg(ch) {
     if (!ch || !ch.streamId) return null;
     if (typeof Store === 'undefined') return null;
-    const list = Store.get('currentList');
+    const list = Store.peek('currentList');
     if (!list || list.type !== 'xtream') return null;
 
     const cacheEntry = _epgCache.get(ch.streamId);

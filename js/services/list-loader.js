@@ -20,7 +20,7 @@ export function createListLoader() {
     if (_currentAbortController) _currentAbortController.abort();
     _currentAbortController = new AbortController();
 
-    const prevList = Store.get('currentList');
+    const prevList = Store.peek('currentList');
     const steps = [
       { id: 'cache', label: 'Comprobando caché local' },
       { id: 'connect', label: 'Conectando al servidor' },
@@ -190,7 +190,7 @@ export function createListLoader() {
         Store.set('channels', newChannels);
         localStorage.setItem(`sync_${list.id}`, Date.now().toString());
         Playlist.clearGroupCache();
-        Store.set('groups', Playlist.getGroups(newChannels, Store.get('currentCountry') || 'ALL', 'tv'));
+        Store.set('groups', Playlist.getGroups(newChannels, Store.peek('currentCountry') || 'ALL', 'tv'));
         if (Router.isView('channels')) {
           ViewChannels.renderGroups();
           ViewChannels.renderChannels();

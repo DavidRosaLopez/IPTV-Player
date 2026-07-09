@@ -9,7 +9,7 @@ import { StorageProgress } from './services/storage-progress.js';
 const _getCurrentListId = (listId = null) => {
   if (listId) return listId;
   if (typeof Store !== 'undefined') {
-    const list = Store.get('currentList');
+    const list = Store.peek('currentList');
     if (list && list.id) return list.id;
   }
   return 'default';
