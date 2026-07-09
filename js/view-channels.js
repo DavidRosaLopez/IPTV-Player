@@ -28,7 +28,6 @@ export const ViewChannels = (() => {
   let _sidebarFocusablesCache = null;
   let _countryFocusIdx = 0;
   let _lastTvCountry = 'ALL';
-  let _lastTvCountryFocusIdx = 0;
   let _currentTab = 'tv';
   let _tabFocusIdx = 0;
   const TABS = ['tv', 'vod', 'series'];
@@ -347,7 +346,6 @@ export const ViewChannels = (() => {
   function _selectCountry(code, idx) {
     if (_currentTab === 'tv') {
       _lastTvCountry = code || 'ALL';
-      _lastTvCountryFocusIdx = Math.max(0, idx || 0);
     }
     return _viewState.selectCountry(code, idx);
   }
@@ -579,7 +577,6 @@ export const ViewChannels = (() => {
 
     if (_currentTab === 'tv') {
       _lastTvCountry = _getCurrentCountry();
-      _lastTvCountryFocusIdx = _countryFocusIdx;
     }
     
     _currentTab = tabId;
