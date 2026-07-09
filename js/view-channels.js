@@ -14,6 +14,7 @@ import { InfoPopup } from './info-popup.js';
 import { Watching } from './watching.js';
 import { getCountryInfo, sortCountryCodes } from './countries.js';
 import { loadTabData } from './services/tab-data-loader.js';
+import { getGroupCounts, invalidateGroupCounts } from './services/group-counts.js';
 import { createFocusController } from './services/focus-controller.js';
 import { renderCountryItems, renderGroupList, setChannelHeader } from './services/view-renderer.js';
 import { createViewState } from './services/view-state.js';
@@ -32,7 +33,6 @@ export const ViewChannels = (() => {
   let _tabAbortController = null;
   let _groupPreviewTimer = null;      // local: era window._groupPreviewTimer (contaminaba global)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
-  let _groupCountsCache  = null;
   let _suppressNextTabClick = false;
   let _pendingFocusAfterRender = null;
   const _focus = createFocusController({
@@ -69,6 +69,7 @@ export const ViewChannels = (() => {
       const cols = _currentTab === 'tv' ? 3 : 5;
       return curIdx % cols === 0;
     },
+    getFocusedChannelEl: () => VirtualList.getFocusedElement?.() || null,
     moveVirtualList: (dir) => VirtualList.move(dir),
     previewCurrentChannel: () => {
       const focused = VirtualList.getCurrentItem();
@@ -89,6 +90,7 @@ export const ViewChannels = (() => {
     onCountryInvalidated: () => {
       const channels = _getCurrentData();
       Playlist.clearGroupCache();
+      invalidateGroupCounts();
       Store.set('groups', Playlist.getGroups(channels, 'ALL', _currentTab));
       Store.set('currentGroup', '__all__');
       Store.set('groupIdx', 0);
@@ -335,7 +337,14 @@ export const ViewChannels = (() => {
     
     const groups = Playlist.getGroups(channels, currentCountry, _currentTab);
     Store.set('groups', groups);
-    const counts = _getGroupCounts(channels, currentCountry);
+    const counts = getGroupCounts(
+      channels,
+      currentCountry,
+      _currentTab,
+      Store.peek('currentList')?.id,
+      Favorites.getIds(),
+      Watching.getIds(Store.peek('currentList')?.id)
+    );
     renderGroupList({
       list,
       groups,
@@ -361,41 +370,25 @@ export const ViewChannels = (() => {
     _sidebarFocusablesCache = null;
   }
 
-  function _getGroupCounts(channels, currentCountry) {
-    const favIds = Favorites.getIds();
-    const watchingIds = Watching.getIds(Store.get('currentList')?.id);
-    const cacheKey = `${currentCountry}|${_currentTab}|${favIds.join(',')}|${watchingIds.join(',')}`;
-    if (_groupCountsCache && _groupCountsCache.channelsRef === channels && _groupCountsCache.key === cacheKey) return _groupCountsCache.counts;
-
-    const favSet = new Set(favIds);
-    const watchingSet = new Set(watchingIds);
-    const counts = { '__all__': 0, '__favs__': 0, '__watching__': 0 };
-    for (const ch of channels) {
-      if (!Playlist.isItemVisibleInCountry(ch, currentCountry)) continue;
-      counts.__all__++;
-      counts[ch.group] = (counts[ch.group] || 0) + 1;
-      if (favSet.has(ch.id)) counts.__favs__++;
-      if (watchingSet.has(ch.id)) counts.__watching__++;
-    }
-
-    _groupCountsCache = { channelsRef: channels, key: cacheKey, counts };
-    Store.set('groupCountsCache', counts);
-    return counts;
-  }
-
   function _updateGroupCounts() {
     const channels = _getCurrentData();
-    const groups = Store.get('groups');
     const currentCountry = Store.get('currentCountry') || 'ALL';
-    const cache = _getGroupCounts(channels, currentCountry);
+    const cache = getGroupCounts(
+      channels,
+      currentCountry,
+      _currentTab,
+      Store.peek('currentList')?.id,
+      Favorites.getIds(),
+      Watching.getIds(Store.peek('currentList')?.id)
+    );
 
     const els = document.querySelectorAll('.group-item');
-    if (!els.length || !groups.length) return;
-    els.forEach((el, i) => {
-      const g = groups[i];
-      if (!g) return;
+    if (!els.length) return;
+    els.forEach((el) => {
+      const groupId = el.dataset.groupId;
+      if (!groupId) return;
       const countEl = el.querySelector('.group-count');
-      if (countEl) countEl.textContent = cache[g.id] || 0;
+      if (countEl) countEl.textContent = cache[groupId] || 0;
     });
   }
 

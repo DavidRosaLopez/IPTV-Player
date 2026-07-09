@@ -108,7 +108,6 @@ export function createListLoader() {
     Playlist.clearGroupCache();
     const channels = Store.peek('channels') || [];
     Store.set('groups', Playlist.getGroups(channels));
-    Store.set('groupCountsCache', null);
     Store.set('currentGroup', '__all__');
     Store.set('groupIdx', 0);
     Favorites.init();
@@ -192,7 +191,6 @@ export function createListLoader() {
         localStorage.setItem(`sync_${list.id}`, Date.now().toString());
         Playlist.clearGroupCache();
         Store.set('groups', Playlist.getGroups(newChannels, Store.get('currentCountry') || 'ALL', 'tv'));
-        Store.set('groupCountsCache', null);
         if (Router.isView('channels')) {
           ViewChannels.renderGroups();
           ViewChannels.renderChannels();

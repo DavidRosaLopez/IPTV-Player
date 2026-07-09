@@ -7,7 +7,6 @@ export const Store = (() => {
     groups: [],
     currentGroup: '__all__',
     currentList: null,
-    groupCountsCache: null,
     currentCountry: 'ALL',
     countries: []
   };

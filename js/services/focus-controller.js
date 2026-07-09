@@ -54,9 +54,9 @@ export function createFocusController(deps) {
       deps.focusCurrentChannel();
       setTimeout(() => {
         if (token !== channelFocusToken || focusZone !== 'channels') return;
-        const card = document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
+        const card = deps.getFocusedChannelEl?.() || document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
         if (card) prevFocusedEl = card;
-        deps.setChannelFocus(card);
+        deps.setChannelFocus(card, true);
       }, 50);
     }
   }
@@ -138,7 +138,7 @@ export function createFocusController(deps) {
       return;
     }
     deps.moveVirtualList(dir);
-    deps.setChannelFocus(document.querySelector('.channel-card.focused'), true);
+    deps.setChannelFocus(deps.getFocusedChannelEl?.() || document.querySelector('.channel-card.focused'), true);
     deps.previewCurrentChannel();
   }
 
