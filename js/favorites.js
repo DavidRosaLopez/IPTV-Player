@@ -11,9 +11,9 @@ export const Favorites = (() => {
   let _cache = null;
 
   function _getKey() {
-    const list = typeof Store !== 'undefined' ? Store.get('currentList') : null;
+    const list = typeof Store !== 'undefined' ? Store.peek('currentList') : null;
     const listId = list ? list.id : 'default';
-    const tabId = typeof Store !== 'undefined' ? (Store.get('currentTab') || 'tv') : 'tv';
+    const tabId = typeof Store !== 'undefined' ? (Store.peek('currentTab') || 'tv') : 'tv';
     return `${listId}_${tabId}`;
   }
 

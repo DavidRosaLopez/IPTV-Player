@@ -347,65 +347,6 @@ export const ViewChannels = (() => {
       onFolderClick: (g, i) => { Store.set('groupIdx', i); _selectGroup(g, true); },
       onGroupClick: (g, li) => { Store.set('groupIdx', parseInt(li.dataset.idx)); _selectGroup(g, true); }
     });
-    return;
-    
-    const currentGroup = Store.get('currentGroup');
-    const groupIdx = Store.get('groupIdx') || 0;
-    const expandedFolders = Store.get('expandedFolders') || {};
-
-    // ── Reconciliación DOM: reutilizar nodos existentes cuando sea posible ──
-    const existingItems = Array.from(list.children);
-    const existingMap = new Map(); // groupId → li element
-    for (const li of existingItems) {
-      if (li.dataset.groupId) existingMap.set(li.dataset.groupId, li);
-    }
-
-    const newIds = new Set();
-    const fragment = document.createDocumentFragment();
-
-    groups.forEach((g, i) => {
-      newIds.add(g.id);
-      let li = existingMap.get(g.id);
-
-      if (g.isFolder) {
-        if (!li) {
-          li = document.createElement('li');
-          li.dataset.groupId = g.id;
-          li.addEventListener('click', () => { Store.set('groupIdx', i); _selectGroup(g, true); });
-        }
-        li.className = 'group-item folder-item' + (i === groupIdx && _focusZone === 'groups' ? ' focused' : '');
-        li.dataset.idx = i;
-        _setGroupContent(li, g, null, Boolean(expandedFolders[g.id]));
-        fragment.appendChild(li);
-        return;
-      }
-
-      const isChild = g.parentId ? true : false;
-      const isHidden = isChild && !expandedFolders[g.parentId];
-
-      if (!li) {
-        li = document.createElement('li');
-        li.dataset.groupId = g.id;
-        li.addEventListener('click', () => { Store.set('groupIdx', parseInt(li.dataset.idx)); _selectGroup(g, true); });
-      }
-      li.className = 'group-item' +
-                     (isChild ? ' group-child' : '') +
-                     (isHidden ? ' hidden' : '') +
-                     (i === groupIdx && _focusZone === 'groups' ? ' focused' : '') +
-                     (g.id === currentGroup ? ' active' : '');
-      li.dataset.idx = i;
-
-      const cnt = counts[g.id] || 0;
-      _setGroupContent(li, g, cnt);
-
-      fragment.appendChild(li);
-    });
-
-    // Remove stale nodes
-    for (const [id, li] of existingMap) {
-      if (!newIds.has(id)) li.remove();
-    }
-    list.appendChild(fragment);
   }
 
   function _updateGroupClasses() {
@@ -472,64 +413,6 @@ export const ViewChannels = (() => {
 
   function _selectGroup(g, autoFocusChannels = true) {
     return _viewState.selectGroup(g, autoFocusChannels);
-    if (g.isFolder) {
-      if (autoFocusChannels) {
-        const expanded = Store.get('expandedFolders') || {};
-        expanded[g.id] = !expanded[g.id];
-        Store.set('expandedFolders', expanded);
-        renderGroups();
-      }
-      
-      const folderId = g.id;
-      const focusables = _getSidebarFocusables();
-      const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === folderId);
-      if (newIdx !== -1) _sidebarFocusIdx = newIdx;
-      
-      _setFocusZone('groups');
-      return;
-    }
-
-    const prevGroup = Store.get('currentGroup');
-    const groups = Store.get('groups');
-    const gIdx = groups.findIndex(item => item.id === g.id);
-
-    const channels = _getCurrentData();
-    const favIds = new Set(Favorites.getIds());
-    const currentCountry = Store.get('currentCountry') || 'ALL';
-    const items = Playlist.filterByGroup(channels, g.id, favIds, currentCountry);
-
-    if (prevGroup === g.id) {
-      const focusables = _getSidebarFocusables();
-      const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === g.id);
-      if (newIdx !== -1) _sidebarFocusIdx = newIdx;
-      
-      _updateGroupClasses();
-      if (autoFocusChannels && items.length > 0) {
-        _setFocusZone('channels');
-      }
-      return;
-    }
-
-    Store.set('currentGroup', g.id);
-    Store.set('groupIdx', gIdx);
-    
-    const focusables = _getSidebarFocusables();
-    const newIdx = focusables.findIndex(el => el.dataset && el.dataset.groupId === g.id);
-    if (newIdx !== -1) _sidebarFocusIdx = newIdx;
-    
-    _updateGroupClasses();
-    
-    // Clear virtual list quickly to avoid lag
-    VirtualList.update([]);
-    renderChannels();
-    
-    if (autoFocusChannels) {
-      if (items.length > 0) {
-        _setFocusZone('channels');
-      } else {
-        _setFocusZone('groups');
-      }
-    }
   }
 
   function renderChannels(list) {

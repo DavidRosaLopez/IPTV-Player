@@ -126,7 +126,6 @@ export const Playlist = (() => {
       }
     }
 
-    dynamicGroups.sort((a, b) => a.id.localeCompare(b.id));
     return (_groupCache[cacheKey] = [...staticGroups, ...dynamicGroups]);
   }
 

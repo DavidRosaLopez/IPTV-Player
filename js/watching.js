@@ -3,7 +3,7 @@ import { Storage } from './storage.js';
 
 export const Watching = (() => {
   function _getKey(listId = null) {
-    const resolvedListId = listId || (Store.get('currentList')?.id || 'default');
+    const resolvedListId = listId || (Store.peek('currentList')?.id || 'default');
     return `${resolvedListId}_watching_series`;
   }
 

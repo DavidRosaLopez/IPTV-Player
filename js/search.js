@@ -99,7 +99,7 @@ export const Search = (() => {
       const q   = e.target.value.trim();
       const currentTab = _view.getCurrentTab();
       const data = _getDataForTab(currentTab);
-      const cacheKey = `${currentTab}|${q}|${Store.get('currentCountry') || 'ALL'}|${Store.get('currentGroup') || ''}|${data.length}`;
+      const cacheKey = `${currentTab}|${q}|${Store.peek('currentCountry') || 'ALL'}|${Store.peek('currentGroup') || ''}|${data.length}`;
       if (_lastSearchKey === cacheKey) return;
       _lastSearchKey = cacheKey;
       const res = Playlist.search(data, q);
