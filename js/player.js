@@ -23,9 +23,16 @@ export const Player = (() => {
   let _onChannelChange = null;
   let _state           = 'IDLE'; // IDLE | BUFFERING | PLAYING | ERROR
   let _mode            = 'IDLE'; // IDLE | FULLSCREEN | PIP
-  let _previewTimer    = null;   // delay para preview al navegar
-  let _retryTimer      = null;   // retry cuando falla el stream
-  let _errorTimer      = null;   // ocultar error / volver a vista
+  const _timers = {
+    preview: null,
+    retry: null,
+    error: null,
+    playDelay: null,
+    pipDelay: null,
+    liveRestart: null,
+    resumeSeek: null,
+    seek: null
+  };
   let _wasPlayingOnHide = false;
   let _retryCount      = 0;      // declarado explÃ­citamente (evita fuga al scope global)
   let _videoLayerEl    = null;   // referencia cacheada a #video-layer
@@ -34,6 +41,25 @@ export const Player = (() => {
   let _pipSeq          = 0;
 
   let _initialized = false;
+  function _setTimer(name, fn, delay) {
+    _clearTimer(name);
+    _timers[name] = setTimeout(() => {
+      _timers[name] = null;
+      fn();
+    }, delay);
+  }
+
+  function _clearTimer(name) {
+    const timer = _timers[name];
+    if (!timer) return;
+    clearTimeout(timer);
+    _timers[name] = null;
+  }
+
+  function _clearTimers(names) {
+    names.forEach(_clearTimer);
+  }
+
   function _getStreamMode(ch = _current) {
     const name = String(ch?.name || '').toUpperCase();
     return {
@@ -107,7 +133,7 @@ export const Player = (() => {
   function play(ch) {
     if (!ch || !ch.url) return;
     if (_current && _current.id !== ch.id) _retryCount = 0;
-    clearTimeout(_previewTimer);
+    _clearTimer('preview');
     const playSeq = ++_playSeq;
     
     _safeStop();
@@ -131,7 +157,7 @@ export const Player = (() => {
     if (errEl) errEl.classList.add('hidden');
 
     // Retraso para que Tizen libere el pipeline anterior
-    setTimeout(() => {
+    _setTimer('playDelay', () => {
       if (playSeq !== _playSeq || _mode !== 'FULLSCREEN' || !_current || _current.id !== ch.id) return;
       try {
         let playUrl = _current.url;
@@ -156,7 +182,7 @@ export const Player = (() => {
                eventBus.emit('info-popup:resume-requested');
             } else {
                // Canal TV en directo: relanzar automÃ¡ticamente
-               setTimeout(() => { if (_current && playSeq === _playSeq) play(_current); }, 1000);
+               _setTimer('liveRestart', () => { if (_current && playSeq === _playSeq) play(_current); }, 1000);
             }
           };
 
@@ -191,7 +217,7 @@ export const Player = (() => {
                  // Buscar progreso: primero en Storage (persiste entre reinicios), luego en Store (sesiÃ³n actual)
                  const saved = Storage.getEpisodeProgress(_current.id) || Store.get('progress_' + _current.id);
                  if (saved && saved > 10000) {
-                   setTimeout(() => {
+                   _setTimer('resumeSeek', () => {
                      if (playSeq !== _playSeq) return;
                      // seekTo es posiciÃ³n absoluta (ms), jumpForward es relativa â†’ seekTo es el correcto aquÃ­
                      try { webapis.avplay.seekTo(saved); } catch(e){}
@@ -265,14 +291,13 @@ export const Player = (() => {
     }
     // Si ya estamos en PiP con el mismo canal, nada que hacer
     if (_mode === 'PIP' && _current && _current.id === ch.id) return;
-    clearTimeout(_previewTimer);
-    _previewTimer = setTimeout(() => {
+    _setTimer('preview', () => {
       _startPip(ch);
     }, 700); // 700ms para que no cambie con cada tecla
   }
 
   function cancelPreview() {
-    clearTimeout(_previewTimer);
+    _clearTimer('preview');
   }
 
   function _startPip(ch) {
@@ -294,7 +319,7 @@ export const Player = (() => {
 
     // NO ponemos video-layer en 1920x1080 aquÃ­; _applyDisplayRect lo ajustarÃ¡
 
-    setTimeout(() => {
+    _setTimer('pipDelay', () => {
       if (pipSeq !== _pipSeq || _mode !== 'PIP' || !_current || _current.id !== ch.id) return;
       try {
         let url = ch.url;
@@ -339,14 +364,7 @@ export const Player = (() => {
 
   // â”€â”€ SAFE STOP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function _safeStop() {
-    if (_retryTimer) {
-      clearTimeout(_retryTimer);
-      _retryTimer = null;
-    }
-    if (_errorTimer) {
-      clearTimeout(_errorTimer);
-      _errorTimer = null;
-    }
+    _clearTimers(['retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek']);
     try {
       const vl = _videoLayerEl || document.getElementById('video-layer');
       if (vl) {
@@ -372,16 +390,14 @@ export const Player = (() => {
 
   function _handleError() {
     _safeStop();
-    if (_retryTimer) clearTimeout(_retryTimer);
-    if (_errorTimer) clearTimeout(_errorTimer);
+    _clearTimers(['retry', 'error']);
 
     if (_isActive() && _current && _retryCount < 3) {
       _retryCount++;
       if (typeof Router !== 'undefined' && Router.showToast) {
         Router.showToast(`Error de conexiÃ³n. Reconectando (${_retryCount}/3)...`, 'error');
       }
-      _retryTimer = setTimeout(() => {
-        _retryTimer = null;
+      _setTimer('retry', () => {
         if (_isActive() && _current) play(_current);
       }, 2000);
       return;
@@ -390,8 +406,7 @@ export const Player = (() => {
     _retryCount = 0;
     const errEl = document.getElementById('player-error');
     if (errEl) errEl.classList.remove('hidden');
-    _errorTimer = setTimeout(() => {
-      _errorTimer = null;
+    _setTimer('error', () => {
       if (errEl) errEl.classList.add('hidden');
       if (_isActive()) Router.showView('channels');
     }, 4000);
@@ -528,9 +543,14 @@ export const Player = (() => {
   }
 
   // â”€â”€ SEEK LOGIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  let _seekTimer = null;
   let _seekAccumulator = 0;
   let _seekLastTime = 0;
+
+  function _resetSeekFeedback() {
+    document.getElementById('seek-feedback-left')?.classList.add('hidden');
+    document.getElementById('seek-feedback-right')?.classList.add('hidden');
+    _seekAccumulator = 0;
+  }
 
   function _handleSeek(dir) {
     if (!_current) return;
@@ -589,12 +609,7 @@ export const Player = (() => {
       console.error('AVPlay jump error', e);
     }
 
-    clearTimeout(_seekTimer);
-    _seekTimer = setTimeout(() => {
-      if (elLeft) elLeft.classList.add('hidden');
-      if (elRight) elRight.classList.add('hidden');
-      _seekAccumulator = 0;
-    }, 600);
+    _setTimer('seek', _resetSeekFeedback, 600);
   }
 
   // â”€â”€ UTILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -611,18 +626,9 @@ export const Player = (() => {
     _current = null;
     _mode = 'IDLE';
     _hidePip();
-    if (_previewTimer) {
-      clearTimeout(_previewTimer);
-      _previewTimer = null;
-    }
-    if (_retryTimer) {
-      clearTimeout(_retryTimer);
-      _retryTimer = null;
-    }
-    if (_errorTimer) {
-      clearTimeout(_errorTimer);
-      _errorTimer = null;
-    }
+    _clearTimer('seek');
+    _resetSeekFeedback();
+    _clearTimers(['preview', 'retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek']);
     if (typeof PlayerOSD !== 'undefined') PlayerOSD.hide();
     if (typeof VodOSD !== 'undefined') VodOSD.hide();
   }
