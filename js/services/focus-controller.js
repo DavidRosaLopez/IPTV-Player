@@ -44,7 +44,7 @@ export function createFocusController(deps) {
     } else if (zone === 'countries') {
       deps.updateCountryClasses();
     } else if (zone === 'tabs') {
-      const tabs = document.querySelectorAll('.sidebar-tab-btn');
+      const tabs = deps.getTabButtons?.() || document.querySelectorAll('.sidebar-tab-btn');
       if (tabs[tabFocusIdx]) {
         tabs[tabFocusIdx].classList.add('focused');
         prevFocusedEl = tabs[tabFocusIdx];

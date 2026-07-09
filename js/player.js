@@ -30,6 +30,8 @@ export const Player = (() => {
   let _retryCount      = 0;      // declarado explÃ­citamente (evita fuga al scope global)
   let _videoLayerEl    = null;   // referencia cacheada a #video-layer
   let _progressSaveTimer = null; // guardado periÃ³dico de progreso (series/vod)
+  let _playSeq         = 0;
+  let _pipSeq          = 0;
 
   let _initialized = false;
   function _getStreamMode(ch = _current) {
@@ -106,6 +108,7 @@ export const Player = (() => {
     if (!ch || !ch.url) return;
     if (_current && _current.id !== ch.id) _retryCount = 0;
     clearTimeout(_previewTimer);
+    const playSeq = ++_playSeq;
     
     _safeStop();
     _current = ch;
@@ -129,6 +132,7 @@ export const Player = (() => {
 
     // Retraso para que Tizen libere el pipeline anterior
     setTimeout(() => {
+      if (playSeq !== _playSeq || _mode !== 'FULLSCREEN' || !_current || _current.id !== ch.id) return;
       try {
         let playUrl = _current.url;
         if (playUrl.includes('|')) playUrl = playUrl.split('|')[0];
@@ -152,7 +156,7 @@ export const Player = (() => {
                eventBus.emit('info-popup:resume-requested');
             } else {
                // Canal TV en directo: relanzar automÃ¡ticamente
-               setTimeout(() => { if (_current) play(_current); }, 1000);
+               setTimeout(() => { if (_current && playSeq === _playSeq) play(_current); }, 1000);
             }
           };
 
@@ -180,6 +184,7 @@ export const Player = (() => {
 
         webapis.avplay.prepareAsync(
           () => {
+            if (playSeq !== _playSeq) return;
             try { 
               webapis.avplay.play();
               if (_current && (_current.type === 'vod' || _current.type === 'series')) {
@@ -187,6 +192,7 @@ export const Player = (() => {
                  const saved = Storage.getEpisodeProgress(_current.id) || Store.get('progress_' + _current.id);
                  if (saved && saved > 10000) {
                    setTimeout(() => {
+                     if (playSeq !== _playSeq) return;
                      // seekTo es posiciÃ³n absoluta (ms), jumpForward es relativa â†’ seekTo es el correcto aquÃ­
                      try { webapis.avplay.seekTo(saved); } catch(e){}
                    }, 200);
@@ -274,6 +280,7 @@ export const Player = (() => {
     if (typeof Router !== 'undefined' && !Router.isView('channels')) return;
     if (_mode === 'FULLSCREEN') return; // no interrumpir reproductor
     if (_current && _current.id === ch.id && _mode === 'PIP') return;
+    const pipSeq = ++_pipSeq;
 
     _retryCount = 0;
     _safeStop();
@@ -288,6 +295,7 @@ export const Player = (() => {
     // NO ponemos video-layer en 1920x1080 aquÃ­; _applyDisplayRect lo ajustarÃ¡
 
     setTimeout(() => {
+      if (pipSeq !== _pipSeq || _mode !== 'PIP' || !_current || _current.id !== ch.id) return;
       try {
         let url = ch.url;
         if (url.includes('|')) url = url.split('|')[0];
@@ -322,7 +330,7 @@ export const Player = (() => {
           onstreamcompleted: () => {},
         });
         webapis.avplay.prepareAsync(
-          () => { try { webapis.avplay.play(); } catch(e) {} },
+          () => { if (pipSeq === _pipSeq) { try { webapis.avplay.play(); } catch(e) {} } },
           () => { _hidePip(); }
         );
       } catch(e) { _hidePip(); }
@@ -628,7 +636,7 @@ export const Player = (() => {
           Storage.setEpisodeProgress(_current.id, ms);
           // Actualizar "Seguir viendo" con el minuto actual
           if (_current.type === 'series' && _current.seriesId) {
-            Watching.updateProgress(_current.seriesId, _current.id, ms, Store.get('currentList')?.id);
+            Watching.updateProgress(_current.seriesId, _current.id, ms, Store.peek('currentList')?.id);
           }
         }
       }

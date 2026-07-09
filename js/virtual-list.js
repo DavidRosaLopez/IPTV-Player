@@ -24,7 +24,8 @@ export const VirtualList = (() => {
   let _vH          = 900;   // cacheado de offsetHeight
   let _eventsBound = false;
   let _scrolling   = false;
-  let _scrollTimeout = null;
+  let _scrollSettleRaf = null;
+  let _lastScrollAt = 0;
 
   const ImageQueue = (() => {
     const queue = [];
@@ -164,6 +165,13 @@ export const VirtualList = (() => {
   function getItems() { return _items; }
   function getCurrentItem() { return _items[_focusedIdx]; }
   function getFocusedElement() { return _domCache[_focusedIdx] || null; }
+  function _ensureRefs(el) {
+    if (el._favBadge && el._img && el._name) return el;
+    el._favBadge = el._favBadge || el.querySelector('.fav-badge');
+    el._img = el._img || el.querySelector('.channel-logo');
+    el._name = el._name || el.querySelector('.channel-name');
+    return el;
+  }
 
   // ── RENDER ───────────────────────────────────────────
   function _render() {
@@ -220,17 +228,15 @@ export const VirtualList = (() => {
       let el;
       if (_pool.length > 0) {
         el = _pool.pop();
+        _ensureRefs(el);
         // Clear stale targetSrc so ImageQueue doesn't skip re-loading on reuse
-        const recycledImg = el._img || el.querySelector('.channel-logo');
+        const recycledImg = el._img;
         if (recycledImg) recycledImg.dataset.targetSrc = '';
       } else {
         el = document.createElement('div');
         // Pre-build structure ONLY once per new node
         el.innerHTML = '<span class="fav-badge material-symbols-rounded" style="display:none">favorite</span><img class="channel-logo" style="display:none" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"><div class="channel-info"><div class="channel-name"></div></div>';
-        // ── PRE-CACHE SUB-ELEMENT REFS (eliminates querySelector on every update) ──
-        el._favBadge  = el.querySelector('.fav-badge');
-        el._img       = el.querySelector('.channel-logo');
-        el._name      = el.querySelector('.channel-name');
+        _ensureRefs(el);
       }
       _updateCard(el, i);
       fragment.appendChild(el);
@@ -251,10 +257,10 @@ export const VirtualList = (() => {
       const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
 
       // Use cached refs — no querySelector needed
-      const fav = el._favBadge || el.querySelector('.fav-badge');
+      const fav = _ensureRefs(el)._favBadge;
       if (fav) fav.style.display = isFav ? '' : 'none';
 
-      const img = el._img || el.querySelector('.channel-logo');
+      const img = el._img;
       if (img) {
         if (ch.logo) {
           const src = _safeStr(ch.logo);
@@ -268,7 +274,7 @@ export const VirtualList = (() => {
         }
       }
 
-      const name = el._name || el.querySelector('.channel-name');
+      const name = el._name;
       if (name) name.textContent = ch.name || '';
     }
   }
@@ -287,10 +293,10 @@ export const VirtualList = (() => {
     const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
 
     // Use cached refs — fall back to querySelector for recycled pool elements that may lack refs
-    const fav = el._favBadge || el.querySelector('.fav-badge');
+    const fav = _ensureRefs(el)._favBadge;
     if (fav) fav.style.display = isFav ? '' : 'none';
 
-    const img = el._img || el.querySelector('.channel-logo');
+    const img = el._img;
     if (img) {
       if (ch.logo) {
         if (_scrolling) {
@@ -313,7 +319,7 @@ export const VirtualList = (() => {
       }
     }
 
-    const name = el._name || el.querySelector('.channel-name');
+    const name = el._name;
     if (name) name.textContent = ch.name || '';
 
     return el;
@@ -345,13 +351,20 @@ export const VirtualList = (() => {
 
   function _onScroll() {
     _scrollTop = _container.scrollTop; // Actualizar el caché real cuando ocurre el evento
-    
+    _lastScrollAt = performance.now();
     _scrolling = true;
-    if (_scrollTimeout) clearTimeout(_scrollTimeout);
-    _scrollTimeout = setTimeout(() => {
+    if (_scrollSettleRaf) return;
+    const checkSettled = () => {
+      const elapsed = performance.now() - _lastScrollAt;
+      if (elapsed < 120) {
+        _scrollSettleRaf = requestAnimationFrame(checkSettled);
+        return;
+      }
+      _scrollSettleRaf = null;
       _scrolling = false;
       _updateVisibleLogos();
-    }, 150);
+    };
+    _scrollSettleRaf = requestAnimationFrame(checkSettled);
 
     if (_rafId) return;
     _rafId = requestAnimationFrame(() => {
@@ -366,7 +379,7 @@ export const VirtualList = (() => {
       const el = _domCache[key];
       const ch = _items[i];
       if (!ch) continue;
-      const img = el._img || el.querySelector('.channel-logo');
+      const img = el._img;
       if (img && ch.logo) {
         const src = _safeStr(ch.logo);
         if (img.getAttribute('src') !== src && img.dataset.targetSrc !== src) {

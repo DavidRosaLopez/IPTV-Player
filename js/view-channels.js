@@ -44,6 +44,7 @@ export const ViewChannels = (() => {
         VirtualList.setFocused(VirtualList.getFocused());
       }
     },
+    getTabButtons: () => Array.from(document.querySelectorAll('.sidebar-tab-btn')),
     setChannelFocus: (el, skipScroll = false) => KeyHandler.setFocus(el, skipScroll),
     isVodOrSeries: () => _currentTab === 'vod' || _currentTab === 'series',
     getCountries: () => Store.get('countries') || ['ALL'],
@@ -451,7 +452,8 @@ export const ViewChannels = (() => {
 
   function _playChannel(ch) {
     if (!ch) return;
-    Storage.setLastChannel(ch.id, Store.get('currentList')?.id);
+    const listId = _getCurrentListId();
+    Storage.setLastChannel(ch.id, listId);
 
     // Si estamos en "Seguir viendo" y tiene un episodio guardado
     if (_getCurrentGroup() === '__watching__' && ch.type === 'series') {
@@ -459,7 +461,7 @@ export const ViewChannels = (() => {
       const wItem = items.find(i => (typeof i === 'object' && i.id === ch.id));
       if (wItem && wItem.ep) {
         const ep = wItem.ep;
-        const list = Store.get('currentList');
+        const list = Store.peek('currentList');
         const ext = ep.container_extension || 'mp4';
         const url = `${list.server}/series/${encodeURIComponent(list.user)}/${encodeURIComponent(list.pass)}/${ep.id}.${ext}`;
         const playCh = {
@@ -755,7 +757,7 @@ export const ViewChannels = (() => {
       groupNameEl.textContent = tabId === 'tv' ? 'TV' : (tabId === 'vod' ? 'Películas' : 'Series');
     }
 
-    const list = Store.get('currentList');
+    const list = Store.peek('currentList');
     if (!list || list.type !== 'xtream') {
       Router.showToast('VOD y Series solo disponibles en cuentas Xtream Codes', 'info');
       return;
@@ -786,8 +788,8 @@ export const ViewChannels = (() => {
       }
     }
     
-    // Forzar renderizado del DOM antes de bloquear con IndexedDB/Parsing
-    await new Promise(r => setTimeout(r, 10));
+    // Dar un frame al navegador antes de bloquear con IndexedDB/Parsing
+    await new Promise(r => requestAnimationFrame(() => r()));
     if (_currentTab !== tabId) return; // Guard contra cambio rápido de pestaña
 
     let data = [];
