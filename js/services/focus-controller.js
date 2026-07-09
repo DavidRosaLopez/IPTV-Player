@@ -50,14 +50,10 @@ export function createFocusController(deps) {
         prevFocusedEl = tabs[tabFocusIdx];
       }
     } else if (zone === 'channels') {
-      const token = channelFocusToken;
       deps.focusCurrentChannel();
-      setTimeout(() => {
-        if (token !== channelFocusToken || focusZone !== 'channels') return;
-        const card = deps.getFocusedChannelEl?.() || document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
-        if (card) prevFocusedEl = card;
-        deps.setChannelFocus(card, true);
-      }, 50);
+      const card = deps.getFocusedChannelEl?.() || document.querySelector('.channel-card.focused') || document.querySelector('.channel-card');
+      if (card) prevFocusedEl = card;
+      deps.setChannelFocus(card, true);
     }
   }
 
