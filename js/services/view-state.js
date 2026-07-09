@@ -1,4 +1,41 @@
 export function createViewState(deps) {
+  function getFilterContext() {
+    return {
+      channels: deps.getCurrentData(),
+      currentCountry: deps.getCurrentCountry(),
+      currentGroup: deps.getCurrentGroup(),
+      currentTab: deps.getCurrentTab(),
+      currentListId: deps.getCurrentListId ? deps.getCurrentListId() : null,
+      favIds: deps.getFavIds ? deps.getFavIds() : [],
+    };
+  }
+
+  function resolveSyncContext(ch) {
+    const currentTab = deps.getCurrentTab();
+    const currentCountry = currentTab === 'vod' || currentTab === 'series' ? 'ALL' : (ch.countryCode || 'ALL');
+    deps.setCurrentCountry(currentCountry);
+    deps.setCountryFocusIdx((deps.getCountries() || ['ALL']).indexOf(currentCountry));
+    if (deps.getCountryFocusIdx() < 0) deps.setCountryFocusIdx(0);
+    deps.updateCountryClasses();
+
+    const groups = deps.getGroupsForCountry(currentCountry);
+    deps.setGroups(groups);
+
+    let targetGroupId = deps.getCurrentGroup();
+    let filtered = targetGroupId ? deps.filterGroup(targetGroupId) : [];
+    if (!targetGroupId || filtered.findIndex(c => c.id === ch.id) === -1) {
+      const groupObj = groups.find(g => g.id === ch.group) || groups.find(g => g.id === '__all__');
+      targetGroupId = groupObj ? groupObj.id : '__all__';
+      filtered = deps.filterGroup(targetGroupId);
+    }
+
+    deps.setCurrentGroup(targetGroupId);
+    deps.setGroupIdx(Math.max(0, groups.findIndex(g => g.id === targetGroupId)));
+    deps.setSidebarFocusIdx(deps.getGroupIdx() + 2);
+
+    return { currentCountry, groups, targetGroupId, filtered };
+  }
+
   function updateCountriesList() {
     const channels = deps.getCurrentData();
     const codesSet = new Set();
@@ -92,28 +129,7 @@ export function createViewState(deps) {
     updateCountriesList();
     deps.renderCountries();
 
-    const channels = deps.getCurrentData();
-    const favIds = deps.getFavIds();
-    const country = deps.getCurrentTab() === 'vod' || deps.getCurrentTab() === 'series' ? 'ALL' : (ch.countryCode || 'ALL');
-    deps.setCurrentCountry(country);
-    deps.setCountryFocusIdx((deps.getCountries() || ['ALL']).indexOf(country));
-    if (deps.getCountryFocusIdx() < 0) deps.setCountryFocusIdx(0);
-    deps.updateCountryClasses();
-
-    const groups = deps.getGroupsForCountry(deps.getCurrentCountry());
-    deps.setGroups(groups);
-
-    let targetGroupId = deps.getCurrentGroup();
-    let filtered = targetGroupId ? deps.filterGroup(targetGroupId) : [];
-    if (!targetGroupId || filtered.findIndex(c => c.id === ch.id) === -1) {
-      const groupObj = groups.find(g => g.id === ch.group) || groups.find(g => g.id === '__all__');
-      targetGroupId = groupObj ? groupObj.id : '__all__';
-      filtered = deps.filterGroup(targetGroupId);
-    }
-
-    deps.setCurrentGroup(targetGroupId);
-    deps.setGroupIdx(Math.max(0, groups.findIndex(g => g.id === targetGroupId)));
-    deps.setSidebarFocusIdx(deps.getGroupIdx() + 2);
+    const { groups, targetGroupId, filtered } = resolveSyncContext(ch);
     deps.refreshGroups();
 
     let chIdx = filtered.findIndex(c => c.id === ch.id);
@@ -131,5 +147,5 @@ export function createViewState(deps) {
     else deps.focusGroups();
   }
 
-  return { updateCountriesList, selectCountry, selectGroup, renderData, syncWithChannel };
+  return { getFilterContext, resolveSyncContext, updateCountriesList, selectCountry, selectGroup, renderData, syncWithChannel };
 }

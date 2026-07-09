@@ -87,6 +87,7 @@ export const ViewChannels = (() => {
     setCurrentCountry: value => Store.set('currentCountry', value),
     setCountryFocusIdx: value => { _countryFocusIdx = value; },
     getCountryFocusIdx: () => _countryFocusIdx,
+    getCurrentListId: () => _getCurrentListId(),
     onCountryInvalidated: () => {
       const channels = _getCurrentData();
       Playlist.clearGroupCache();
@@ -343,19 +344,17 @@ export const ViewChannels = (() => {
     _sidebarFocusablesCache = null;
     const list = document.getElementById('group-list');
     if (!list) return;
-    
-    const currentCountry = _getCurrentCountry();
-    const channels = _getCurrentData();
-    
-    const groups = Playlist.getGroups(channels, currentCountry, _currentTab);
+
+    const ctx = _viewState.getFilterContext();
+    const groups = Playlist.getGroups(ctx.channels, ctx.currentCountry, ctx.currentTab);
     Store.set('groups', groups);
     const counts = getGroupCounts(
-      channels,
-      currentCountry,
-      _currentTab,
-      _getCurrentListId(),
-      Favorites.getIds(),
-      Watching.getIds(_getCurrentListId())
+      ctx.channels,
+      ctx.currentCountry,
+      ctx.currentTab,
+      ctx.currentListId,
+      ctx.favIds,
+      Watching.getIds(ctx.currentListId)
     );
     renderGroupList({
       list,
@@ -383,15 +382,14 @@ export const ViewChannels = (() => {
   }
 
   function _updateGroupCounts() {
-    const channels = _getCurrentData();
-    const currentCountry = _getCurrentCountry();
+    const ctx = _viewState.getFilterContext();
     const cache = getGroupCounts(
-      channels,
-      currentCountry,
-      _currentTab,
-      _getCurrentListId(),
-      Favorites.getIds(),
-      Watching.getIds(_getCurrentListId())
+      ctx.channels,
+      ctx.currentCountry,
+      ctx.currentTab,
+      ctx.currentListId,
+      ctx.favIds,
+      Watching.getIds(ctx.currentListId)
     );
 
     const els = document.querySelectorAll('.group-item');
@@ -421,18 +419,16 @@ export const ViewChannels = (() => {
   }
 
   function renderChannels(list) {
-    const channels = _getCurrentData();
-    const currentGroup = _getCurrentGroup();
-    const currentCountry = _getCurrentCountry();
-    const favIds = new Set(Favorites.getIds());
+    const ctx = _viewState.getFilterContext();
+    const favIds = new Set(ctx.favIds);
     let items;
     if (list) {
       items = list;
     } else {
-      items = Playlist.filterByGroup(channels, currentGroup, favIds, currentCountry);
+      items = Playlist.filterByGroup(ctx.channels, ctx.currentGroup, favIds, ctx.currentCountry);
     }
 
-    setChannelHeader({ currentGroup, currentTab: _currentTab, count: items.length });
+    setChannelHeader({ currentGroup: ctx.currentGroup, currentTab: ctx.currentTab, count: items.length });
 
     const newLayout = _currentTab === 'tv' ? 'tv' : 'poster';
     if (_currentLayoutMode !== newLayout) {
