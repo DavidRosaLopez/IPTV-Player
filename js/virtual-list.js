@@ -3,6 +3,8 @@
  * Only renders visible rows — handles 10,000+ channels smoothly
  * Performance: pre-cached sub-element references on card creation.
  */
+import { DeviceProfile } from './device-profile.js';
+
 export const VirtualList = (() => {
   let COLS        = 3;
   let ITEM_H      = 74;   // px — card height + gap
@@ -26,13 +28,15 @@ export const VirtualList = (() => {
   let _scrolling   = false;
   let _scrollSettleRaf = null;
   let _lastScrollAt = 0;
+  let _logoResumeTimer = null;
+  let _suppressLogosUntil = 0;
 
   const ImageQueue = (() => {
     const queue = [];
     const activeRequests = new Set();
     let active = 0;
     let generation = 0;
-    const MAX = 4;
+    const MAX = DeviceProfile.virtualList.imageConcurrency;
     const process = () => {
       while(active < MAX && queue.length > 0) {
         const { imgEl, src, gen } = queue.shift();
@@ -173,6 +177,7 @@ export const VirtualList = (() => {
   function getFocused() { return _focusedIdx; }
 
   function move(dir) {
+    _suspendLogoLoading(DeviceProfile.virtualList.logoPauseAfterNavMs);
     let next = _focusedIdx;
     const col = _focusedIdx % COLS;
     if (dir === 'down')  next = Math.min(_items.length - 1, _focusedIdx + COLS);
@@ -204,6 +209,21 @@ export const VirtualList = (() => {
 
   function _queueLogo(img, src, idx) {
     ImageQueue.add(img, src, _getLogoPriority(idx));
+  }
+
+  function _shouldDeferLogos() {
+    return _scrolling || performance.now() < _suppressLogosUntil;
+  }
+
+  function _suspendLogoLoading(ms) {
+    if (!ms) return;
+    _suppressLogosUntil = performance.now() + ms;
+    ImageQueue.flush();
+    if (_logoResumeTimer) clearTimeout(_logoResumeTimer);
+    _logoResumeTimer = setTimeout(() => {
+      _logoResumeTimer = null;
+      if (!_scrolling) _updateVisibleLogos();
+    }, ms + 20);
   }
 
   // ── RENDER ───────────────────────────────────────────
@@ -336,7 +356,7 @@ export const VirtualList = (() => {
     const img = el._img;
     if (img) {
       if (ch.logo) {
-        if (_scrolling) {
+        if (_shouldDeferLogos()) {
           // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
           // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
           img.dataset.targetSrc = '';
@@ -370,7 +390,7 @@ export const VirtualList = (() => {
     el.classList.add('focused');
     const ch = _items[idx];
     const img = el._img;
-    if (!_scrolling && img && ch?.logo && img.getAttribute('src') !== ch.logo) {
+    if (!_shouldDeferLogos() && img && ch?.logo && img.getAttribute('src') !== ch.logo) {
       _queueLogo(img, _safeStr(ch.logo), idx);
     }
   }

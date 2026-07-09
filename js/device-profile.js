@@ -29,11 +29,17 @@ const BASE = {
     highBufferSeconds: 10,
     bufferingTimeoutMs: 5000,
     heavyBufferingTimeoutMs: 10000,
-    resolutionMarker: '4k'
+    resolutionMarker: '4k',
+    pipPreviewDelayMs: 900
   },
   prefetch: {
-    delayMs: 5000,
-    idleGraceMs: 2500
+    delayMs: 12000,
+    idleGraceMs: 2500,
+    betweenTabsDelayMs: 3000
+  },
+  virtualList: {
+    imageConcurrency: 3,
+    logoPauseAfterNavMs: 180
   }
 };
 

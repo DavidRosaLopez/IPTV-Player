@@ -293,7 +293,7 @@ export const Player = (() => {
     if (_mode === 'PIP' && _current && _current.id === ch.id) return;
     _setTimer('preview', () => {
       _startPip(ch);
-    }, 700); // 700ms para que no cambie con cada tecla
+    }, DeviceProfile.player.pipPreviewDelayMs); // evita reiniciar AVPlay con cada pulsacion
   }
 
   function cancelPreview() {

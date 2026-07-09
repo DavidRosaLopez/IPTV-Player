@@ -147,10 +147,10 @@ export function createListLoader() {
         try {
           if (signal.aborted) return;
 
-          const tasks = [];
-          tasks.push(ensureTabData('vod', list, signal, null).catch(e => { if (e.name !== 'AbortError') console.error('Prefetch VOD error', e); }));
-          tasks.push(ensureTabData('series', list, signal, null).catch(e => { if (e.name !== 'AbortError') console.error('Prefetch Series error', e); }));
-          await Promise.all(tasks);
+          await _prefetchTab('vod', list, signal);
+          await _idleDelay(DeviceProfile.prefetch.betweenTabsDelayMs, signal);
+          if (Player.getMode() !== 'IDLE' || document.hidden || !Router.isView('channels')) return;
+          await _prefetchTab('series', list, signal);
         } catch (e) {
           if (e.name !== 'AbortError') console.error('Prefetch error', e);
         } finally {
@@ -166,6 +166,28 @@ export function createListLoader() {
         _backgroundSync(list);
       }, 500);
     }
+  }
+
+  async function _prefetchTab(tabId, list, signal) {
+    try {
+      await ensureTabData(tabId, list, signal, null);
+    } catch (e) {
+      if (e.name !== 'AbortError') console.error(`Prefetch ${tabId} error`, e);
+    }
+  }
+
+  function _idleDelay(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal.aborted) {
+        reject(new DOMException('Aborted', 'AbortError'));
+        return;
+      }
+      const timer = setTimeout(resolve, ms);
+      signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(new DOMException('Aborted', 'AbortError'));
+      }, { once: true });
+    });
   }
 
   function _shouldCheckUpdate(listId) {
