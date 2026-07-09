@@ -27,6 +27,8 @@ export const ViewChannels = (() => {
   let _exitFocusIdx = 0; // 0 = Cancel, 1 = Exit
   let _sidebarFocusablesCache = null;
   let _countryFocusIdx = 0;
+  let _lastTvCountry = 'ALL';
+  let _lastTvCountryFocusIdx = 0;
   let _currentTab = 'tv';
   let _tabFocusIdx = 0;
   const TABS = ['tv', 'vod', 'series'];
@@ -343,6 +345,10 @@ export const ViewChannels = (() => {
   }
 
   function _selectCountry(code, idx) {
+    if (_currentTab === 'tv') {
+      _lastTvCountry = code || 'ALL';
+      _lastTvCountryFocusIdx = Math.max(0, idx || 0);
+    }
     return _viewState.selectCountry(code, idx);
   }
 
@@ -570,6 +576,11 @@ export const ViewChannels = (() => {
   async function _switchTab(tabId) {
     if (_currentTab === tabId) return;
     _tabs.abortPendingLoad();
+
+    if (_currentTab === 'tv') {
+      _lastTvCountry = _getCurrentCountry();
+      _lastTvCountryFocusIdx = _countryFocusIdx;
+    }
     
     _currentTab = tabId;
     Store.set('currentTab', _currentTab);
@@ -581,9 +592,15 @@ export const ViewChannels = (() => {
 
     Playlist.clearGroupCache();
 
-    // Resetear filtro de país al cambiar de pestaña
-    Store.set('currentCountry', 'ALL');
-    _countryFocusIdx = 0;
+    if (tabId === 'tv') {
+      const codes = Store.get('countries') || ['ALL'];
+      const idx = codes.indexOf(_lastTvCountry);
+      Store.set('currentCountry', idx >= 0 ? _lastTvCountry : 'ALL');
+      _countryFocusIdx = idx >= 0 ? idx : 0;
+    } else {
+      Store.set('currentCountry', 'ALL');
+      _countryFocusIdx = 0;
+    }
     renderCountries();
     
     _tabs.activate(tabId);
