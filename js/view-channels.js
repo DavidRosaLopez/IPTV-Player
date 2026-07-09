@@ -13,9 +13,9 @@ import { Player } from './player.js';
 import { InfoPopup } from './info-popup.js';
 import { Watching } from './watching.js';
 import { getCountryInfo, sortCountryCodes } from './countries.js';
-import { loadTabData } from './services/tab-data-loader.js';
 import { getGroupCounts, invalidateGroupCounts } from './services/group-counts.js';
 import { createFocusController } from './services/focus-controller.js';
+import { createTabViewController } from './services/tab-view-controller.js';
 import { renderCountryItems, renderGroupList, setChannelHeader } from './services/view-renderer.js';
 import { createViewState } from './services/view-state.js';
 
@@ -30,11 +30,15 @@ export const ViewChannels = (() => {
   let _currentTab = 'tv';
   let _tabFocusIdx = 0;
   const TABS = ['tv', 'vod', 'series'];
-  let _tabAbortController = null;
   let _groupPreviewTimer = null;      // local: era window._groupPreviewTimer (contaminaba global)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
   let _suppressNextTabClick = false;
   let _pendingFocusAfterRender = null;
+  const _tabs = createTabViewController({
+    virtualList: VirtualList,
+    showToast: (...args) => Router.showToast(...args),
+    getCurrentTab: () => _currentTab
+  });
   const _focus = createFocusController({
     tabs: TABS,
     getSidebarFocusables: () => _getSidebarFocusables(),
@@ -205,7 +209,7 @@ export const ViewChannels = (() => {
     if (fromView !== 'player') {
       _currentTab = 'tv';
     }
-    document.querySelectorAll('.sidebar-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.type === _currentTab));
+    _tabs.activate(_currentTab);
     initKeys();
     
     if (fromView !== 'player') {
@@ -725,13 +729,8 @@ export const ViewChannels = (() => {
   
   async function _switchTab(tabId) {
     if (_currentTab === tabId) return;
+    _tabs.abortPendingLoad();
     
-    if (_tabAbortController) {
-      _tabAbortController.abort();
-    }
-    _tabAbortController = new AbortController();
-    const signal = _tabAbortController.signal;
-
     _currentTab = tabId;
     Store.set('currentTab', _currentTab);
     
@@ -747,15 +746,7 @@ export const ViewChannels = (() => {
     _countryFocusIdx = 0;
     renderCountries();
     
-    // Update UI tabs
-    document.querySelectorAll('.sidebar-tab-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.type === tabId);
-    });
-
-    const groupNameEl = document.getElementById('current-group-name');
-    if (groupNameEl) {
-      groupNameEl.textContent = tabId === 'tv' ? 'TV' : (tabId === 'vod' ? 'Películas' : 'Series');
-    }
+    _tabs.activate(tabId);
 
     const list = Store.peek('currentList');
     if (!list || list.type !== 'xtream') {
@@ -763,45 +754,9 @@ export const ViewChannels = (() => {
       return;
     }
 
-    const channelCount = document.getElementById('channel-count');
-    if (channelCount) {
-      channelCount.style.display = '';
-      channelCount.textContent = 'Cargando...';
-    }
-    document.getElementById('group-list').innerHTML = '';
-    VirtualList.update([]);
+    const data = await _tabs.load(tabId, list);
+    if (data === null || _currentTab !== tabId) return;
 
-    const grid = document.getElementById('channel-grid');
-    const loader = document.getElementById('tab-loader');
-    if (grid) {
-      grid.classList.add('hidden');
-      if (typeof VirtualList !== 'undefined') VirtualList.update([]);
-    }
-    if (loader) {
-      loader.classList.remove('hidden');
-      if (tabId === 'vod') {
-        document.getElementById('tab-loader-msg').textContent = 'Cargando películas...';
-      } else if (tabId === 'series') {
-        document.getElementById('tab-loader-msg').textContent = 'Cargando series...';
-      } else {
-        document.getElementById('tab-loader-msg').textContent = 'Cargando canales...';
-      }
-    }
-    
-    // Dar un frame al navegador antes de bloquear con IndexedDB/Parsing
-    await new Promise(r => requestAnimationFrame(() => r()));
-    if (_currentTab !== tabId) return; // Guard contra cambio rápido de pestaña
-
-    let data = [];
-    try {
-      data = await loadTabData(tabId, list, signal);
-    } catch (e) {
-      if (e.name === 'AbortError') return;
-      Router.showToast(tabId === 'vod' ? 'Error cargando películas' : (tabId === 'series' ? 'Error cargando series' : 'Error cargando canales'), 'error');
-      data = [];
-    }
-
-    // Guardar en store y recargar
     Store.set('currentGroup', null);
 
     _renderData(data);
