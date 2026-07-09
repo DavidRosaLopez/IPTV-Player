@@ -35,6 +35,12 @@ export const Playlist = (() => {
     return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
+  function _groupSortKey(rawName) {
+    return _normalize(String(rawName || '').replace(/<span[^>]*>.*?<\/span>\s*/g, ''))
+      .replace(/^[^a-z0-9]+/i, '')
+      .trim();
+  }
+
   let _groupIndex = new Map();
   let _indexedChannels = null;
 
@@ -125,6 +131,14 @@ export const Playlist = (() => {
         dynamicGroups.push({ id: ch.group, name: ch.group });
       }
     }
+
+    dynamicGroups.sort((a, b) => {
+      const aBucket = a.parentId ? _groupSortKey(FOLDERS[a.parentId]?.name || a.name) : _groupSortKey(a.name);
+      const bBucket = b.parentId ? _groupSortKey(FOLDERS[b.parentId]?.name || b.name) : _groupSortKey(b.name);
+      if (aBucket !== bBucket) return aBucket.localeCompare(bBucket, 'es');
+      if (Boolean(a.isFolder) !== Boolean(b.isFolder)) return a.isFolder ? -1 : 1;
+      return _groupSortKey(a.name).localeCompare(_groupSortKey(b.name), 'es');
+    });
 
     return (_groupCache[cacheKey] = [...staticGroups, ...dynamicGroups]);
   }
