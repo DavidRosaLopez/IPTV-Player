@@ -408,7 +408,7 @@ export const ViewSetup = (() => {
 
     container.innerHTML = '';
     const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
-    const allItem = _createCountrySettingItem('ALL', 'ðŸŒŽ Seleccionar todos', allChecked, () => {
+    const allItem = _createCountrySettingItem('ALL', 'Seleccionar todos', allChecked, () => {
       const currentlyChecked = allItem.classList.contains('checked');
       Storage.setVisibleCountries(currentlyChecked ? [] : null);
       _renderCountrySettings();
