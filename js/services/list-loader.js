@@ -17,6 +17,35 @@ export function createListLoader() {
   let _syncTimer = null;
   let _loadSeq = 0;
 
+  function _throwIfCancelled(controller, isCurrentLoad) {
+    if (controller.signal.aborted || !isCurrentLoad()) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+  }
+
+  function _delay(ms, controller, isCurrentLoad) {
+    return new Promise((resolve, reject) => {
+      try {
+        _throwIfCancelled(controller, isCurrentLoad);
+      } catch (e) {
+        reject(e);
+        return;
+      }
+      const timer = setTimeout(() => {
+        try {
+          _throwIfCancelled(controller, isCurrentLoad);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }, ms);
+      controller.signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(new DOMException('Aborted', 'AbortError'));
+      }, { once: true });
+    });
+  }
+
   async function loadList(list) {
     if (_currentAbortController) _currentAbortController.abort();
     const loadSeq = ++_loadSeq;
@@ -38,17 +67,18 @@ export function createListLoader() {
 
     try {
       const cached = await Storage.getChannelCache(list);
-      if (controller.signal.aborted || !isCurrentLoad()) throw new DOMException('Aborted', 'AbortError');
+      _throwIfCancelled(controller, isCurrentLoad);
 
       if (cached && cached.length > 0) {
         SetupProgress.progress(100);
-        await new Promise(r => setTimeout(r, 400));
-        if (controller.signal.aborted || !isCurrentLoad()) throw new DOMException('Aborted', 'AbortError');
+        await _delay(400, controller, isCurrentLoad);
+        _throwIfCancelled(controller, isCurrentLoad);
 
-        SetupProgress.hide();
         Store.set('currentList', list);
         Storage.setLastList(list.id);
         Store.set('channels', cached);
+        _throwIfCancelled(controller, isCurrentLoad);
+        SetupProgress.hide();
         await _afterLoad(list, true);
         _currentAbortController = null;
         return;
@@ -63,13 +93,13 @@ export function createListLoader() {
       }, { forceReload: false });
 
       SetupProgress.progress(100);
-      if (controller.signal.aborted || !isCurrentLoad()) throw new DOMException('Aborted', 'AbortError');
+      await _delay(400, controller, isCurrentLoad);
+      _throwIfCancelled(controller, isCurrentLoad);
 
       Store.set('currentList', list);
       Storage.setLastList(list.id);
       Store.set('channels', loadedChannels);
-
-      await new Promise(r => setTimeout(r, 400));
+      _throwIfCancelled(controller, isCurrentLoad);
       SetupProgress.hide();
       await _afterLoad(list, true);
     } catch (e) {

@@ -258,30 +258,41 @@ export async function loadM3U(url, onProgress, signal) {
   if (!res.ok) throw new Error('Error al descargar la lista M3U');
   if (onProgress) onProgress(30);
   const text = await res.text();
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   if (onProgress) onProgress(50);
   return new Promise((resolve, reject) => {
     const worker = new Worker('js/m3u-worker.js');
+    const abort = () => {
+      worker.terminate();
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    if (signal?.aborted) {
+      abort();
+      return;
+    }
+    signal?.addEventListener('abort', abort, { once: true });
+    const finish = (fn, value) => {
+      signal?.removeEventListener('abort', abort);
+      worker.terminate();
+      fn(value);
+    };
     worker.onmessage = (e) => {
       if (e.data.progress && onProgress) {
         onProgress(50 + (e.data.progress * 0.5));
       } else if (e.data.channelsBuffer) {
         const str = new TextDecoder().decode(e.data.channelsBuffer);
         const channels = JSON.parse(str);
-        worker.terminate();
         if (onProgress) onProgress(100);
-        resolve(channels);
+        finish(resolve, channels);
       } else if (e.data.channels) {
-        worker.terminate();
         if (onProgress) onProgress(100);
-        resolve(e.data.channels);
+        finish(resolve, e.data.channels);
       } else if (e.data.error) {
-        worker.terminate();
-        reject(new Error(e.data.error));
+        finish(reject, new Error(e.data.error));
       }
     };
     worker.onerror = (err) => {
-      worker.terminate();
-      reject(err);
+      finish(reject, err);
     };
     worker.postMessage({ content: text });
   });
