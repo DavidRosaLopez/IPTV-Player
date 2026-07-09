@@ -132,29 +132,44 @@ export const Playlist = (() => {
   function clearGroupCache() {
     _groupCache = {};
     invalidateIndex();
+    _filterCache.clear();
   }
 
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
     _buildGroupIndex(channels);
+    const favKey = Array.isArray(favIds) ? favIds.join(',') : Array.from(favIds || []).join(',');
+    const watchingKey = groupId === '__watching__' ? Watching.getIds().join(',') : '';
+    const cacheKey = `${groupId}|${countryCode}|${favKey}|${watchingKey}`;
+    const cached = _filterCache.get(cacheKey);
+    if (cached) return cached;
 
+    let result;
     if (groupId === '__favs__') {
       const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
-      return base.filter(c => favIds && favIds.has(c.id));
+      result = base.filter(c => favIds && favIds.has(c.id));
+      _filterCache.set(cacheKey, result);
+      return result;
     }
 
     if (groupId === '__watching__') {
       const watchingIds = Watching.getIds();
       const idMap = new Map(watchingIds.map((id, index) => [id, index]));
       const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
-      return base.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
+      result = base.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
+      _filterCache.set(cacheKey, result);
+      return result;
     }
 
     if (groupId === '__all__') {
-      return countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
+      result = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
+      _filterCache.set(cacheKey, result);
+      return result;
     }
 
     const groupChannels = _groupIndex.get(groupId) || [];
-    return countryCode === 'ALL' ? groupChannels : groupChannels.filter(c => isItemVisibleInCountry(c, countryCode));
+    result = countryCode === 'ALL' ? groupChannels : groupChannels.filter(c => isItemVisibleInCountry(c, countryCode));
+    _filterCache.set(cacheKey, result);
+    return result;
   }
 
   const LRU_MAX = 100;
@@ -177,6 +192,7 @@ export const Playlist = (() => {
     };
   }
 
+  const _filterCache = _makeLRU();
   const _infoCache = { vod: _makeLRU(), series: _makeLRU() };
 
   async function _fetchInfo(cache, url, signal) {
