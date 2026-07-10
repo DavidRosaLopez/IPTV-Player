@@ -487,6 +487,7 @@ export const ViewChannels = (() => {
     }
 
     const layout = _currentTab === 'tv' ? 'tv' : 'poster';
+    const listSignature = list ? list.map(ch => ch.id).join(',') : '';
     const channelsInput = [
       ctx.channels,
       ctx.currentCountry,
@@ -494,6 +495,7 @@ export const ViewChannels = (() => {
       ctx.currentTab,
       ctx.currentListId,
       layout,
+      listSignature,
       ctx.currentGroup === '__favs__' ? (ctx.favIds || []).join(',') : '',
       ctx.currentGroup === '__watching__' ? Watching.getIds(ctx.currentListId).join(',') : ''
     ];

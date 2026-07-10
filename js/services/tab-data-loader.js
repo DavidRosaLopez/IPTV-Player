@@ -5,58 +5,48 @@ function _throwIfAborted(signal) {
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 }
 
-async function _loadAndCache(tabId, list, signal, onProgress = null) {
+async function _loadFresh(tabId, list, signal, onProgress = null) {
   if (tabId === 'tv') {
-    return Storage.getChannelCache(list) || [];
+    return list.type === 'xtream'
+      ? (await Playlist.loadXtream(list.server, list.user, list.pass, onProgress, signal)).channels || []
+      : await Playlist.loadM3U(list.url, onProgress, signal);
   }
 
   if (tabId === 'vod') {
-    let cached = await Storage.getVodCache(list);
-    _throwIfAborted(signal);
-    if (cached && cached.length > 0) return cached;
-    cached = await Playlist.loadVod(list.server, list.user, list.pass, onProgress, signal);
-    _throwIfAborted(signal);
-    if (cached && cached.length > 0) await Storage.setVodCache(list, cached);
-    return cached || [];
+    return (await Playlist.loadVod(list.server, list.user, list.pass, onProgress, signal)) || [];
   }
 
   if (tabId === 'series') {
-    let cached = await Storage.getSeriesCache(list);
-    _throwIfAborted(signal);
-    if (cached && cached.length > 0) return cached;
-    cached = await Playlist.loadSeries(list.server, list.user, list.pass, onProgress, signal);
-    _throwIfAborted(signal);
-    if (cached && cached.length > 0) await Storage.setSeriesCache(list, cached);
-    return cached || [];
+    return (await Playlist.loadSeries(list.server, list.user, list.pass, onProgress, signal)) || [];
   }
 
   return [];
 }
 
 export async function loadTabData(tabId, list, signal, onProgress = null) {
-  return _loadAndCache(tabId, list, signal, onProgress);
+  return ensureTabData(tabId, list, signal, onProgress);
 }
 
 export async function ensureTabData(tabId, list, signal, onProgress = null, { forceReload = false } = {}) {
-  if (tabId === 'tv') {
-    if (!forceReload) {
-      const cached = await Storage.getChannelCache(list);
-      _throwIfAborted(signal);
-      if (cached && cached.length > 0) return cached;
-    }
-    const channels = list.type === 'xtream'
-      ? (await Playlist.loadXtream(list.server, list.user, list.pass, onProgress, signal)).channels || []
-      : await Playlist.loadM3U(list.url, onProgress, signal);
-    _throwIfAborted(signal);
-    if (channels.length > 0) await Storage.setChannelCache(list, channels);
-    return channels;
-  }
+  const cacheLoader = tabId === 'tv'
+    ? Storage.getChannelCache
+    : tabId === 'vod'
+      ? Storage.getVodCache
+      : Storage.getSeriesCache;
+  const cacheSaver = tabId === 'tv'
+    ? Storage.setChannelCache
+    : tabId === 'vod'
+      ? Storage.setVodCache
+      : Storage.setSeriesCache;
 
   if (!forceReload) {
-    const cached = tabId === 'vod' ? await Storage.getVodCache(list) : await Storage.getSeriesCache(list);
+    const cached = await cacheLoader(list);
     _throwIfAborted(signal);
     if (cached && cached.length > 0) return cached;
   }
 
-  return _loadAndCache(tabId, list, signal, onProgress);
+  const fresh = await _loadFresh(tabId, list, signal, onProgress);
+  _throwIfAborted(signal);
+  if (fresh.length > 0) await cacheSaver(list, fresh);
+  return fresh;
 }
