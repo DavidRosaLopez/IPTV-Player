@@ -43,6 +43,7 @@ export const Playlist = (() => {
 
   let _groupIndex = new Map();
   let _indexedChannels = null;
+  let _visibleCache = null;
 
   function _buildGroupIndex(channels) {
     if (_indexedChannels === channels) return;
@@ -62,6 +63,16 @@ export const Playlist = (() => {
     if (tabId === 'vod') return VOD_GROUPS;
     if (tabId === 'series') return SERIES_GROUPS;
     return null;
+  }
+
+  function getVisibleChannels(channels, countryCode = 'ALL') {
+    if (countryCode === 'ALL') return channels;
+    if (_visibleCache && _visibleCache.channels === channels && _visibleCache.countryCode === countryCode) {
+      return _visibleCache.list;
+    }
+    const list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
+    _visibleCache = { channels, countryCode, list };
+    return list;
   }
 
   function search(channels, query) {
@@ -110,7 +121,7 @@ export const Playlist = (() => {
     const seen = new Set();
     const seenFolders = new Set();
     const dynamicGroups = [];
-    const list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
+    const list = getVisibleChannels(channels, countryCode);
 
     const staticGroups = [
       { id: '__all__', name: '<span class="material-symbols-rounded">tv</span> Canales' },
@@ -147,6 +158,7 @@ export const Playlist = (() => {
     _groupCache = {};
     invalidateIndex();
     _filterCache.clear();
+    _visibleCache = null;
   }
 
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
@@ -158,9 +170,9 @@ export const Playlist = (() => {
     if (cached) return cached;
 
     let result;
+    const visibleChannels = getVisibleChannels(channels, countryCode);
     if (groupId === '__favs__') {
-      const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
-      result = base.filter(c => favIds && favIds.has(c.id));
+      result = visibleChannels.filter(c => favIds && favIds.has(c.id));
       _filterCache.set(cacheKey, result);
       return result;
     }
@@ -168,14 +180,13 @@ export const Playlist = (() => {
     if (groupId === '__watching__') {
       const watchingIds = Watching.getIds();
       const idMap = new Map(watchingIds.map((id, index) => [id, index]));
-      const base = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
-      result = base.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
+      result = visibleChannels.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
       _filterCache.set(cacheKey, result);
       return result;
     }
 
     if (groupId === '__all__') {
-      result = countryCode === 'ALL' ? channels : channels.filter(c => isItemVisibleInCountry(c, countryCode));
+      result = visibleChannels;
       _filterCache.set(cacheKey, result);
       return result;
     }
@@ -242,6 +253,7 @@ export const Playlist = (() => {
     loadM3U,
     search,
     filterByGroup,
+    getVisibleChannels,
     getGroups,
     clearGroupCache,
     getVodInfo,

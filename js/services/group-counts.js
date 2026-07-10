@@ -11,9 +11,9 @@ export function getGroupCounts(channels, currentCountry, currentTab, listId = nu
   const favSet = new Set(favIds);
   const watchingSet = new Set(watchingIds);
   const counts = { '__all__': 0, '__favs__': 0, '__watching__': 0 };
+  const visibleChannels = Playlist.getVisibleChannels(channels, currentCountry);
 
-  for (const ch of channels) {
-    if (!Playlist.isItemVisibleInCountry(ch, currentCountry)) continue;
+  for (const ch of visibleChannels) {
     counts.__all__++;
     counts[ch.group] = (counts[ch.group] || 0) + 1;
     if (favSet.has(ch.id)) counts.__favs__++;
