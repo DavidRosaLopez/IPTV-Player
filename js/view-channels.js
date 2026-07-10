@@ -34,6 +34,8 @@ export const ViewChannels = (() => {
   let _groupPreviewTimer = null;      // local: era window._groupPreviewTimer (contaminaba global)
   let _currentLayoutMode = null;      // 'tv' | 'poster' — para saber si necesita VirtualList.init() o .update()
   let _pendingFocusAfterRender = null;
+  let _lastGroupsRenderInput = null;
+  let _lastChannelsRenderInput = null;
   const _tabs = createTabViewController({
     virtualList: VirtualList,
     showToast: (...args) => Router.showToast(...args),
@@ -375,6 +377,29 @@ export const ViewChannels = (() => {
     if (!list) return;
 
     const ctx = _viewState.getFilterContext();
+    const watchingIds = Watching.getIds(ctx.currentListId);
+    const expanded = Store.get('expandedFolders') || {};
+    const expandedKey = Object.keys(expanded).filter(id => expanded[id]).sort().join(',');
+    const groupIdx = Store.get('groupIdx') || 0;
+    const groupsInput = [
+      ctx.channels,
+      ctx.currentCountry,
+      ctx.currentTab,
+      ctx.currentListId,
+      ctx.currentGroup || null,
+      groupIdx,
+      _focusZone,
+      (ctx.favIds || []).join(','),
+      watchingIds.join(','),
+      expandedKey
+    ];
+    if (_lastGroupsRenderInput &&
+        _lastGroupsRenderInput.length === groupsInput.length &&
+        groupsInput.every((value, idx) => value === _lastGroupsRenderInput[idx])) {
+      return;
+    }
+    _lastGroupsRenderInput = groupsInput;
+
     const groups = Playlist.getGroups(ctx.channels, ctx.currentCountry, ctx.currentTab);
     Store.set('groups', groups);
     const counts = getGroupCounts(
@@ -383,14 +408,14 @@ export const ViewChannels = (() => {
       ctx.currentTab,
       ctx.currentListId,
       ctx.favIds,
-      Watching.getIds(ctx.currentListId)
+      watchingIds
     );
     renderGroupList({
       list,
       groups,
       counts,
       currentGroup: _getCurrentGroup(),
-      groupIdx: Store.get('groupIdx') || 0,
+      groupIdx,
       focusZone: _focusZone,
       expandedFolders: Store.get('expandedFolders') || {},
       onFolderClick: (g, i) => { Store.set('groupIdx', i); _selectGroup(g, true); },
@@ -449,24 +474,41 @@ export const ViewChannels = (() => {
 
   function renderChannels(list) {
     const ctx = _viewState.getFilterContext();
-    const favIds = new Set(ctx.favIds);
     let items;
     if (list) {
       items = list;
     } else {
+      const favIds = new Set(ctx.favIds);
       items = Playlist.filterByGroup(ctx.channels, ctx.currentGroup, favIds, ctx.currentCountry);
     }
 
+    const layout = _currentTab === 'tv' ? 'tv' : 'poster';
+    const channelsInput = [
+      ctx.channels,
+      ctx.currentCountry,
+      ctx.currentGroup || null,
+      ctx.currentTab,
+      ctx.currentListId,
+      layout,
+      ctx.currentGroup === '__favs__' ? (ctx.favIds || []).join(',') : '',
+      ctx.currentGroup === '__watching__' ? Watching.getIds(ctx.currentListId).join(',') : ''
+    ];
+    if (_lastChannelsRenderInput &&
+        _lastChannelsRenderInput.length === channelsInput.length &&
+        channelsInput.every((value, idx) => value === _lastChannelsRenderInput[idx])) {
+      _updateGroupCounts();
+      return;
+    }
+    _lastChannelsRenderInput = channelsInput;
     setChannelHeader({ currentGroup: ctx.currentGroup, currentTab: ctx.currentTab, count: items.length });
 
-    const newLayout = _currentTab === 'tv' ? 'tv' : 'poster';
-    if (_currentLayoutMode !== newLayout) {
+    if (_currentLayoutMode !== layout) {
       // Layout change requires full re-init
-      _currentLayoutMode = newLayout;
+      _currentLayoutMode = layout;
       VirtualList.init({
         containerId:  'channel-grid',
         items,
-        layout:       newLayout,
+        layout:       layout,
         onSelect:     ch => _playChannel(ch),
         getFavBadge:  id => Favorites.isFav(id)
       });

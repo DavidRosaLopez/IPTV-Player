@@ -129,7 +129,8 @@ export function createViewState(deps) {
     updateCountriesList();
     deps.renderCountries();
 
-    const { groups, targetGroupId, filtered } = resolveSyncContext(ch);
+    const { groups, targetGroupId } = resolveSyncContext(ch);
+    let filtered = deps.filterGroup(targetGroupId);
     deps.refreshGroups();
 
     let chIdx = filtered.findIndex(c => c.id === ch.id);

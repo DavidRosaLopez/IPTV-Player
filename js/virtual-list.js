@@ -417,7 +417,7 @@ export const VirtualList = (() => {
   function _onScroll() {
     _scrollTop = _container.scrollTop; // Actualizar el caché real cuando ocurre el evento
     _lastScrollAt = performance.now();
-    ImageQueue.flush();
+    if (!_scrolling) ImageQueue.flush();
     _scrolling = true;
     if (_scrollSettleRaf) return;
     const checkSettled = () => {

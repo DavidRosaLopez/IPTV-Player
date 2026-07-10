@@ -497,10 +497,6 @@ export const ViewSetup = (() => {
 
     document.getElementById('btn-add-xtream')?.addEventListener('click', () => _addXtream());
     document.getElementById('btn-test-xtream')?.addEventListener('click', () => _testXtream());
-    document.getElementById('btn-cancel-load')?.addEventListener('click', () => {
-      _requestCancelLoad();
-    });
-
     KeyHandler.on('RIGHT', () => _handleSetupDirection('right'));
     KeyHandler.on('LEFT', () => _handleSetupDirection('left'));
     KeyHandler.on('DOWN', () => _handleSetupDirection('down'));
