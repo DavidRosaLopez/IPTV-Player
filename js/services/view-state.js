@@ -76,8 +76,11 @@ export function createViewState(deps) {
     deps.setCurrentGroup('__all__');
     deps.setGroupIdx(0);
     deps.setSidebarFocusIdx(2);
-    deps.refreshGroups();
-    deps.refreshChannels();
+    if (deps.refreshAll) deps.refreshAll();
+    else {
+      deps.refreshGroups();
+      deps.refreshChannels();
+    }
     deps.focusGroups();
   }
 
@@ -118,8 +121,11 @@ export function createViewState(deps) {
     deps.setGroups(deps.getGroupsForData(data));
     deps.setCurrentGroup(deps.getInitialGroup(data));
     deps.setGroupIdx(0);
-    deps.refreshGroups();
-    deps.refreshChannels();
+    if (deps.refreshAll) deps.refreshAll();
+    else {
+      deps.refreshGroups();
+      deps.refreshChannels();
+    }
     deps.restoreFocusAfterRender();
   }
 
@@ -129,20 +135,22 @@ export function createViewState(deps) {
     updateCountriesList();
     deps.renderCountries();
 
-    const { groups, targetGroupId } = resolveSyncContext(ch);
+    const { targetGroupId } = resolveSyncContext(ch);
     let filtered = deps.filterGroup(targetGroupId);
-    deps.refreshGroups();
 
     let chIdx = filtered.findIndex(c => c.id === ch.id);
     if (chIdx < 0) {
       deps.setCurrentGroup('__all__');
       deps.setGroupIdx(0);
       deps.setSidebarFocusIdx(2);
-      deps.refreshGroups();
       filtered = deps.filterGroup('__all__');
       chIdx = filtered.findIndex(c => c.id === ch.id);
     }
-    deps.refreshChannels();
+    if (deps.refreshAll) deps.refreshAll();
+    else {
+      deps.refreshGroups();
+      deps.refreshChannels();
+    }
     if (chIdx >= 0) deps.focusChannelIndex(chIdx);
     if (focusChannels) deps.focusChannels();
     else deps.focusGroups();

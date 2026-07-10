@@ -151,6 +151,10 @@ export const ViewChannels = (() => {
     getGroupsForData: data => Playlist.getGroups(data, _getCurrentCountry(), _currentTab),
     getInitialGroup: data => (Playlist.getGroups(data, _getCurrentCountry(), _currentTab)[0]?.id || null),
     setCurrentData: data => Store.set('currentData', data),
+    refreshAll: () => {
+      renderGroups();
+      renderChannels();
+    },
     hideLoader: () => {
       const grid = document.getElementById('channel-grid');
       const loader = document.getElementById('tab-loader');
