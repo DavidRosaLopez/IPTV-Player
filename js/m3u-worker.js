@@ -1,7 +1,7 @@
 self.onmessage = function(e) {
-  const { content } = e.data;
+  const { content, jobId } = e.data;
   if (!content) {
-    self.postMessage({ error: 'No content to parse' });
+    self.postMessage({ error: 'No content to parse', jobId });
     return;
   }
 
@@ -10,9 +10,9 @@ self.onmessage = function(e) {
     // Zero-Copy Transfer: Use ArrayBuffer to avoid deep cloning large arrays in memory
     const str = JSON.stringify(channels);
     const buffer = new TextEncoder().encode(str).buffer;
-    self.postMessage({ channelsBuffer: buffer }, [buffer]);
+    self.postMessage({ channelsBuffer: buffer, jobId }, [buffer]);
   } catch (error) {
-    self.postMessage({ error: error.message });
+    self.postMessage({ error: error.message, jobId });
   }
 };
 
@@ -127,7 +127,7 @@ function parseM3U(m3uText) {
     
     // Optional: Send progress every 10,000 lines
     if (i % 10000 === 0 && i > 0) {
-      self.postMessage({ progress: Math.round((i / lines.length) * 100) });
+      self.postMessage({ progress: Math.round((i / lines.length) * 100), jobId: e.data.jobId });
     }
   }
 

@@ -154,6 +154,42 @@ async function _fetchJson(url, signal, noCache = false) {
   }
 }
 
+let _m3uWorker = null;
+let _m3uJobId = 0;
+let _m3uPending = null;
+
+function _ensureM3UWorker() {
+  if (_m3uWorker) return _m3uWorker;
+  _m3uWorker = new Worker('js/m3u-worker.js');
+  _m3uWorker.onmessage = (e) => {
+    const { jobId, progress, channelsBuffer, channels, error } = e.data || {};
+    if (!_m3uPending || jobId !== _m3uPending.jobId) return;
+    if (typeof progress === 'number') {
+      if (_m3uPending.onProgress) _m3uPending.onProgress(50 + (progress * 0.5));
+      return;
+    }
+    const pending = _m3uPending;
+    _m3uPending = null;
+    if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+    if (channelsBuffer) {
+      const str = new TextDecoder().decode(channelsBuffer);
+      pending.resolve(JSON.parse(str));
+    } else if (channels) {
+      pending.resolve(channels);
+    } else if (error) {
+      pending.reject(new Error(error));
+    }
+  };
+  _m3uWorker.onerror = (err) => {
+    if (!_m3uPending) return;
+    const pending = _m3uPending;
+    _m3uPending = null;
+    if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+    pending.reject(err);
+  };
+  return _m3uWorker;
+}
+
 export async function loadXtream(server, user, pass, onProgress, signal) {
   const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
   if (onProgress) onProgress(10);
@@ -261,39 +297,35 @@ export async function loadM3U(url, onProgress, signal) {
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   if (onProgress) onProgress(50);
   return new Promise((resolve, reject) => {
-    const worker = new Worker('js/m3u-worker.js');
+    const worker = _ensureM3UWorker();
+    const jobId = ++_m3uJobId;
+    if (_m3uPending) {
+      const pending = _m3uPending;
+      _m3uPending = null;
+      if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+      pending.reject(new DOMException('Aborted', 'AbortError'));
+    }
     const abort = () => {
-      worker.terminate();
-      reject(new DOMException('Aborted', 'AbortError'));
+      if (_m3uPending && _m3uPending.jobId === jobId) {
+        const pending = _m3uPending;
+        _m3uPending = null;
+        if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+        pending.reject(new DOMException('Aborted', 'AbortError'));
+      }
     };
     if (signal?.aborted) {
       abort();
       return;
     }
     signal?.addEventListener('abort', abort, { once: true });
-    const finish = (fn, value) => {
-      signal?.removeEventListener('abort', abort);
-      worker.terminate();
-      fn(value);
+    _m3uPending = {
+      jobId,
+      resolve,
+      reject,
+      onProgress,
+      signal,
+      abort,
     };
-    worker.onmessage = (e) => {
-      if (e.data.progress && onProgress) {
-        onProgress(50 + (e.data.progress * 0.5));
-      } else if (e.data.channelsBuffer) {
-        const str = new TextDecoder().decode(e.data.channelsBuffer);
-        const channels = JSON.parse(str);
-        if (onProgress) onProgress(100);
-        finish(resolve, channels);
-      } else if (e.data.channels) {
-        if (onProgress) onProgress(100);
-        finish(resolve, e.data.channels);
-      } else if (e.data.error) {
-        finish(reject, new Error(e.data.error));
-      }
-    };
-    worker.onerror = (err) => {
-      finish(reject, err);
-    };
-    worker.postMessage({ content: text });
+    worker.postMessage({ content: text, jobId });
   });
 }

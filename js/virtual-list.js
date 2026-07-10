@@ -39,7 +39,11 @@ export const VirtualList = (() => {
     const MAX = DeviceProfile.virtualList.imageConcurrency;
     const process = () => {
       while(active < MAX && queue.length > 0) {
-        const { imgEl, src, gen } = queue.shift();
+        let bestIdx = 0;
+        for (let i = 1; i < queue.length; i++) {
+          if (queue[i].priority > queue[bestIdx].priority) bestIdx = i;
+        }
+        const { imgEl, src, gen } = queue.splice(bestIdx, 1)[0];
         if (gen !== generation || imgEl.dataset.targetSrc !== src) continue;
         active++;
         
@@ -81,7 +85,6 @@ export const VirtualList = (() => {
           if (queue[i].imgEl === imgEl) queue.splice(i, 1);
         }
         queue.push({ imgEl, src, priority, gen: generation });
-        queue.sort((a, b) => b.priority - a.priority);
         process();
       },
       // Discard pending requests so new icons aren't queued behind stale ones.
