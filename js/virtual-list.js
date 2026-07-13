@@ -262,6 +262,7 @@ export const VirtualList = (() => {
   }
 
   function _shouldDeferLogos() {
+    if (_layout === 'poster') return false;
     return _scrolling || performance.now() < _suppressLogosUntil;
   }
 
@@ -324,7 +325,10 @@ export const VirtualList = (() => {
     let fragment = null;
 
     for (let i = startIdx; i <= endIdx; i++) {
-      if (_domCache[i]) continue;
+      if (_domCache[i]) {
+        _updateCard(_domCache[i], i);
+        continue;
+      }
       
       if (!fragment) fragment = document.createDocumentFragment();
 
