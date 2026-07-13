@@ -35,6 +35,10 @@ export const Favorites = (() => {
     return _loadCache().arr;
   }
 
+  function getSet() {
+    return _loadCache().ids;
+  }
+
   function toggle(channelId) {
     const key = _getKey();
     const cache = _loadCache();
@@ -60,5 +64,5 @@ export const Favorites = (() => {
 
   function getVersion() { return _version; }
 
-  return { init, toggle, isFav, getIds, getVersion };
+  return { init, toggle, isFav, getIds, getSet, getVersion };
 })();

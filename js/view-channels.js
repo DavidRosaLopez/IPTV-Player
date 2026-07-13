@@ -144,7 +144,7 @@ export const ViewChannels = (() => {
       if (newIdx !== -1) _sidebarFocusIdx = newIdx;
     },
     getCurrentGroup: () => _getCurrentGroup(),
-    filterGroup: id => Playlist.filterByGroup(_getCurrentData(), id, new Set(Favorites.getIds()), _getCurrentCountry()),
+    filterGroup: id => Playlist.filterByGroup(_getCurrentData(), id, Favorites.getSet(), _getCurrentCountry()),
     updateGroupClasses: () => _updateGroupClasses(),
     clearVirtualList: () => VirtualList.update([]),
     focusChannelsIfItems: hasItems => { if (hasItems) _setFocusZone('channels'); else _setFocusZone('groups'); },
@@ -178,6 +178,7 @@ export const ViewChannels = (() => {
     isSearchOpen: () => typeof Search !== 'undefined' && Search.isOpen(),
     renderCountries: () => renderCountries(),
     getFavIds: () => Favorites.getIds(),
+    getFavSet: () => Favorites.getSet(),
     getCurrentTab: () => _currentTab,
     isTvTab: () => _currentTab === 'tv',
     getCountries: () => Store.get('countries') || ['ALL'],
@@ -381,7 +382,7 @@ export const ViewChannels = (() => {
     if (!list) return;
 
     const ctx = _viewState.getFilterContext();
-    const watchingIds = Watching.getIds(ctx.currentListId);
+    const watchingIds = Watching.getSet(ctx.currentListId);
     const expanded = Store.get('expandedFolders') || {};
     const expandedKey = Object.keys(expanded).filter(id => expanded[id]).sort().join(',');
     const groupIdx = Store.get('groupIdx') || 0;
@@ -413,7 +414,7 @@ export const ViewChannels = (() => {
       ctx.currentCountry,
       ctx.currentTab,
       ctx.currentListId,
-      ctx.favIds,
+      ctx.favSet || ctx.favIds,
       watchingIds
     );
     renderGroupList({
@@ -448,8 +449,8 @@ export const ViewChannels = (() => {
       ctx.currentCountry,
       ctx.currentTab,
       ctx.currentListId,
-      ctx.favIds,
-      Watching.getIds(ctx.currentListId)
+      ctx.favSet || ctx.favIds,
+      Watching.getSet(ctx.currentListId)
     );
 
     const els = document.querySelectorAll('.group-item');
@@ -484,7 +485,7 @@ export const ViewChannels = (() => {
     if (list) {
       items = list;
     } else {
-      const favIds = new Set(ctx.favIds);
+      const favIds = Favorites.getSet();
       items = Playlist.filterByGroup(ctx.channels, ctx.currentGroup, favIds, ctx.currentCountry);
     }
 

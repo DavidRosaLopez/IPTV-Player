@@ -97,9 +97,8 @@ export const Playlist = (() => {
   function isItemVisibleInCountry(ch, countryCode) {
     if (countryCode === 'ALL') return true;
     if (ch.countryCode === countryCode) return true;
-    if (isGlobalGroup(ch.group) && (ch.countryCode === 'OTROS' || ch.countryCode === 'US' || ch.countryCode === 'LAT' || ch.countryCode === 'ES')) {
-      if (ch.countryCode === 'OTROS' || ch.countryCode === 'US') return true;
-    }
+    // Los grupos globales deben seguir apareciendo aunque el canal venga etiquetado como genérico.
+    if (isGlobalGroup(ch.group) && ['OTROS', 'US', 'LAT', 'ES'].includes(ch.countryCode)) return true;
     return false;
   }
 
@@ -187,14 +186,16 @@ export const Playlist = (() => {
     let result;
     const visibleChannels = getVisibleChannels(channels, countryCode);
     if (groupId === '__favs__') {
-      result = visibleChannels.filter(c => favIds && favIds.has(c.id));
+      const favSet = favIds instanceof Set ? favIds : new Set(favIds || []);
+      result = visibleChannels.filter(c => favSet.has(c.id));
       cache.set(cacheKey, result);
       return result;
     }
 
     if (groupId === '__watching__') {
-      const watchingIds = Watching.getIds();
-      const idMap = new Map(watchingIds.map((id, index) => [id, index]));
+      const watchingIds = Watching.getSet ? Watching.getSet() : Watching.getIds();
+      const watchingList = watchingIds instanceof Set ? Array.from(watchingIds) : watchingIds;
+      const idMap = new Map(watchingList.map((id, index) => [id, index]));
       result = visibleChannels.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
       cache.set(cacheKey, result);
       return result;

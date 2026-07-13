@@ -10,8 +10,8 @@ export function getGroupCounts(channels, currentCountry, currentTab, listId = nu
   const cacheKey = `${currentCountry}|${currentTab}|${listId || ''}|${favKey}|${watchingKey}`;
   if (_cache && _cache.channelsRef === channels && _cache.key === cacheKey) return _cache.counts;
 
-  const favSet = new Set(favIds);
-  const watchingSet = new Set(watchingIds);
+  const favSet = favIds instanceof Set ? favIds : new Set(favIds);
+  const watchingSet = watchingIds instanceof Set ? watchingIds : new Set(watchingIds);
   const counts = { '__all__': 0, '__favs__': 0, '__watching__': 0 };
   const visibleChannels = Playlist.getVisibleChannels(channels, currentCountry);
 

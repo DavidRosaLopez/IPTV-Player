@@ -3,6 +3,7 @@ import { Storage } from './storage.js';
 
 export const Watching = (() => {
   let _version = 0;
+  let _setCache = new Map();
 
   function _getKey(listId = null) {
     const resolvedListId = listId || (Store.peek('currentList')?.id || 'default');
@@ -15,6 +16,15 @@ export const Watching = (() => {
 
   function getIds(listId = null) {
     return getItems(listId).map(item => typeof item === 'string' ? item : item.id);
+  }
+
+  function getSet(listId = null) {
+    const key = _getKey(listId);
+    const cached = _setCache.get(key);
+    if (cached && cached.version === _version) return cached.set;
+    const set = new Set(getIds(listId));
+    _setCache.set(key, { version: _version, set });
+    return set;
   }
 
   function add(ch, ep = null, listId = null) {
@@ -37,6 +47,7 @@ export const Watching = (() => {
     });
 
     Storage.set(key, items);
+    _setCache.delete(key);
     _version++;
   }
 
@@ -52,6 +63,7 @@ export const Watching = (() => {
       items[idx].progressMs = ms;
       items[idx].epId = epId;
       Storage.set(key, items);
+      _setCache.delete(key);
       _version++;
     }
   }
@@ -62,5 +74,5 @@ export const Watching = (() => {
 
   function getVersion() { return _version; }
 
-  return { getIds, getItems, add, isWatching, updateProgress, getVersion };
+  return { getIds, getSet, getItems, add, isWatching, updateProgress, getVersion };
 })();

@@ -7,6 +7,7 @@ export function createViewState(deps) {
       currentTab: deps.getCurrentTab(),
       currentListId: deps.getCurrentListId ? deps.getCurrentListId() : null,
       favIds: deps.getFavIds ? deps.getFavIds() : [],
+      favSet: deps.getFavSet ? deps.getFavSet() : new Set(deps.getFavIds ? deps.getFavIds() : []),
     };
   }
 

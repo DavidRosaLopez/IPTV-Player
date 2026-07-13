@@ -498,7 +498,7 @@ export const InfoPopup = (() => {
   }
 
   function _updateFavIcon() {
-    const isFav = Favorites.getIds().includes(_current.id);
+    const isFav = Favorites.getSet().has(_current.id);
     document.getElementById('info-fav-icon').textContent = isFav ? 'favorite' : 'favorite_border';
     if (isFav) {
       document.getElementById('btn-info-fav').classList.add('active-fav');
@@ -509,7 +509,7 @@ export const InfoPopup = (() => {
 
   function _toggleFav() {
     Favorites.toggle(_current.id);
-    const isFav = Favorites.getIds().includes(_current.id);
+    const isFav = Favorites.getSet().has(_current.id);
     _updateFavIcon();
     
     if (typeof Router !== 'undefined') {
