@@ -13,6 +13,7 @@ export const Search = (() => {
   let _debounceTimer = null;
   let _isOpen = false;
   let _lastSearchKey = '';
+  let _lastSearchDataRef = null;
   let _view = {
     getCurrentTab: () => 'tv',
     renderChannels: () => {},
@@ -26,6 +27,7 @@ export const Search = (() => {
 
   function init() {
     _lastSearchKey = '';
+    _lastSearchDataRef = null;
   }
 
   function _getDataForTab(currentTab) {
@@ -69,6 +71,7 @@ export const Search = (() => {
     _isOpen = false;
     clearTimeout(_debounceTimer);
     _lastSearchKey = '';
+    _lastSearchDataRef = null;
     const bar   = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
     const count = document.getElementById('search-count');
@@ -102,9 +105,10 @@ export const Search = (() => {
       const q   = e.target.value.trim();
       const currentTab = _view.getCurrentTab();
       const data = _getDataForTab(currentTab);
-      const cacheKey = `${currentTab}|${q}|${Store.peek('currentCountry') || 'ALL'}|${Store.peek('currentGroup') || ''}|${data.length}`;
-      if (_lastSearchKey === cacheKey) return;
+      const cacheKey = `${currentTab}|${q}|${Store.peek('currentCountry') || 'ALL'}|${Store.peek('currentGroup') || ''}`;
+      if (_lastSearchKey === cacheKey && _lastSearchDataRef === data) return;
       _lastSearchKey = cacheKey;
+      _lastSearchDataRef = data;
       const res = Playlist.search(data, q);
       const cnt = document.getElementById('search-count');
       if (!q) {
