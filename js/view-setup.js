@@ -405,14 +405,29 @@ export const ViewSetup = (() => {
     const item = document.createElement('div');
     item.className = 'country-setting-item focusable' + (checked ? ' checked' : '');
     item.dataset.code = code;
-    item.innerHTML = `
-      <div class="checkbox-box">
-        <span class="material-symbols-rounded">check</span>
-      </div>
-      <span class="country-setting-label">${label}</span>
-    `;
+
+    const box = document.createElement('div');
+    box.className = 'checkbox-box';
+    const check = document.createElement('span');
+    check.className = 'material-symbols-rounded';
+    check.textContent = 'check';
+    box.appendChild(check);
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'country-setting-label';
+    labelEl.textContent = label;
+
+    item.append(box, labelEl);
     item.addEventListener('click', onClick);
     return item;
+  }
+
+  function _setEmptyMessage(container, text) {
+    container.replaceChildren();
+    const p = document.createElement('p');
+    p.className = 'empty-msg';
+    p.textContent = text;
+    container.appendChild(p);
   }
 
   function _toggleCountryVisibility(code) {
@@ -436,14 +451,14 @@ export const ViewSetup = (() => {
     if (!container) return;
     const codes = _getAllCountryCodes();
     if (!codes.length) {
-      container.innerHTML = '<p class="empty-msg">Carga una lista de canales para ver los ajustes de país</p>';
+      _setEmptyMessage(container, 'Carga una lista de canales para ver los ajustes de país');
       return;
     }
 
     const visibleCountries = Storage.getVisibleCountries();
     if (_syncCountrySettingChecks(container, codes, visibleCountries)) return;
 
-    container.innerHTML = '';
+    container.replaceChildren();
     const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
     const allItem = _createCountrySettingItem('ALL', 'Seleccionar todos', allChecked, () => {
       const currentlyChecked = allItem.classList.contains('checked');
