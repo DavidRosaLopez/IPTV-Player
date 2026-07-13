@@ -592,7 +592,14 @@ export const Player = (() => {
     }
 
     if (el) {
-      el.innerHTML = `<span class="material-symbols-rounded">${icon}</span><span class="seek-time">${text}</span>`;
+      el.replaceChildren();
+      const iconEl = document.createElement('span');
+      iconEl.className = 'material-symbols-rounded';
+      iconEl.textContent = icon;
+      const timeEl = document.createElement('span');
+      timeEl.className = 'seek-time';
+      timeEl.textContent = text;
+      el.append(iconEl, timeEl);
       el.classList.remove('hidden');
       
       // Reset animation to replay it

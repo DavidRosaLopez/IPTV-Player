@@ -44,13 +44,24 @@ export const SetupProgress = (() => {
   function _renderSteps(activeId) {
     const ul = document.getElementById('sp-steps');
     if (!ul) return;
-    ul.innerHTML = _steps.map(s => {
+    ul.replaceChildren();
+    const fragment = document.createDocumentFragment();
+    _steps.forEach(s => {
       const isDone   = _doneSet.has(s.id);
       const isActive = s.id === activeId;
       const cls = isDone ? 'done' : isActive ? 'active' : '';
-      const icon = isDone ? '✓' : isActive ? '›' : '○';
-      return `<li class="sp-step ${cls}"><span class="sp-step-icon">${icon}</span>${s.label}</li>`;
-    }).join('');
+      const icon = isDone ? 'check' : isActive ? 'chevron_right' : 'radio_button_unchecked';
+
+      const li = document.createElement('li');
+      li.className = `sp-step ${cls}`;
+      const iconEl = document.createElement('span');
+      iconEl.className = 'sp-step-icon material-symbols-rounded';
+      iconEl.textContent = icon;
+      li.appendChild(iconEl);
+      li.appendChild(document.createTextNode(s.label || ''));
+      fragment.appendChild(li);
+    });
+    ul.appendChild(fragment);
   }
 
   function _setProgress(pct) {

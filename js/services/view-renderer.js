@@ -37,7 +37,7 @@ function _setGroupContent(li, g, count = null, folderExpanded = null) {
 
 export function renderCountryItems({ container, codes, currentCountry, focusedIdx, onSelect }) {
   if (!container) return;
-  container.innerHTML = '';
+  container.replaceChildren();
   codes.forEach((entry, i) => {
     const code = typeof entry === 'string' ? entry : (entry.code || 'ALL');
     const info = typeof entry === 'string'
