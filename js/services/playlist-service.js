@@ -158,6 +158,21 @@ let _m3uWorker = null;
 let _m3uJobId = 0;
 let _m3uPending = null;
 
+function _disposeM3UWorker() {
+  if (!_m3uWorker) return;
+  _m3uWorker.onmessage = null;
+  _m3uWorker.onerror = null;
+  _m3uWorker.terminate();
+  _m3uWorker = null;
+}
+
+function _clearM3UPending() {
+  const pending = _m3uPending;
+  _m3uPending = null;
+  if (pending?.signal) pending.signal.removeEventListener('abort', pending.abort);
+  return pending;
+}
+
 function _ensureM3UWorker() {
   if (_m3uWorker) return _m3uWorker;
   _m3uWorker = new Worker('js/m3u-worker.js');
@@ -168,9 +183,7 @@ function _ensureM3UWorker() {
       if (_m3uPending.onProgress) _m3uPending.onProgress(50 + (progress * 0.5));
       return;
     }
-    const pending = _m3uPending;
-    _m3uPending = null;
-    if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+    const pending = _clearM3UPending();
     if (channelsBuffer) {
       const str = new TextDecoder().decode(channelsBuffer);
       pending.resolve(JSON.parse(str));
@@ -182,9 +195,8 @@ function _ensureM3UWorker() {
   };
   _m3uWorker.onerror = (err) => {
     if (!_m3uPending) return;
-    const pending = _m3uPending;
-    _m3uPending = null;
-    if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+    const pending = _clearM3UPending();
+    _disposeM3UWorker();
     pending.reject(err);
   };
   return _m3uWorker;
@@ -297,24 +309,22 @@ export async function loadM3U(url, onProgress, signal) {
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   if (onProgress) onProgress(50);
   return new Promise((resolve, reject) => {
-    const worker = _ensureM3UWorker();
-    const jobId = ++_m3uJobId;
     if (_m3uPending) {
-      const pending = _m3uPending;
-      _m3uPending = null;
-      if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+      const pending = _clearM3UPending();
+      _disposeM3UWorker();
       pending.reject(new DOMException('Aborted', 'AbortError'));
     }
+    const worker = _ensureM3UWorker();
+    const jobId = ++_m3uJobId;
     const abort = () => {
       if (_m3uPending && _m3uPending.jobId === jobId) {
-        const pending = _m3uPending;
-        _m3uPending = null;
-        if (pending.signal) pending.signal.removeEventListener('abort', pending.abort);
+        const pending = _clearM3UPending();
+        _disposeM3UWorker();
         pending.reject(new DOMException('Aborted', 'AbortError'));
       }
     };
     if (signal?.aborted) {
-      abort();
+      reject(new DOMException('Aborted', 'AbortError'));
       return;
     }
     signal?.addEventListener('abort', abort, { once: true });
