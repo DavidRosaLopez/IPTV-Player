@@ -422,6 +422,14 @@ export const VirtualList = (() => {
     _lastScrollAt = performance.now();
     if (!_scrolling) ImageQueue.flush();
     _scrolling = true;
+
+    if (!_rafId) {
+      _rafId = requestAnimationFrame(() => {
+        _rafId = null;
+        _renderVisible();
+      });
+    }
+
     if (_scrollSettleRaf) return;
     const checkSettled = () => {
       const elapsed = performance.now() - _lastScrollAt;
@@ -434,12 +442,6 @@ export const VirtualList = (() => {
       _updateVisibleLogos();
     };
     _scrollSettleRaf = requestAnimationFrame(checkSettled);
-
-    if (_rafId) return;
-    _rafId = requestAnimationFrame(() => {
-      _rafId = null;
-      _renderVisible();
-    });
   }
 
   function _updateVisibleLogos() {
