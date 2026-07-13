@@ -59,13 +59,16 @@ export const VirtualList = (() => {
         loader.onload = () => {
           if (gen === generation && imgEl.dataset.targetSrc === src) {
             imgEl.src = src;
+            imgEl.style.display = '';
+            const el = imgEl.closest ? imgEl.closest('.channel-card') : null;
+            if (el) _hideMediaFallback(el);
           }
           finish();
         };
         loader.onerror = () => {
           if (gen === generation && imgEl.dataset.targetSrc === src) {
             imgEl.dataset.targetSrc = ''; // Allow retry later
-            imgEl.style.display = 'none';
+            _showMediaFallback(imgEl);
           }
           finish();
         };
@@ -195,9 +198,17 @@ export const VirtualList = (() => {
   function getCurrentItem() { return _items[_focusedIdx]; }
   function getFocusedElement() { return _domCache[_focusedIdx] || null; }
   function _ensureRefs(el) {
-    if (el._favBadge && el._img && el._name) return el;
+    if (el._favBadge && el._img && el._fallback && el._name) return el;
     el._favBadge = el._favBadge || el.querySelector('.fav-badge');
     el._img = el._img || el.querySelector('.channel-logo');
+    el._fallback = el._fallback || el.querySelector('.channel-logo-fallback');
+    if (!el._fallback) {
+      el._fallback = document.createElement('span');
+      el._fallback.className = 'channel-logo-fallback material-symbols-rounded';
+      el._fallback.style.display = 'none';
+      el._fallback.textContent = 'tv';
+      el.insertBefore(el._fallback, el.querySelector('.channel-info'));
+    }
     el._name = el._name || el.querySelector('.channel-name');
     return el;
   }
@@ -212,6 +223,42 @@ export const VirtualList = (() => {
 
   function _queueLogo(img, src, idx) {
     ImageQueue.add(img, src, _getLogoPriority(idx));
+  }
+
+  function _setFallbackIcon(el) {
+    const fallback = _ensureRefs(el)._fallback;
+    if (!fallback) return;
+    if (el.dataset.mediaType === 'series') fallback.textContent = 'live_tv';
+    else fallback.textContent = _layout === 'poster' ? 'movie' : 'tv';
+  }
+
+  function _showMediaFallback(img) {
+    const el = img && img.closest ? img.closest('.channel-card') : null;
+    if (!el) return;
+    _setFallbackIcon(el);
+    img.dataset.targetSrc = '';
+    img.dataset.logoPriority = '';
+    img.removeAttribute('src');
+    img.src = '';
+    img.style.display = 'none';
+    const fallback = _ensureRefs(el)._fallback;
+    if (fallback) fallback.style.display = 'flex';
+  }
+
+  function _hideMediaFallback(el) {
+    const fallback = _ensureRefs(el)._fallback;
+    if (fallback) fallback.style.display = 'none';
+  }
+
+  function _showLoadingFallback(el) {
+    _setFallbackIcon(el);
+    const img = _ensureRefs(el)._img;
+    if (img) {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+    const fallback = _ensureRefs(el)._fallback;
+    if (fallback) fallback.style.display = 'flex';
   }
 
   function _shouldDeferLogos() {
@@ -294,7 +341,7 @@ export const VirtualList = (() => {
       } else {
         el = document.createElement('div');
         // Pre-build structure ONLY once per new node
-        el.innerHTML = '<span class="fav-badge material-symbols-rounded" style="display:none">favorite</span><img class="channel-logo" style="display:none" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"><div class="channel-info"><div class="channel-name"></div></div>';
+        el.innerHTML = '<span class="fav-badge material-symbols-rounded" style="display:none">favorite</span><img class="channel-logo" style="display:none" loading="lazy" decoding="async"><span class="channel-logo-fallback material-symbols-rounded" style="display:none">tv</span><div class="channel-info"><div class="channel-name"></div></div>';
         _ensureRefs(el);
       }
       _updateCard(el, i);
@@ -325,12 +372,14 @@ export const VirtualList = (() => {
           const src = _safeStr(ch.logo);
           // Route through ImageQueue so broken/stale images are retried properly
           if (img.dataset.targetSrc !== src) _queueLogo(img, src, i);
-          img.style.display = '';
+          if (img.getAttribute('src') !== src) _showLoadingFallback(el);
+          else img.style.display = '';
         } else {
           img.removeAttribute('src');
           img.dataset.targetSrc = '';
           img.dataset.logoPriority = '';
           img.style.display = 'none';
+          _showMediaFallback(img);
         }
       }
 
@@ -349,6 +398,7 @@ export const VirtualList = (() => {
     el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx ? ' focused' : '');
     el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${x}px,${y}px,0);width:${_colW}px;height:${ITEM_H}px;`;
     el.dataset.idx = i;
+    el.dataset.mediaType = ch.type || (_layout === 'poster' ? 'vod' : 'tv');
 
     const isFav  = _getFavBadge ? _getFavBadge(ch.id) : false;
 
@@ -358,26 +408,28 @@ export const VirtualList = (() => {
 
     const img = el._img;
     if (img) {
+      _setFallbackIcon(el);
       if (ch.logo) {
         if (_shouldDeferLogos()) {
           // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
           // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
           img.dataset.targetSrc = '';
           img.dataset.logoPriority = '';
-          img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-          img.style.display = '';
+          _showLoadingFallback(el);
         } else {
           // Solo actualizar src si cambia para evitar parpadeos de red
           if (img.getAttribute('src') !== ch.logo) {
             _queueLogo(img, _safeStr(ch.logo), i);
           }
-          img.style.display = '';
+          if (img.getAttribute('src') !== _safeStr(ch.logo)) _showLoadingFallback(el);
+          else img.style.display = '';
         }
       } else {
         img.removeAttribute('src');
         img.dataset.targetSrc = '';
         img.dataset.logoPriority = '';
         img.style.display = 'none';
+        _showMediaFallback(img);
       }
     }
 
@@ -393,7 +445,7 @@ export const VirtualList = (() => {
     el.classList.add('focused');
     const ch = _items[idx];
     const img = el._img;
-    if (!_shouldDeferLogos() && img && ch?.logo && img.getAttribute('src') !== ch.logo) {
+    if (!_shouldDeferLogos() && img && ch && ch.logo && img.getAttribute('src') !== ch.logo) {
       _queueLogo(img, _safeStr(ch.logo), idx);
     }
   }

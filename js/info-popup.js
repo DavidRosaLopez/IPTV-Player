@@ -54,12 +54,37 @@ export const InfoPopup = (() => {
   function _setImage(id, url) {
     const safe = _safeMediaUrl(url);
     const el = document.getElementById(id);
-    if (el && safe) el.src = safe;
+    if (!el) return;
+    if (!safe) {
+      _showPosterFallback();
+      return;
+    }
+    el.onload = () => _hidePosterFallback();
+    el.onerror = () => _showPosterFallback();
+    el.src = safe;
+    el.style.display = '';
   }
   function _setBackground(id, url) {
     const safe = _safeMediaUrl(url).replace(/["\\\r\n]/g, '');
     const el = document.getElementById(id);
     if (el && safe) el.style.backgroundImage = `url("${safe}")`;
+  }
+  function _showPosterFallback() {
+    const img = document.getElementById('info-poster');
+    const fallback = document.getElementById('info-poster-fallback');
+    const icon = fallback?.querySelector('.material-symbols-rounded');
+    if (icon) icon.textContent = _current?.type === 'series' ? 'live_tv' : 'movie';
+    if (img) {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+    if (fallback) fallback.style.display = 'flex';
+  }
+  function _hidePosterFallback() {
+    const img = document.getElementById('info-poster');
+    const fallback = document.getElementById('info-poster-fallback');
+    if (img) img.style.display = '';
+    if (fallback) fallback.style.display = 'none';
   }
 
   async function show(ch) {
@@ -158,6 +183,8 @@ export const InfoPopup = (() => {
 
     document.getElementById('info-seasons-list').innerHTML = '';
     document.getElementById('info-episodes-list').innerHTML = '';
+    document.getElementById('info-popup-bg').style.backgroundImage = 'none';
+    _showPosterFallback();
 
     document.getElementById('info-year').textContent = '';
     document.getElementById('info-duration').textContent = '';
