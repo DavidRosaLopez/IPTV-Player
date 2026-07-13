@@ -2,6 +2,8 @@ import { Store } from './store.js';
 import { Storage } from './storage.js';
 
 export const Watching = (() => {
+  let _version = 0;
+
   function _getKey(listId = null) {
     const resolvedListId = listId || (Store.peek('currentList')?.id || 'default');
     return `${resolvedListId}_watching_series`;
@@ -35,6 +37,7 @@ export const Watching = (() => {
     });
 
     Storage.set(key, items);
+    _version++;
   }
 
   function updateProgress(seriesId, epId, ms, listId = null) {
@@ -49,6 +52,7 @@ export const Watching = (() => {
       items[idx].progressMs = ms;
       items[idx].epId = epId;
       Storage.set(key, items);
+      _version++;
     }
   }
 
@@ -56,5 +60,7 @@ export const Watching = (() => {
     return getIds(listId).includes(id);
   }
 
-  return { getIds, getItems, add, isWatching, updateProgress };
+  function getVersion() { return _version; }
+
+  return { getIds, getItems, add, isWatching, updateProgress, getVersion };
 })();

@@ -374,6 +374,10 @@ export const VirtualList = (() => {
       if (img) {
         if (ch.logo) {
           const src = _safeStr(ch.logo);
+          if (!src) {
+            _showMediaFallback(img);
+            continue;
+          }
           // Route through ImageQueue so broken/stale images are retried properly
           if (img.dataset.targetSrc !== src) _queueLogo(img, src, i);
           if (img.getAttribute('src') !== src) _showLoadingFallback(el);
@@ -414,6 +418,15 @@ export const VirtualList = (() => {
     if (img) {
       _setFallbackIcon(el);
       if (ch.logo) {
+        const src = _safeStr(ch.logo);
+        if (!src) {
+          img.removeAttribute('src');
+          img.dataset.targetSrc = '';
+          img.dataset.logoPriority = '';
+          img.style.display = 'none';
+          _showMediaFallback(img);
+          return el;
+        }
         if (_shouldDeferLogos()) {
           // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
           // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
@@ -422,10 +435,10 @@ export const VirtualList = (() => {
           _showLoadingFallback(el);
         } else {
           // Solo actualizar src si cambia para evitar parpadeos de red
-          if (img.getAttribute('src') !== ch.logo) {
-            _queueLogo(img, _safeStr(ch.logo), i);
+          if (img.getAttribute('src') !== src) {
+            _queueLogo(img, src, i);
           }
-          if (img.getAttribute('src') !== _safeStr(ch.logo)) _showLoadingFallback(el);
+          if (img.getAttribute('src') !== src) _showLoadingFallback(el);
           else img.style.display = '';
         }
       } else {
@@ -449,8 +462,9 @@ export const VirtualList = (() => {
     el.classList.add('focused');
     const ch = _items[idx];
     const img = el._img;
-    if (!_shouldDeferLogos() && img && ch && ch.logo && img.getAttribute('src') !== ch.logo) {
-      _queueLogo(img, _safeStr(ch.logo), idx);
+    if (!_shouldDeferLogos() && img && ch && ch.logo) {
+      const src = _safeStr(ch.logo);
+      if (src && img.getAttribute('src') !== src) _queueLogo(img, src, idx);
     }
   }
   function _unfocus(idx) {
@@ -518,7 +532,8 @@ export const VirtualList = (() => {
   }
 
   function _safeStr(s) {
-    return s ? String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const url = String(s || '').trim();
+    return /^(https?:|data:image\/)/i.test(url) ? url : '';
   }
 
   return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, refreshVisible };

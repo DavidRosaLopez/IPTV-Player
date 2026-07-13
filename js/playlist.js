@@ -2,6 +2,7 @@
  * playlist.js - Catalog, filtering and search facade
  */
 import { Watching } from './watching.js';
+import { Favorites } from './favorites.js';
 import { loadXtream as _loadXtream, loadVod as _loadVod, loadSeries as _loadSeries, loadM3U as _loadM3U } from './services/playlist-service.js';
 
 export const Playlist = (() => {
@@ -177,8 +178,8 @@ export const Playlist = (() => {
       cache = _makeLRU();
       _filterCacheByChannels.set(channels, cache);
     }
-    const favKey = Array.isArray(favIds) ? favIds.join(',') : Array.from(favIds || []).join(',');
-    const watchingKey = groupId === '__watching__' ? Watching.getIds().join(',') : '';
+    const favKey = groupId === '__favs__' ? Favorites.getVersion() : '';
+    const watchingKey = groupId === '__watching__' ? Watching.getVersion() : '';
     const cacheKey = `${groupId}|${countryCode}|${favKey}|${watchingKey}`;
     const cached = cache.get(cacheKey);
     if (cached) return cached;

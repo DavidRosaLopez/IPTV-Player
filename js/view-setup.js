@@ -239,29 +239,54 @@ export const ViewSetup = (() => {
     const el = document.getElementById('saved-list');
     if (!el) return;
     if (!lists.length) { el.innerHTML = '<p class="empty-msg">No hay listas guardadas</p>'; return; }
-    el.innerHTML = '';
+    el.replaceChildren();
     const defaultListId = Storage.getDefaultList();
     lists.forEach(list => {
       const isDefault = defaultListId === list.id;
-      const safeName = _escapeHtml(list.name || 'Lista IPTV');
-      const safeServer = _escapeHtml(list.server || '');
       const item = document.createElement('div');
       item.className = 'saved-item focusable';
-      item.innerHTML = `
-        <span class="saved-item-icon material-symbols-rounded">${list.type === 'xtream' ? 'key' : 'list_alt'}</span>
-        <div class="saved-item-info">
-          <div class="saved-item-name">${safeName}</div>
-          <div class="saved-item-type">${list.type === 'xtream' ? 'Xtream · ' + safeServer : 'M3U8'}</div>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="saved-item-default" data-id="${list.id}"><span class="material-symbols-rounded" style="font-size: 20px; color: ${isDefault ? 'var(--yellow)' : 'var(--text-sec)'};">${isDefault ? 'star' : 'star_border'}</span></button>
-          <button class="saved-item-edit" data-id="${list.id}"><span class="material-symbols-rounded" style="font-size: 20px;">edit</span></button>
-          <button class="saved-item-del" data-id="${list.id}"><span class="material-symbols-rounded" style="font-size: 20px;">delete</span></button>
-        </div>`;
+
+      const icon = document.createElement('span');
+      icon.className = 'saved-item-icon material-symbols-rounded';
+      icon.textContent = list.type === 'xtream' ? 'key' : 'list_alt';
+      item.appendChild(icon);
+
+      const info = document.createElement('div');
+      info.className = 'saved-item-info';
+      const name = document.createElement('div');
+      name.className = 'saved-item-name';
+      name.textContent = list.name || 'Lista IPTV';
+      const type = document.createElement('div');
+      type.className = 'saved-item-type';
+      type.textContent = list.type === 'xtream' ? 'Xtream - ' + (list.server || '') : 'M3U8';
+      info.append(name, type);
+      item.appendChild(info);
+
+      const actions = document.createElement('div');
+      actions.style.display = 'flex';
+      actions.style.gap = '8px';
+      const makeAction = (className, iconName, color = '') => {
+        const btn = document.createElement('button');
+        btn.className = className;
+        btn.dataset.id = list.id;
+        const span = document.createElement('span');
+        span.className = 'material-symbols-rounded';
+        span.style.fontSize = '20px';
+        if (color) span.style.color = color;
+        span.textContent = iconName;
+        btn.appendChild(span);
+        return btn;
+      };
+
+      const defaultBtn = makeAction('saved-item-default', isDefault ? 'star' : 'star_border', isDefault ? 'var(--yellow)' : 'var(--text-sec)');
+      const editBtn = makeAction('saved-item-edit', 'edit');
+      const deleteBtn = makeAction('saved-item-del', 'delete');
+      actions.append(defaultBtn, editBtn, deleteBtn);
+      item.appendChild(actions);
       
-      item.querySelector('.saved-item-default').addEventListener('click', e => { e.stopPropagation(); _toggleDefaultList(list.id); });
-      item.querySelector('.saved-item-edit').addEventListener('click', e => { e.stopPropagation(); _editList(list); });
-      item.querySelector('.saved-item-del').addEventListener('click', e => { e.stopPropagation(); _deleteList(list.id); });
+      defaultBtn.addEventListener('click', e => { e.stopPropagation(); _toggleDefaultList(list.id); });
+      editBtn.addEventListener('click', e => { e.stopPropagation(); _editList(list); });
+      deleteBtn.addEventListener('click', e => { e.stopPropagation(); _deleteList(list.id); });
       item.addEventListener('click', () => {
         _requestLoadList(list);
       });

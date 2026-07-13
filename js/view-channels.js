@@ -385,6 +385,8 @@ export const ViewChannels = (() => {
     const expanded = Store.get('expandedFolders') || {};
     const expandedKey = Object.keys(expanded).filter(id => expanded[id]).sort().join(',');
     const groupIdx = Store.get('groupIdx') || 0;
+    const favVersion = Favorites.getVersion();
+    const watchingVersion = Watching.getVersion();
     const groupsInput = [
       ctx.channels,
       ctx.currentCountry,
@@ -393,8 +395,8 @@ export const ViewChannels = (() => {
       ctx.currentGroup || null,
       groupIdx,
       _focusZone,
-      (ctx.favIds || []).join(','),
-      watchingIds.join(','),
+      favVersion,
+      watchingVersion,
       expandedKey
     ];
     if (_lastGroupsRenderInput &&
@@ -487,7 +489,9 @@ export const ViewChannels = (() => {
     }
 
     const layout = _currentTab === 'tv' ? 'tv' : 'poster';
-    const listSignature = list ? list.map(ch => ch.id).join(',') : '';
+    const listSignature = list ? `${list.length}|${list[0]?.id || ''}|${list[list.length - 1]?.id || ''}` : '';
+    const favVersion = Favorites.getVersion();
+    const watchingVersion = Watching.getVersion();
     const channelsInput = [
       ctx.channels,
       ctx.currentCountry,
@@ -496,8 +500,8 @@ export const ViewChannels = (() => {
       ctx.currentListId,
       layout,
       listSignature,
-      ctx.currentGroup === '__favs__' ? (ctx.favIds || []).join(',') : '',
-      ctx.currentGroup === '__watching__' ? Watching.getIds(ctx.currentListId).join(',') : ''
+      ctx.currentGroup === '__favs__' ? favVersion : '',
+      ctx.currentGroup === '__watching__' ? watchingVersion : ''
     ];
     if (_lastChannelsRenderInput &&
         _lastChannelsRenderInput.length === channelsInput.length &&

@@ -291,49 +291,65 @@ export const InfoPopup = (() => {
 
   function _renderEpisodes() {
     const list = document.getElementById('info-episodes-list');
-    list.innerHTML = '';
+    list.replaceChildren();
     if (_seasons.length === 0) return;
     
     const s = _seasons[_seasonIdx];
     const sNum = s.season_number;
     const eps = _episodesMap[sNum] || [];
     
-    eps.forEach((ep, i) => {
+    eps.forEach((ep) => {
       const li = document.createElement('li');
       const info = ep.info || {};
       const epCover = _safeMediaUrl(info.cover);
-      const img = epCover ? `<img src="${_escapeHtml(epCover)}" class="info-ep-img" loading="lazy" onerror="this.style.display='none'">` : '';
-      let cleanTitle = _escapeHtml(String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim());
+      if (epCover) {
+        const img = document.createElement('img');
+        img.src = epCover;
+        img.className = 'info-ep-img';
+        img.loading = 'lazy';
+        img.onerror = () => { img.style.display = 'none'; };
+        li.appendChild(img);
+      }
+
+      const details = document.createElement('div');
+      details.className = 'info-ep-details';
+
+      const title = document.createElement('div');
+      title.className = 'info-ep-title';
+      title.textContent = String(ep.episode_num || '') + '. ' + String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim();
+      details.appendChild(title);
       
-      // Mostrar progreso guardado si existe
-      const epId = `ep_${ep.id}`;
+      const epId = 'ep_' + ep.id;
       const savedMs = Storage.getEpisodeProgress(epId);
-      let progressHtml = '';
       if (savedMs && savedMs > 10000) {
         const totalSecs = Math.floor(savedMs / 1000);
         const m = Math.floor(totalSecs / 60);
         const s = totalSecs % 60;
-        const timeStr = `${m}:${s.toString().padStart(2,'0')}`;
-        progressHtml = `<div class="info-ep-progress"><div class="info-ep-progress-fill" style="width:0%" data-ms="${savedMs}"></div></div><span class="info-ep-resume">▶ ${timeStr}</span>`;
+        const timeStr = m + ':' + s.toString().padStart(2, '0');
+
+        const progress = document.createElement('div');
+        progress.className = 'info-ep-progress';
+        const fill = document.createElement('div');
+        fill.className = 'info-ep-progress-fill';
+        fill.dataset.ms = String(savedMs);
+        fill.style.width = '0%';
+        progress.appendChild(fill);
+        details.appendChild(progress);
+
+        const resume = document.createElement('span');
+        resume.className = 'info-ep-resume';
+        resume.textContent = '> ' + timeStr;
+        details.appendChild(resume);
       }
-      
-      li.innerHTML = `
-        ${img}
-        <div class="info-ep-details">
-          <div class="info-ep-title">${ep.episode_num}. ${cleanTitle}</div>
-          ${progressHtml}
-        </div>
-      `;
+
+      li.appendChild(details);
       list.appendChild(li);
     });
 
-    // Rellenar barras de progreso con % real (necesita getDuration del episodio — se aproxima con el tiempo guardado)
-    // Las barras se actualizan con el ancho relativo al máximo de todos los episodios
     if (typeof Storage !== 'undefined') {
       const fills = list.querySelectorAll('.info-ep-progress-fill');
       fills.forEach(fill => {
         const ms = parseInt(fill.dataset.ms || 0);
-        // Aproximamos 45 minutos (2700000ms) como duración típica de serie; la barra es orientativa
         const pct = Math.min(100, Math.round((ms / 2700000) * 100));
         fill.style.width = pct + '%';
       });
@@ -342,7 +358,6 @@ export const InfoPopup = (() => {
     if (_episodeIdx >= eps.length) _episodeIdx = Math.max(0, eps.length - 1);
   }
 
-  // ── DETECCIÓN DE CALIDAD ────────────────────────────
   function _detectQuality(name) {
     if (!name) return { html: '<span class="quality-badge quality-sd">SD</span>', quality: 'SD' };
     

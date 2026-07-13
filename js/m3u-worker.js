@@ -6,7 +6,7 @@ self.onmessage = function(e) {
   }
 
   try {
-    const channels = parseM3U(content);
+    const channels = parseM3U(content, jobId);
     // Zero-Copy Transfer: Use ArrayBuffer to avoid deep cloning large arrays in memory
     const str = JSON.stringify(channels);
     const buffer = new TextEncoder().encode(str).buffer;
@@ -86,7 +86,7 @@ function detectCountry(name, group) {
   return result;
 }
 
-function parseM3U(m3uText) {
+function parseM3U(m3uText, jobId) {
   const lines = m3uText.split(/\r?\n/);
   const channels = [];
   let currentChannel = null;
@@ -127,7 +127,7 @@ function parseM3U(m3uText) {
     
     // Optional: Send progress every 10,000 lines
     if (i % 10000 === 0 && i > 0) {
-      self.postMessage({ progress: Math.round((i / lines.length) * 100), jobId: e.data.jobId });
+      self.postMessage({ progress: Math.round((i / lines.length) * 100), jobId });
     }
   }
 

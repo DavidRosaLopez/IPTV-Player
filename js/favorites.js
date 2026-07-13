@@ -9,6 +9,7 @@ import { Storage } from './storage.js';
 export const Favorites = (() => {
   // In-memory cache: { key: string, ids: Set, arr: [] }
   let _cache = null;
+  let _version = 0;
 
   function _getKey() {
     const list = typeof Store !== 'undefined' ? Store.peek('currentList') : null;
@@ -25,7 +26,10 @@ export const Favorites = (() => {
     return _cache;
   }
 
-  function _invalidate() { _cache = null; }
+  function _invalidate() {
+    _cache = null;
+    _version++;
+  }
 
   function getIds() {
     return _loadCache().arr;
@@ -43,6 +47,7 @@ export const Favorites = (() => {
     }
     cache.arr = Array.from(cache.ids);
     Storage.saveFavs(key, cache.arr);
+    _version++;
     return added;
   }
 
@@ -53,5 +58,7 @@ export const Favorites = (() => {
   // Expose invalidate for external callers that switch tabs/lists
   function init() { _invalidate(); }
 
-  return { init, toggle, isFav, getIds };
+  function getVersion() { return _version; }
+
+  return { init, toggle, isFav, getIds, getVersion };
 })();

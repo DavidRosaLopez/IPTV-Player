@@ -1,10 +1,12 @@
 import { Playlist } from '../playlist.js';
+import { Favorites } from '../favorites.js';
+import { Watching } from '../watching.js';
 
 let _cache = null;
 
 export function getGroupCounts(channels, currentCountry, currentTab, listId = null, favIds = [], watchingIds = []) {
-  const favKey = favIds.join(',');
-  const watchingKey = watchingIds.join(',');
+  const favKey = Favorites.getVersion();
+  const watchingKey = Watching.getVersion();
   const cacheKey = `${currentCountry}|${currentTab}|${listId || ''}|${favKey}|${watchingKey}`;
   if (_cache && _cache.channelsRef === channels && _cache.key === cacheKey) return _cache.counts;
 
