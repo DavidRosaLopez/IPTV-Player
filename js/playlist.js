@@ -43,7 +43,8 @@ export const Playlist = (() => {
 
   let _groupIndex = new Map();
   let _indexedChannels = null;
-  let _visibleCache = null;
+  const _groupCache = new WeakMap();
+  const _visibleCache = new WeakMap();
 
   function _buildGroupIndex(channels) {
     if (_indexedChannels === channels) return;
@@ -57,6 +58,7 @@ export const Playlist = (() => {
 
   function invalidateIndex() {
     _indexedChannels = null;
+    _groupIndex = new Map();
   }
 
   function _groupsForTab(tabId) {
@@ -67,11 +69,14 @@ export const Playlist = (() => {
 
   function getVisibleChannels(channels, countryCode = 'ALL') {
     if (countryCode === 'ALL') return channels;
-    if (_visibleCache && _visibleCache.channels === channels && _visibleCache.countryCode === countryCode) {
-      return _visibleCache.list;
+    let cache = _visibleCache.get(channels);
+    if (!cache) {
+      cache = new Map();
+      _visibleCache.set(channels, cache);
     }
+    if (cache.has(countryCode)) return cache.get(countryCode);
     const list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
-    _visibleCache = { channels, countryCode, list };
+    cache.set(countryCode, list);
     return list;
   }
 
@@ -97,14 +102,17 @@ export const Playlist = (() => {
     return false;
   }
 
-  let _groupCache = {};
-
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
     const tabGroups = _groupsForTab(tabId);
     if (tabGroups) return tabGroups;
 
+    let cache = _groupCache.get(channels);
+    if (!cache) {
+      cache = new Map();
+      _groupCache.set(channels, cache);
+    }
     const cacheKey = `${countryCode}_${tabId}`;
-    if (_groupCache[cacheKey]) return _groupCache[cacheKey];
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
 
     const FOLDERS = {
       '__folder_plataformas__': {
@@ -151,29 +159,35 @@ export const Playlist = (() => {
       return _groupSortKey(a.name).localeCompare(_groupSortKey(b.name), 'es');
     });
 
-    return (_groupCache[cacheKey] = [...staticGroups, ...dynamicGroups]);
+    const groups = [...staticGroups, ...dynamicGroups];
+    cache.set(cacheKey, groups);
+    return groups;
   }
 
   function clearGroupCache() {
-    _groupCache = {};
     invalidateIndex();
-    _filterCache.clear();
-    _visibleCache = null;
   }
+
+  const _filterCacheByChannels = new WeakMap();
 
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
     _buildGroupIndex(channels);
+    let cache = _filterCacheByChannels.get(channels);
+    if (!cache) {
+      cache = _makeLRU();
+      _filterCacheByChannels.set(channels, cache);
+    }
     const favKey = Array.isArray(favIds) ? favIds.join(',') : Array.from(favIds || []).join(',');
     const watchingKey = groupId === '__watching__' ? Watching.getIds().join(',') : '';
     const cacheKey = `${groupId}|${countryCode}|${favKey}|${watchingKey}`;
-    const cached = _filterCache.get(cacheKey);
+    const cached = cache.get(cacheKey);
     if (cached) return cached;
 
     let result;
     const visibleChannels = getVisibleChannels(channels, countryCode);
     if (groupId === '__favs__') {
       result = visibleChannels.filter(c => favIds && favIds.has(c.id));
-      _filterCache.set(cacheKey, result);
+      cache.set(cacheKey, result);
       return result;
     }
 
@@ -181,19 +195,19 @@ export const Playlist = (() => {
       const watchingIds = Watching.getIds();
       const idMap = new Map(watchingIds.map((id, index) => [id, index]));
       result = visibleChannels.filter(c => idMap.has(c.id)).sort((a, b) => idMap.get(a.id) - idMap.get(b.id));
-      _filterCache.set(cacheKey, result);
+      cache.set(cacheKey, result);
       return result;
     }
 
     if (groupId === '__all__') {
       result = visibleChannels;
-      _filterCache.set(cacheKey, result);
+      cache.set(cacheKey, result);
       return result;
     }
 
     const groupChannels = _groupIndex.get(groupId) || [];
     result = countryCode === 'ALL' ? groupChannels : groupChannels.filter(c => isItemVisibleInCountry(c, countryCode));
-    _filterCache.set(cacheKey, result);
+    cache.set(cacheKey, result);
     return result;
   }
 
@@ -218,7 +232,6 @@ export const Playlist = (() => {
     };
   }
 
-  const _filterCache = _makeLRU();
   const _infoCache = { vod: _makeLRU(), series: _makeLRU() };
 
   async function _fetchInfo(cache, url, signal) {

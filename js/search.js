@@ -24,14 +24,17 @@ export const Search = (() => {
     _view = { ..._view, ...viewApi };
   }
 
-  function init(channels) {
+  function init() {
     _lastSearchKey = '';
   }
 
   function _getDataForTab(currentTab) {
-    return currentTab === 'tv'
+    const data = currentTab === 'tv'
       ? (Store.peek('channels') || [])
       : (Store.peek('currentData') || []);
+
+    if (currentTab !== 'tv') return data;
+    return Playlist.getVisibleChannels(data, Store.peek('currentCountry') || 'ALL');
   }
 
   function _getResultLabel(tab, count) {
