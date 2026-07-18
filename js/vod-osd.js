@@ -224,6 +224,49 @@ export const VodOSD = (() => {
     });
   }
 
+  function _labelFromText(text) {
+    const v = String(text || '').trim().toLowerCase();
+    if (!v) return '';
+    if (/(^|[^a-z])(es|spa|esp|spanish|espa(?:ñ|Ã±)ol|castellano)([^a-z]|$)/.test(v)) return 'EspaÃ±ol';
+    if (/(^|[^a-z])(lat|latino)([^a-z]|$)/.test(v)) return 'Latino';
+    if (/(^|[^a-z])(eng|en|english)([^a-z]|$)/.test(v)) return 'InglÃ©s';
+    if (/(^|[^a-z])(original|vo|vos|vose)([^a-z]|$)/.test(v)) return 'Original';
+    if (/(^|[^a-z])(fr|fra|french)([^a-z]|$)/.test(v)) return 'FrancÃ©s';
+    if (/(^|[^a-z])(it|ita|italian)([^a-z]|$)/.test(v)) return 'Italiano';
+    if (/(^|[^a-z])(pt|por|portuguese)([^a-z]|$)/.test(v)) return 'PortuguÃ©s';
+    if (/(^|[^a-z])(de|ger|german)([^a-z]|$)/.test(v)) return 'AlemÃ¡n';
+    const map = {
+      es: 'EspaÃ±ol',
+      spa: 'EspaÃ±ol',
+      esp: 'EspaÃ±ol',
+      spanish: 'EspaÃ±ol',
+      espaÃ±ol: 'EspaÃ±ol',
+      castellano: 'EspaÃ±ol',
+      lat: 'Latino',
+      latino: 'Latino',
+      eng: 'InglÃ©s',
+      en: 'InglÃ©s',
+      english: 'InglÃ©s',
+      original: 'Original',
+      vo: 'Original',
+      vos: 'Original',
+      vose: 'Original',
+      fr: 'FrancÃ©s',
+      fra: 'FrancÃ©s',
+      french: 'FrancÃ©s',
+      it: 'Italiano',
+      ita: 'Italiano',
+      italian: 'Italiano',
+      pt: 'PortuguÃ©s',
+      por: 'PortuguÃ©s',
+      portuguese: 'PortuguÃ©s',
+      de: 'AlemÃ¡n',
+      ger: 'AlemÃ¡n',
+      german: 'AlemÃ¡n'
+    };
+    return map[v] || '';
+  }
+
   function _getTrackLabel(track, index) {
     let info = track?.extra_info || {};
     if (typeof info === 'string') {
@@ -232,6 +275,15 @@ export const VodOSD = (() => {
       } catch (e) {
         info = { language: info };
       }
+    }
+    const candidates = [
+      info.language, info.track_lang, info.lang,
+      track?.language, track?.lang,
+      track?.title, track?.name
+    ];
+    for (const value of candidates) {
+      const mapped = _labelFromText(value);
+      if (mapped) return mapped;
     }
     const raw = info.language || info.track_lang || info.lang || track?.language || track?.lang || track?.title || track?.name || '';
     const label = String(raw).trim();
