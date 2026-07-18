@@ -137,7 +137,7 @@ function _extractYear(item) {
 }
 
 function _isSpanishTitle(name) {
-  return /^\s*ES\b(?:\s*[-_.:]\s*|\s+)?/i.test(String(name || ''));
+  return /^\s*(?:ES\b(?:\s*[-_.:]\s*|\s+)?|4K(?:\s*[-_.:]\s*|\s+)?ES\b(?:\s*[-_.:]\s*|\s+)?)/i.test(String(name || ''));
 }
 
 function _sortByGroupThenRecency(a, b) {
