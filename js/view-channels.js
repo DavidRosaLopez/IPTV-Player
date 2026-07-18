@@ -134,9 +134,10 @@ export const ViewChannels = (() => {
     focusGroups: () => _setFocusZone('groups'),
     focusChannels: () => _setFocusZone('channels'),
     toggleExpandedFolder: id => {
-      const expanded = Store.get('expandedFolders') || {};
+      const expanded = Storage.get(`expandedFolders_${_currentTab}`) || {};
       expanded[id] = !expanded[id];
       Store.set('expandedFolders', expanded);
+      Storage.set(`expandedFolders_${_currentTab}`, expanded);
     },
     focusGroupById: id => {
       const focusables = _getSidebarFocusables();
@@ -383,7 +384,8 @@ export const ViewChannels = (() => {
 
     const ctx = _viewState.getFilterContext();
     const watchingIds = Watching.getSet(ctx.currentListId);
-    const expanded = Store.get('expandedFolders') || {};
+    const expanded = Storage.get(`expandedFolders_${ctx.currentTab}`) || {};
+    Store.set('expandedFolders', expanded);
     const expandedKey = Object.keys(expanded).filter(id => expanded[id]).sort().join(',');
     const groupIdx = Store.get('groupIdx') || 0;
     const favVersion = Favorites.getVersion();
