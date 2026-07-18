@@ -240,7 +240,7 @@ export async function loadXtream(server, user, pass, onProgress, signal) {
   const catMap = {};
   _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
   const channels = _toArray(streams).map((s, i) => ({
-    id: i,
+    id: `tv_${s.stream_id}`,
     name: s.name?.trim() || '',
     _search: _normalize(s.name),
     logo: _normalizeMediaUrl(server, s.stream_icon),
