@@ -65,7 +65,7 @@ function _cleanVodCategoryName(rawName) {
   n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '').trim();
   const nUnaccented = n.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
-  if (nUnaccented.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR/)) return '💎 Calidad 4K / UHD';
+  if (nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/) || (nUnaccented.match(/\bHDR\b/) && nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/))) return '💎 Calidad 4K / UHD';
   if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
   if (nUnaccented.match(/HBO|MAX/)) return '🟣 HBO Max';
   if (nUnaccented.match(/\b(PRIME|AMAZON)\b/)) return '🟦 Amazon Prime';
@@ -96,7 +96,7 @@ function _cleanSeriesCategoryName(rawName) {
   n = n.replace(/^(ESPA[ÑN]A|FRANCE|ITALY|GERMANY|NORDIC|QU[EÉ]BEC|TURKISH|GREECE|GREEK|INDIA|HINDI|SOMALIA|PAKISTAN|NETHERLANDS|BELGIUM|POLSKA|LATINO|PT\/BR|PERSIAN|KURDISH|HEBREW|ROMANIAN|BULGARIYA|HUNGARY|RUSSAIN|AFRICA|SOUTH AFRICA|CHINA|PHILIPPINES|SVENSK|SVENSKA|DANSK|DANSKE|NORSK|SUOMI|SUOMEN|ÍSLANDS)\s*/, '').trim();
   const nUnaccented = n.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
-  if (nUnaccented.match(/4K|3840P|UHD|BLURAY|DOLBY|HDR/)) return '💎 Series en 4K / UHD';
+  if (nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/) || (nUnaccented.match(/\bHDR\b/) && nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/))) return '💎 Series en 4K / UHD';
   if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
   if (nUnaccented.match(/HBO|MAX/)) return '🟣 HBO Max';
   if (nUnaccented.match(/\b(PRIME|AMAZON)\b/)) return '🟦 Amazon Prime';

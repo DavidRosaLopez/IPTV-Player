@@ -42,6 +42,10 @@ export const Playlist = (() => {
       .trim();
   }
 
+  function _isOtrasGroup(name) {
+    return _normalize(String(name || '')) === 'otras';
+  }
+
   function _recencyKey(ch) {
     if (!ch) return 0;
     if (Number.isFinite(ch._added) && ch._added > 0) return ch._added;
@@ -131,6 +135,9 @@ export const Playlist = (() => {
 
       const dynamicGroups = Array.from(seen.values())
         .sort((a, b) => {
+          const aOther = _isOtrasGroup(a.group);
+          const bOther = _isOtrasGroup(b.group);
+          if (aOther !== bOther) return aOther ? 1 : -1;
           if (tabId === 'vod') {
             if (a.group === '✨ Últimos Estrenos') return -1;
             if (b.group === '✨ Últimos Estrenos') return 1;
@@ -191,6 +198,9 @@ export const Playlist = (() => {
     }
 
     dynamicGroups.sort((a, b) => {
+      const aOther = _isOtrasGroup(a.name);
+      const bOther = _isOtrasGroup(b.name);
+      if (aOther !== bOther) return aOther ? 1 : -1;
       const aBucket = a.parentId ? _groupSortKey(FOLDERS[a.parentId]?.name || a.name) : _groupSortKey(a.name);
       const bBucket = b.parentId ? _groupSortKey(FOLDERS[b.parentId]?.name || b.name) : _groupSortKey(b.name);
       if (aBucket !== bBucket) return aBucket.localeCompare(bBucket, 'es');
