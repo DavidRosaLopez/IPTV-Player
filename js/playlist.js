@@ -42,6 +42,13 @@ export const Playlist = (() => {
       .trim();
   }
 
+  function _recencyKey(ch) {
+    if (!ch) return 0;
+    if (Number.isFinite(ch._added) && ch._added > 0) return ch._added;
+    if (Number.isFinite(ch._year) && ch._year > 0) return ch._year;
+    return 0;
+  }
+
   let _groupIndex = new Map();
   let _indexedChannels = null;
   const _groupCache = new WeakMap();
@@ -103,8 +110,36 @@ export const Playlist = (() => {
   }
 
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
-    const tabGroups = _groupsForTab(tabId);
-    if (tabGroups) return tabGroups;
+    if (tabId === 'vod' || tabId === 'series') {
+      let cache = _groupCache.get(channels);
+      if (!cache) {
+        cache = new Map();
+        _groupCache.set(channels, cache);
+      }
+      const cacheKey = `${countryCode}_${tabId}`;
+      if (cache.has(cacheKey)) return cache.get(cacheKey);
+
+      const staticGroups = _groupsForTab(tabId);
+      const list = getVisibleChannels(channels, countryCode);
+      const seen = new Map();
+      for (const ch of list) {
+        const group = ch.group || 'Sin categoría';
+        const score = _recencyKey(ch);
+        const prev = seen.get(group);
+        if (!prev || score > prev.score) seen.set(group, { score, group });
+      }
+
+      const dynamicGroups = Array.from(seen.values())
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return _groupSortKey(a.group).localeCompare(_groupSortKey(b.group), 'es');
+        })
+        .map(g => ({ id: g.group, name: g.group }));
+
+      const groups = [...staticGroups, ...dynamicGroups];
+      cache.set(cacheKey, groups);
+      return groups;
+    }
 
     let cache = _groupCache.get(channels);
     if (!cache) {

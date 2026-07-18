@@ -126,7 +126,7 @@ function _extractYear(item) {
 }
 
 function _isSpanishTitle(name) {
-  return /^\s*ES\s*-\s*/i.test(String(name || ''));
+  return /^\s*ES\b(?:\s*[-_.:]\s*|\s+)?/i.test(String(name || ''));
 }
 
 function _sortByGroupThenRecency(a, b) {
@@ -273,6 +273,8 @@ export async function loadVod(server, user, pass, onProgress, signal) {
     url: `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
     streamId: s.stream_id,
     type: 'vod',
+    _year: s._year,
+    _added: s._added,
     streamMeta: _detectStreamMeta(s.name, catMap[s.category_id], s.container_extension, s.stream_type)
   }));
   if (onProgress) onProgress(100);
@@ -307,7 +309,9 @@ export async function loadSeries(server, user, pass, onProgress, signal) {
     group: _cleanSeriesCategoryName(catMap[s.category_id]),
     countryCode: detectCountry(s.name, catMap[s.category_id]),
     streamId: s.series_id,
-    type: 'series'
+    type: 'series',
+    _year: s._year,
+    _added: s._added
   }));
   if (onProgress) onProgress(100);
   return series;
