@@ -43,15 +43,15 @@ export const Playlist = (() => {
   }
 
   function _isOtrasGroup(name) {
-    return _normalize(String(name || '')) === 'otras';
+    return _groupSortKey(name) === 'otras';
   }
 
   function _isLatestGroup(name) {
-    return _normalize(String(name || '')) === 'ultimos estrenos';
+    return _groupSortKey(name) === 'ultimos estrenos';
   }
 
   function _is4kGroup(name) {
-    const n = _normalize(String(name || ''));
+    const n = _groupSortKey(name);
     return n.includes('4k / uhd') || n.includes('4k uhd') || n.includes('series en 4k') || n.includes('calidad 4k');
   }
 
@@ -71,8 +71,8 @@ export const Playlist = (() => {
 
   let _groupIndex = new Map();
   let _indexedChannels = null;
-  const _groupCache = new WeakMap();
-  const _visibleCache = new WeakMap();
+  let _groupCache = new WeakMap();
+  let _visibleCache = new WeakMap();
 
   function _buildGroupIndex(channels) {
     if (_indexedChannels === channels) return;
@@ -159,7 +159,13 @@ export const Playlist = (() => {
         })
         .map(g => ({ id: g.group, name: g.group }));
 
-      const groups = [...staticGroups, ...dynamicGroups];
+      const others = dynamicGroups.filter(g => _isOtrasGroup(g.name));
+      const rest = dynamicGroups.filter(g => !_isOtrasGroup(g.name));
+      const latest = rest.filter(g => _isLatestGroup(g.name));
+      const k4 = rest.filter(g => _is4kGroup(g.name) && !_isLatestGroup(g.name));
+      const middle = rest.filter(g => !_isLatestGroup(g.name) && !_is4kGroup(g.name));
+
+      const groups = [...staticGroups, ...latest, ...k4, ...middle, ...others];
       cache.set(cacheKey, groups);
       return groups;
     }
@@ -226,6 +232,8 @@ export const Playlist = (() => {
   }
 
   function clearGroupCache() {
+    _groupCache = new WeakMap();
+    _visibleCache = new WeakMap();
     invalidateIndex();
   }
 
