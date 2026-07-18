@@ -46,6 +46,22 @@ export const Playlist = (() => {
     return _normalize(String(name || '')) === 'otras';
   }
 
+  function _isLatestGroup(name) {
+    return _normalize(String(name || '')) === 'ultimos estrenos';
+  }
+
+  function _is4kGroup(name) {
+    const n = _normalize(String(name || ''));
+    return n.includes('4k / uhd') || n.includes('4k uhd') || n.includes('series en 4k') || n.includes('calidad 4k');
+  }
+
+  function _vodSeriesGroupRank(name) {
+    if (_isLatestGroup(name)) return 0;
+    if (_is4kGroup(name)) return 1;
+    if (_isOtrasGroup(name)) return 99;
+    return 10;
+  }
+
   function _recencyKey(ch) {
     if (!ch) return 0;
     if (Number.isFinite(ch._added) && ch._added > 0) return ch._added;
@@ -135,13 +151,9 @@ export const Playlist = (() => {
 
       const dynamicGroups = Array.from(seen.values())
         .sort((a, b) => {
-          const aOther = _isOtrasGroup(a.group);
-          const bOther = _isOtrasGroup(b.group);
-          if (aOther !== bOther) return aOther ? 1 : -1;
-          if (tabId === 'vod') {
-            if (a.group === '✨ Últimos Estrenos') return -1;
-            if (b.group === '✨ Últimos Estrenos') return 1;
-          }
+          const rankA = _vodSeriesGroupRank(a.group);
+          const rankB = _vodSeriesGroupRank(b.group);
+          if (rankA !== rankB) return rankA - rankB;
           if (b.score !== a.score) return b.score - a.score;
           return _groupSortKey(a.group).localeCompare(_groupSortKey(b.group), 'es');
         })
@@ -198,9 +210,9 @@ export const Playlist = (() => {
     }
 
     dynamicGroups.sort((a, b) => {
-      const aOther = _isOtrasGroup(a.name);
-      const bOther = _isOtrasGroup(b.name);
-      if (aOther !== bOther) return aOther ? 1 : -1;
+      const rankA = _vodSeriesGroupRank(a.name);
+      const rankB = _vodSeriesGroupRank(b.name);
+      if (rankA !== rankB) return rankA - rankB;
       const aBucket = a.parentId ? _groupSortKey(FOLDERS[a.parentId]?.name || a.name) : _groupSortKey(a.name);
       const bBucket = b.parentId ? _groupSortKey(FOLDERS[b.parentId]?.name || b.name) : _groupSortKey(b.name);
       if (aBucket !== bBucket) return aBucket.localeCompare(bBucket, 'es');
