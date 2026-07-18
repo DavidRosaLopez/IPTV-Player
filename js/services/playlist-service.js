@@ -125,6 +125,19 @@ function _extractYear(item) {
   return 0;
 }
 
+function _isSpanishTitle(name) {
+  return /^\s*ES\s*-\s*/i.test(String(name || ''));
+}
+
+function _sortByGroupThenRecency(a, b) {
+  const ga = String(a.group || '');
+  const gb = String(b.group || '');
+  if (ga !== gb) return ga.localeCompare(gb, 'es');
+  if (b._year !== a._year) return b._year - a._year;
+  if (b._added !== a._added) return b._added - a._added;
+  return String(a.name || '').localeCompare(String(b.name || ''), 'es');
+}
+
 function _detectStreamMeta(...values) {
   const raw = values.filter(Boolean).join(' ').toUpperCase();
   const heightMatch = raw.match(/\b(4320|2160|1440|1080|720|576|480)P?\b/);
@@ -240,7 +253,7 @@ export async function loadVod(server, user, pass, onProgress, signal) {
   if (onProgress) onProgress(80);
   const catMap = {};
   _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
-  const streamsWithKeys = _toArray(streams).map(s => {
+  const streamsWithKeys = _toArray(streams).filter(s => _isSpanishTitle(s.name || s.title)).map(s => {
     let addedNum = parseInt(s.added, 10) || 0;
     let yr = _extractYear(s);
     if (yr === 0 && addedNum > 0) {
@@ -249,7 +262,7 @@ export async function loadVod(server, user, pass, onProgress, signal) {
     }
     return { ...s, _year: yr, _added: addedNum };
   });
-  streamsWithKeys.sort((a, b) => (b._year !== a._year ? b._year - a._year : b._added - a._added));
+  streamsWithKeys.sort(_sortByGroupThenRecency);
   const movies = streamsWithKeys.map(s => ({
     id: `vod_${s.stream_id}`,
     name: s.name?.trim() || '',
@@ -276,7 +289,7 @@ export async function loadSeries(server, user, pass, onProgress, signal) {
   if (onProgress) onProgress(80);
   const catMap = {};
   _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
-  const seriesWithKeys = _toArray(seriesList).map(s => {
+  const seriesWithKeys = _toArray(seriesList).filter(s => _isSpanishTitle(s.name || s.title)).map(s => {
     let addedNum = parseInt(s.added || s.last_modified, 10) || 0;
     let yr = _extractYear(s);
     if (yr === 0 && addedNum > 0) {
@@ -285,7 +298,7 @@ export async function loadSeries(server, user, pass, onProgress, signal) {
     }
     return { ...s, _year: yr, _added: addedNum };
   });
-  seriesWithKeys.sort((a, b) => (b._year !== a._year ? b._year - a._year : b._added - a._added));
+  seriesWithKeys.sort(_sortByGroupThenRecency);
   const series = seriesWithKeys.map(s => ({
     id: `series_${s.series_id}`,
     name: s.name?.trim() || '',

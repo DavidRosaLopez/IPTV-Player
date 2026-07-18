@@ -224,6 +224,13 @@ export const VodOSD = (() => {
     });
   }
 
+  function _getTrackLabel(track, index) {
+    const raw = track?.extra_info?.language || track?.language || track?.lang || track?.title || track?.name || '';
+    const label = String(raw).trim();
+    if (label) return label.toUpperCase();
+    return `Pista ${index + 1}`;
+  }
+
   function _openAudioMenu() {
     if (!_player) return;
     _audioTracks = _player.getAudioTracks() || [];
@@ -263,7 +270,7 @@ export const VodOSD = (() => {
       li.className = 'vod-audio-item' + (i === _audioIdx ? ' focused' : '');
       if (current && current.index === t.index) li.classList.add('active');
       
-      const lang = (t.extra_info && t.extra_info.language) ? t.extra_info.language.toUpperCase() : ('Pista ' + (i+1));
+      const lang = _getTrackLabel(t, i);
       
       const label = document.createElement('span');
       label.textContent = lang;
