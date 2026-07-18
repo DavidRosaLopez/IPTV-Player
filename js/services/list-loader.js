@@ -190,27 +190,20 @@ export function createListLoader() {
     }
 
     if (list && list.type === 'xtream') {
-      if (_prefetchTimer) clearTimeout(_prefetchTimer);
-      _prefetchTimer = setTimeout(async () => {
-        _prefetchTimer = null;
-        if (Player.getMode() !== 'IDLE') return;
-        if (document.hidden || !Router.isView('channels')) return;
-        if (_prefetchController) _prefetchController.abort();
-        _prefetchController = new AbortController();
-        const signal = _prefetchController.signal;
+      if (_prefetchController) _prefetchController.abort();
+      _prefetchController = new AbortController();
+      const signal = _prefetchController.signal;
+      void (async () => {
         try {
-          if (signal.aborted) return;
-
           await _prefetchTab('vod', list, signal);
-          await _idleDelay(DeviceProfile.prefetch.betweenTabsDelayMs, signal);
-          if (Player.getMode() !== 'IDLE' || document.hidden || !Router.isView('channels')) return;
+          if (signal.aborted) return;
           await _prefetchTab('series', list, signal);
         } catch (e) {
           if (e.name !== 'AbortError') console.error('Prefetch error', e);
         } finally {
           _prefetchController = null;
         }
-      }, DeviceProfile.prefetch.delayMs);
+      })();
     }
 
     if (fromCache && _shouldCheckUpdate(list.id)) {

@@ -220,51 +220,22 @@ export const VodOSD = (() => {
 
   function _updateBtnFocus() {
     _visibleBtns.forEach((id, idx) => {
-       document.getElementById(id)?.classList.toggle('focused', idx === _btnIdx);
+      document.getElementById(id)?.classList.toggle('focused', idx === _btnIdx);
     });
   }
 
   function _labelFromText(text) {
-    const v = String(text || '').trim().toLowerCase();
+    const v = String(text || '').trim().toLowerCase().replace(/[^a-z0-9]+/gi, '');
     if (!v) return '';
-    if (/(^|[^a-z])(es|spa|esp|spanish|espa(?:ñ|Ã±)ol|castellano)([^a-z]|$)/.test(v)) return 'EspaÃ±ol';
-    if (/(^|[^a-z])(lat|latino)([^a-z]|$)/.test(v)) return 'Latino';
-    if (/(^|[^a-z])(eng|en|english)([^a-z]|$)/.test(v)) return 'InglÃ©s';
-    if (/(^|[^a-z])(original|vo|vos|vose)([^a-z]|$)/.test(v)) return 'Original';
-    if (/(^|[^a-z])(fr|fra|french)([^a-z]|$)/.test(v)) return 'FrancÃ©s';
-    if (/(^|[^a-z])(it|ita|italian)([^a-z]|$)/.test(v)) return 'Italiano';
-    if (/(^|[^a-z])(pt|por|portuguese)([^a-z]|$)/.test(v)) return 'PortuguÃ©s';
-    if (/(^|[^a-z])(de|ger|german)([^a-z]|$)/.test(v)) return 'AlemÃ¡n';
-    const map = {
-      es: 'EspaÃ±ol',
-      spa: 'EspaÃ±ol',
-      esp: 'EspaÃ±ol',
-      spanish: 'EspaÃ±ol',
-      espaÃ±ol: 'EspaÃ±ol',
-      castellano: 'EspaÃ±ol',
-      lat: 'Latino',
-      latino: 'Latino',
-      eng: 'InglÃ©s',
-      en: 'InglÃ©s',
-      english: 'InglÃ©s',
-      original: 'Original',
-      vo: 'Original',
-      vos: 'Original',
-      vose: 'Original',
-      fr: 'FrancÃ©s',
-      fra: 'FrancÃ©s',
-      french: 'FrancÃ©s',
-      it: 'Italiano',
-      ita: 'Italiano',
-      italian: 'Italiano',
-      pt: 'PortuguÃ©s',
-      por: 'PortuguÃ©s',
-      portuguese: 'PortuguÃ©s',
-      de: 'AlemÃ¡n',
-      ger: 'AlemÃ¡n',
-      german: 'AlemÃ¡n'
-    };
-    return map[v] || '';
+    if (['es', 'spa', 'esp', 'spanish', 'espanol', 'castellano'].includes(v)) return 'Espa\u00f1ol';
+    if (['lat', 'latino'].includes(v)) return 'Latino';
+    if (['eng', 'en', 'english'].includes(v)) return 'Ingl\u00e9s';
+    if (['original', 'vo', 'vos', 'vose'].includes(v)) return 'Original';
+    if (['fr', 'fra', 'french'].includes(v)) return 'Franc\u00e9s';
+    if (['it', 'ita', 'italian'].includes(v)) return 'Italiano';
+    if (['pt', 'por', 'portuguese'].includes(v)) return 'Portugu\u00e9s';
+    if (['de', 'ger', 'german'].includes(v)) return 'Alem\u00e1n';
+    return '';
   }
 
   function _getTrackLabel(track, index) {
@@ -276,43 +247,13 @@ export const VodOSD = (() => {
         info = { language: info };
       }
     }
-    const candidates = [
-      info.language, info.track_lang, info.lang,
-      track?.language, track?.lang,
-      track?.title, track?.name
-    ];
+    const candidates = [info.language, info.track_lang, info.lang, track?.language, track?.lang, track?.title, track?.name];
     for (const value of candidates) {
       const mapped = _labelFromText(value);
       if (mapped) return mapped;
     }
-    const raw = info.language || info.track_lang || info.lang || track?.language || track?.lang || track?.title || track?.name || '';
-    const label = String(raw).trim();
-    if (label) {
-      const v = label.toLowerCase();
-      const map = {
-        es: 'Español',
-        spa: 'Español',
-        spanish: 'Español',
-        en: 'Inglés',
-        eng: 'Inglés',
-        english: 'Inglés',
-        lat: 'Latino',
-        latino: 'Latino',
-        original: 'Original',
-        vo: 'Original',
-        vos: 'Original',
-        vose: 'Original',
-        fr: 'Francés',
-        fra: 'Francés',
-        it: 'Italiano',
-        ita: 'Italiano',
-        pt: 'Portugués',
-        por: 'Portugués',
-        de: 'Alemán',
-        ger: 'Alemán'
-      };
-      return map[v] || label;
-    }
+    const raw = candidates.find(v => String(v || '').trim()) || '';
+    if (raw) return String(raw).trim();
     return `Pista ${index + 1}`;
   }
 
@@ -323,7 +264,6 @@ export const VodOSD = (() => {
     list.style.overflowY = needsScroll ? 'auto' : 'hidden';
     return needsScroll;
   }
-
   function _openAudioMenu() {
     if (!_player) return;
     _audioTracks = _player.getAudioTracks() || [];
