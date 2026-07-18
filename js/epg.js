@@ -100,8 +100,20 @@ export const EPG = (() => {
     let currentIdx = -1;
     for (let i = 0; i < sanitized.length; i++) {
       if (sanitized[i].start <= now && now < sanitized[i].end) {
-        currentIdx = i;
-        break;
+        if (currentIdx === -1) {
+          currentIdx = i;
+          continue;
+        }
+        const cur = sanitized[currentIdx];
+        const candidate = sanitized[i];
+        const curDuration = cur.end.getTime() - cur.start.getTime();
+        const candidateDuration = candidate.end.getTime() - candidate.start.getTime();
+        if (
+          candidate.start.getTime() > cur.start.getTime() ||
+          (candidate.start.getTime() === cur.start.getTime() && candidateDuration < curDuration)
+        ) {
+          currentIdx = i;
+        }
       }
     }
     
@@ -142,11 +154,15 @@ export const EPG = (() => {
         end: curProg.end,
         progress: progress
       },
-      next: sanitized[currentIdx + 1] ? {
-        title: sanitized[currentIdx + 1].title,
-        start: sanitized[currentIdx + 1].start,
-        end: sanitized[currentIdx + 1].end
-      } : null
+      next: (() => {
+        const nextIdx = sanitized.findIndex((l, i) => i > currentIdx && l.start >= curProg.end);
+        const nextProg = nextIdx >= 0 ? sanitized[nextIdx] : sanitized[currentIdx + 1];
+        return nextProg ? {
+          title: nextProg.title,
+          start: nextProg.start,
+          end: nextProg.end
+        } : null;
+      })()
     };
   }
   
