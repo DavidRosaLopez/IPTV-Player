@@ -30,6 +30,12 @@ export const Search = (() => {
     _lastSearchDataRef = null;
   }
 
+  function _getPlaceholder(tab) {
+    if (tab === 'vod') return 'Buscar pelÃ­cula...';
+    if (tab === 'series') return 'Buscar serie...';
+    return 'Buscar canal...';
+  }
+
   function _getDataForTab(currentTab) {
     const data = currentTab === 'tv'
       ? (Store.peek('channels') || [])
@@ -51,6 +57,7 @@ export const Search = (() => {
     const bar   = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
     if (!bar || !input) return;
+    input.placeholder = _getPlaceholder(_view.getCurrentTab());
     input.value = '';
     const count = document.getElementById('search-count');
     if (count) count.textContent = '';
@@ -104,6 +111,7 @@ export const Search = (() => {
     _debounceTimer = setTimeout(() => {
       const q   = e.target.value.trim();
       const currentTab = _view.getCurrentTab();
+      e.target.placeholder = _getPlaceholder(currentTab);
       const data = _getDataForTab(currentTab);
       const cacheKey = `${currentTab}|${q}|${Store.peek('currentCountry') || 'ALL'}|${Store.peek('currentGroup') || ''}`;
       if (_lastSearchKey === cacheKey && _lastSearchDataRef === data) return;
@@ -148,6 +156,7 @@ export const Search = (() => {
     if (!_isOpen) return;
     const input = document.getElementById('search-input');
     if (input) {
+      input.placeholder = _getPlaceholder(_view.getCurrentTab());
       input.dispatchEvent(new Event('input'));
     }
   }

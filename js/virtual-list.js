@@ -224,11 +224,33 @@ export const VirtualList = (() => {
   }
 
   function _queueLogo(img, src, idx) {
+    if (_layout === 'poster') {
+      _applyDirectLogo(img, src);
+      return;
+    }
     ImageQueue.add(img, src, _getLogoPriority(idx));
   }
 
   function _needsLogoRetry(img, src) {
     return !img || !src || Number(img.dataset.logoGen || 0) !== ImageQueue.getGeneration() || img.dataset.targetSrc !== src;
+  }
+
+  function _applyDirectLogo(img, src) {
+    if (!img || !src) return;
+    const el = img.closest ? img.closest('.channel-card') : null;
+    img.dataset.targetSrc = src;
+    img.dataset.logoPriority = '3';
+    img.dataset.logoGen = String(ImageQueue.getGeneration());
+    img.onload = () => {
+      img.style.display = '';
+      if (el) _hideMediaFallback(el);
+    };
+    img.onerror = () => {
+      img.dataset.targetSrc = '';
+      _showMediaFallback(img);
+    };
+    if (img.getAttribute('src') !== src) img.src = src;
+    img.style.display = '';
   }
 
   function _setFallbackIcon(el) {
@@ -347,12 +369,21 @@ export const VirtualList = (() => {
         if (recycledImg) {
           recycledImg.dataset.targetSrc = '';
           recycledImg.dataset.logoPriority = '';
+          recycledImg.dataset.logoGen = '';
+          recycledImg.loading = _layout === 'poster' ? 'eager' : 'lazy';
+          recycledImg.decoding = 'async';
+          try { recycledImg.fetchPriority = _layout === 'poster' ? 'high' : 'auto'; } catch(e) {}
         }
       } else {
         el = document.createElement('div');
         // Pre-build structure ONLY once per new node
         el.innerHTML = '<span class="fav-badge material-symbols-rounded" style="display:none">favorite</span><img class="channel-logo" style="display:none" loading="lazy" decoding="async"><span class="channel-logo-fallback material-symbols-rounded" style="display:none">tv</span><div class="channel-info"><div class="channel-name"></div></div>';
         _ensureRefs(el);
+        if (el._img) {
+          el._img.loading = _layout === 'poster' ? 'eager' : 'lazy';
+          el._img.decoding = 'async';
+          try { el._img.fetchPriority = _layout === 'poster' ? 'high' : 'auto'; } catch(e) {}
+        }
       }
       _updateCard(el, i);
       fragment.appendChild(el);
@@ -385,7 +416,8 @@ export const VirtualList = (() => {
             continue;
           }
           // Route through ImageQueue so broken/stale images are retried properly
-          if (_needsLogoRetry(img, src)) _queueLogo(img, src, i);
+          if (_layout === 'poster') _applyDirectLogo(img, src);
+          else if (_needsLogoRetry(img, src)) _queueLogo(img, src, i);
           if (_needsLogoRetry(img, src)) _showLoadingFallback(el);
           else img.style.display = '';
         } else {
@@ -443,10 +475,12 @@ export const VirtualList = (() => {
             _showLoadingFallback(el);
           } else {
             // Solo actualizar src si cambia para evitar parpadeos de red
-            if (_needsLogoRetry(img, src)) {
+            if (_layout === 'poster') {
+              _applyDirectLogo(img, src);
+            } else if (_needsLogoRetry(img, src)) {
               _queueLogo(img, src, i);
             }
-            if (_needsLogoRetry(img, src)) _showLoadingFallback(el);
+            if (_layout !== 'poster' && _needsLogoRetry(img, src)) _showLoadingFallback(el);
             else img.style.display = '';
           }
         } else {
@@ -473,7 +507,9 @@ export const VirtualList = (() => {
     const img = el._img;
     if (!_shouldDeferLogos() && img && ch && ch.logo) {
       const src = _safeStr(ch.logo);
-      if (src && _needsLogoRetry(img, src)) _queueLogo(img, src, idx);
+      if (src && (_layout === 'poster' || _needsLogoRetry(img, src))) {
+        _queueLogo(img, src, idx);
+      }
     }
   }
   function _unfocus(idx) {
@@ -505,7 +541,7 @@ export const VirtualList = (() => {
   function _onScroll() {
     _scrollTop = _container.scrollTop; // Actualizar el caché real cuando ocurre el evento
     _lastScrollAt = performance.now();
-    if (!_scrolling) ImageQueue.flush();
+    if (!_scrolling && _layout !== 'poster') ImageQueue.flush();
     _scrolling = true;
 
     if (!_rafId) {
@@ -538,7 +574,8 @@ export const VirtualList = (() => {
       const img = el._img;
       if (img && ch.logo) {
         const src = _safeStr(ch.logo);
-        if (_needsLogoRetry(img, src)) {
+        if (_layout === 'poster') _applyDirectLogo(img, src);
+        else if (_needsLogoRetry(img, src)) {
           _queueLogo(img, src, i);
           img.style.display = '';
         }

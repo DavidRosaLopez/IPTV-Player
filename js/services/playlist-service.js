@@ -11,6 +11,17 @@ function _toArray(obj) {
   return [];
 }
 
+function _normalizeMediaUrl(base, value) {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  if (/^(https?:|data:image\/)/i.test(url)) return url;
+  try {
+    return new URL(url, base).toString();
+  } catch (e) {
+    return '';
+  }
+}
+
 const _countryDetectCache = new Map();
 
 function detectCountry(name, group) {
@@ -232,7 +243,7 @@ export async function loadXtream(server, user, pass, onProgress, signal) {
     id: i,
     name: s.name?.trim() || '',
     _search: _normalize(s.name),
-    logo: s.stream_icon || '',
+    logo: _normalizeMediaUrl(server, s.stream_icon),
     group: _cleanTvCategoryName(catMap[s.category_id]),
     countryCode: detectCountry(s.name, catMap[s.category_id] || 'Sin categoría'),
     url: `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.ts`,
@@ -267,7 +278,7 @@ export async function loadVod(server, user, pass, onProgress, signal) {
     id: `vod_${s.stream_id}`,
     name: s.name?.trim() || '',
     _search: _normalize(s.name),
-    logo: s.stream_icon || '',
+    logo: _normalizeMediaUrl(server, s.stream_icon),
     group: _cleanVodCategoryName(catMap[s.category_id]),
     countryCode: detectCountry(s.name, catMap[s.category_id]),
     url: `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
@@ -305,7 +316,7 @@ export async function loadSeries(server, user, pass, onProgress, signal) {
     id: `series_${s.series_id}`,
     name: s.name?.trim() || '',
     _search: _normalize(s.name),
-    logo: s.cover || s.stream_icon || '',
+    logo: _normalizeMediaUrl(server, s.cover || s.stream_icon),
     group: _cleanSeriesCategoryName(catMap[s.category_id]),
     countryCode: detectCountry(s.name, catMap[s.category_id]),
     streamId: s.series_id,
