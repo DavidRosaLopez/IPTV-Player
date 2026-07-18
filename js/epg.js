@@ -106,19 +106,24 @@ export const EPG = (() => {
     }
     
     if (currentIdx === -1) {
-      const firstFutureIdx = sanitized.findIndex(l => l.start > now);
-      if (firstFutureIdx >= 0) {
+      let lastPastIdx = -1;
+      for (let i = 0; i < sanitized.length; i++) {
+        if (sanitized[i].start <= now) lastPastIdx = i;
+        else break;
+      }
+      const fallbackIdx = lastPastIdx >= 0 ? lastPastIdx : sanitized.findIndex(l => l.start > now);
+      if (fallbackIdx >= 0) {
         return {
           current: {
-            title: sanitized[firstFutureIdx].title,
-            start: sanitized[firstFutureIdx].start,
-            end: sanitized[firstFutureIdx].end,
+            title: sanitized[fallbackIdx].title,
+            start: sanitized[fallbackIdx].start,
+            end: sanitized[fallbackIdx].end,
             progress: 0
           },
-          next: sanitized[firstFutureIdx + 1] ? {
-            title: sanitized[firstFutureIdx + 1].title,
-            start: sanitized[firstFutureIdx + 1].start,
-            end: sanitized[firstFutureIdx + 1].end
+          next: sanitized[fallbackIdx + 1] ? {
+            title: sanitized[fallbackIdx + 1].title,
+            start: sanitized[fallbackIdx + 1].start,
+            end: sanitized[fallbackIdx + 1].end
           } : null
         };
       }
