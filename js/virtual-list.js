@@ -476,6 +476,12 @@ export const VirtualList = (() => {
     if (!_container) return;
     const row = Math.floor(idx / COLS);
     const y   = row * (ITEM_H + ITEM_GAP) + PADDING;
+    const centerTarget = Math.max(0, y - Math.max(0, (_vH - ITEM_H) / 2));
+    if (_layout === 'poster') {
+      _scrollTop = centerTarget;
+      _container.scrollTop = _scrollTop;
+      return;
+    }
     // Usar la posición cacheada evita leer .scrollTop y forzar un reflow síncrono por cada pulsación
     if (y < _scrollTop) {
       _scrollTop = y - PADDING;
