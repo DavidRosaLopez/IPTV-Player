@@ -16,9 +16,9 @@ export const Search = (() => {
   let _lastSearchDataRef = null;
   let _view = {
     getCurrentTab: () => 'tv',
-    renderChannels: () => {},
-    focusSearchResults: () => {},
-    setSidebarFocusToSearch: () => {}
+    renderChannels: () => { },
+    focusSearchResults: () => { },
+    setSidebarFocusToSearch: () => { }
   };
 
   function configure(viewApi) {
@@ -31,7 +31,7 @@ export const Search = (() => {
   }
 
   function _getPlaceholder(tab) {
-    if (tab === 'vod') return 'Buscar pelÃ­cula...';
+    if (tab === 'vod') return 'Buscar película...';
     if (tab === 'series') return 'Buscar serie...';
     return 'Buscar canal...';
   }
@@ -54,7 +54,7 @@ export const Search = (() => {
   function open() {
     if (_isOpen) return;
     _isOpen = true;
-    const bar   = document.getElementById('search-bar');
+    const bar = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
     if (!bar || !input) return;
     input.placeholder = _getPlaceholder(_view.getCurrentTab());
@@ -68,7 +68,7 @@ export const Search = (() => {
     input.addEventListener('change', _onChange);
     input.addEventListener('keydown', _onNativeKeyDown);
     KeyHandler.on('BACK', _onBack);
-    
+
     if (typeof VirtualList !== 'undefined') VirtualList.setFocused(-1);
     if (typeof Player !== 'undefined' && Player.getMode() === 'PIP') Player.stop();
   }
@@ -79,16 +79,16 @@ export const Search = (() => {
     clearTimeout(_debounceTimer);
     _lastSearchKey = '';
     _lastSearchDataRef = null;
-    const bar   = document.getElementById('search-bar');
+    const bar = document.getElementById('search-bar');
     const input = document.getElementById('search-input');
     const count = document.getElementById('search-count');
-    if (bar)   bar.classList.add('hidden');
+    if (bar) bar.classList.add('hidden');
     if (count) count.textContent = '';
-    if (input) { 
-      input.removeEventListener('input', _onInput); 
+    if (input) {
+      input.removeEventListener('input', _onInput);
       input.removeEventListener('change', _onChange);
       input.removeEventListener('keydown', _onNativeKeyDown);
-      input.value = ''; 
+      input.value = '';
     }
     KeyHandler.off('BACK', _onBack);
     _view.renderChannels();
@@ -109,7 +109,7 @@ export const Search = (() => {
   const _onInput = (e) => {
     clearTimeout(_debounceTimer);
     _debounceTimer = setTimeout(() => {
-      const q   = e.target.value.trim();
+      const q = e.target.value.trim();
       const currentTab = _view.getCurrentTab();
       e.target.placeholder = _getPlaceholder(currentTab);
       const data = _getDataForTab(currentTab);
@@ -132,7 +132,7 @@ export const Search = (() => {
   const _onBack = () => {
     if (typeof InfoPopup !== 'undefined' && InfoPopup.isVisible()) return;
     const viewChannels = document.getElementById('view-channels');
-    if (_isOpen && viewChannels && viewChannels.classList.contains('active')) { 
+    if (_isOpen && viewChannels && viewChannels.classList.contains('active')) {
       const input = document.getElementById('search-input');
       if (document.activeElement === input) {
         close();
@@ -146,7 +146,7 @@ export const Search = (() => {
           Player.stop(); // Cerrar el mini-reproductor
         }
       }
-      return true; 
+      return true;
     }
   };
 
