@@ -131,6 +131,10 @@ export const Playlist = (() => {
 
       const dynamicGroups = Array.from(seen.values())
         .sort((a, b) => {
+          if (tabId === 'vod') {
+            if (a.group === '✨ Últimos Estrenos') return -1;
+            if (b.group === '✨ Últimos Estrenos') return 1;
+          }
           if (b.score !== a.score) return b.score - a.score;
           return _groupSortKey(a.group).localeCompare(_groupSortKey(b.group), 'es');
         })

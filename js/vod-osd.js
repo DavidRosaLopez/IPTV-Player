@@ -225,10 +225,51 @@ export const VodOSD = (() => {
   }
 
   function _getTrackLabel(track, index) {
-    const raw = track?.extra_info?.language || track?.language || track?.lang || track?.title || track?.name || '';
+    let info = track?.extra_info || {};
+    if (typeof info === 'string') {
+      try {
+        info = info ? JSON.parse(info) : {};
+      } catch (e) {
+        info = { language: info };
+      }
+    }
+    const raw = info.language || info.track_lang || info.lang || track?.language || track?.lang || track?.title || track?.name || '';
     const label = String(raw).trim();
-    if (label) return label.toUpperCase();
+    if (label) {
+      const v = label.toLowerCase();
+      const map = {
+        es: 'Español',
+        spa: 'Español',
+        spanish: 'Español',
+        en: 'Inglés',
+        eng: 'Inglés',
+        english: 'Inglés',
+        lat: 'Latino',
+        latino: 'Latino',
+        original: 'Original',
+        vo: 'Original',
+        vos: 'Original',
+        vose: 'Original',
+        fr: 'Francés',
+        fra: 'Francés',
+        it: 'Italiano',
+        ita: 'Italiano',
+        pt: 'Portugués',
+        por: 'Portugués',
+        de: 'Alemán',
+        ger: 'Alemán'
+      };
+      return map[v] || label;
+    }
     return `Pista ${index + 1}`;
+  }
+
+  function _syncAudioListScroll() {
+    const list = document.getElementById('vod-audio-list');
+    if (!list) return;
+    const needsScroll = list.scrollHeight > list.clientHeight + 1;
+    list.style.overflowY = needsScroll ? 'auto' : 'hidden';
+    return needsScroll;
   }
 
   function _openAudioMenu() {
@@ -285,8 +326,13 @@ export const VodOSD = (() => {
       list.appendChild(li);
     });
 
-    const focusedEl = list.querySelector('.focused');
-    if (focusedEl) focusedEl.scrollIntoView({ block: 'nearest' });
+    const needsScroll = _syncAudioListScroll();
+    if (needsScroll) {
+      const focusedEl = list.querySelector('.focused');
+      if (focusedEl) focusedEl.scrollIntoView({ block: 'nearest' });
+    } else {
+      list.scrollTop = 0;
+    }
   }
 
   function isVisible() {

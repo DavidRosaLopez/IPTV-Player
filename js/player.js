@@ -685,11 +685,23 @@ export const Player = (() => {
   function seekTo(ms) {
     try { webapis.avplay.seekTo(ms); } catch(e) {}
   }
+  function _normalizeTrackInfo(track) {
+    if (!track || track.type !== 'AUDIO') return track;
+    let extra = track.extra_info;
+    if (typeof extra === 'string') {
+      try {
+        extra = extra ? JSON.parse(extra) : {};
+      } catch (e) {
+        extra = { language: extra };
+      }
+    }
+    return { ...track, extra_info: extra || {} };
+  }
   function getAudioTracks() {
     try {
       if (typeof webapis === 'undefined') return [];
       const tracks = webapis.avplay.getTotalTrackInfo();
-      return tracks.filter(t => t.type === 'AUDIO');
+      return tracks.filter(t => t.type === 'AUDIO').map(_normalizeTrackInfo);
     } catch(e) { return []; }
   }
   function setAudioTrack(index) {
@@ -699,7 +711,7 @@ export const Player = (() => {
     try {
       if (typeof webapis === 'undefined') return null;
       const current = webapis.avplay.getCurrentStreamInfo() || [];
-      return current.find(t => t.type === 'AUDIO');
+      return _normalizeTrackInfo(current.find(t => t.type === 'AUDIO'));
     } catch(e) { return null; }
   }
 

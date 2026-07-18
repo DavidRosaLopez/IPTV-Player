@@ -103,7 +103,8 @@ export const VirtualList = (() => {
           active--;
         }
         if (active < 0) active = 0;
-      }
+      },
+      getGeneration: () => generation
     };
   })();
 
