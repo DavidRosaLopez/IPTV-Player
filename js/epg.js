@@ -108,7 +108,11 @@ export const EPG = (() => {
         const candidate = sanitized[i];
         const curDuration = cur.end.getTime() - cur.start.getTime();
         const candidateDuration = candidate.end.getTime() - candidate.start.getTime();
+        const curScore = _titleScore(cur.title);
+        const candidateScore = _titleScore(candidate.title);
         if (
+          candidateScore > curScore ||
+          (candidateScore === curScore && candidate.start.getTime() > cur.start.getTime()) ||
           candidate.start.getTime() > cur.start.getTime() ||
           (candidate.start.getTime() === cur.start.getTime() && candidateDuration < curDuration)
         ) {
@@ -175,6 +179,13 @@ export const EPG = (() => {
     } catch (e) {
       return title;
     }
+  }
+
+  function _titleScore(title) {
+    const n = String(title || '').trim().toUpperCase();
+    if (!n) return 0;
+    if (/PROGRAMA A DETERMINAR|SIN INFORMACI[ÓO]N|SIN INFO|TBA|TO BE ANNOUNCED|PENDIENTE|COMING UP|PR[ÓO]XIMAMENTE/.test(n)) return 0;
+    return 1;
   }
 
   return { fetchRealEpg, parseRealEpg };
