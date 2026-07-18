@@ -81,6 +81,7 @@ export const VirtualList = (() => {
         
         imgEl.dataset.targetSrc = src;
         imgEl.dataset.logoPriority = String(priority);
+        imgEl.dataset.logoGen = String(generation);
         if (imgEl.src && !imgEl.src.startsWith('data:')) {
           imgEl.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         }
@@ -223,6 +224,10 @@ export const VirtualList = (() => {
 
   function _queueLogo(img, src, idx) {
     ImageQueue.add(img, src, _getLogoPriority(idx));
+  }
+
+  function _needsLogoRetry(img, src) {
+    return !img || !src || Number(img.dataset.logoGen || 0) !== ImageQueue.getGeneration() || img.dataset.targetSrc !== src;
   }
 
   function _setFallbackIcon(el) {
@@ -379,8 +384,8 @@ export const VirtualList = (() => {
             continue;
           }
           // Route through ImageQueue so broken/stale images are retried properly
-          if (img.dataset.targetSrc !== src) _queueLogo(img, src, i);
-          if (img.getAttribute('src') !== src) _showLoadingFallback(el);
+          if (_needsLogoRetry(img, src)) _queueLogo(img, src, i);
+          if (_needsLogoRetry(img, src)) _showLoadingFallback(el);
           else img.style.display = '';
         } else {
           img.removeAttribute('src');
@@ -417,37 +422,40 @@ export const VirtualList = (() => {
     const img = el._img;
     if (img) {
       _setFallbackIcon(el);
-      if (ch.logo) {
-        const src = _safeStr(ch.logo);
-        if (!src) {
+        if (ch.logo) {
+          const src = _safeStr(ch.logo);
+          if (!src) {
+            img.removeAttribute('src');
+            img.dataset.targetSrc = '';
+            img.dataset.logoPriority = '';
+            img.dataset.logoGen = '';
+            img.style.display = 'none';
+            _showMediaFallback(img);
+            return el;
+          }
+          if (_shouldDeferLogos()) {
+            // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
+            // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
+            img.dataset.targetSrc = '';
+            img.dataset.logoPriority = '';
+            img.dataset.logoGen = '';
+            _showLoadingFallback(el);
+          } else {
+            // Solo actualizar src si cambia para evitar parpadeos de red
+            if (_needsLogoRetry(img, src)) {
+              _queueLogo(img, src, i);
+            }
+            if (_needsLogoRetry(img, src)) _showLoadingFallback(el);
+            else img.style.display = '';
+          }
+        } else {
           img.removeAttribute('src');
           img.dataset.targetSrc = '';
           img.dataset.logoPriority = '';
+          img.dataset.logoGen = '';
           img.style.display = 'none';
           _showMediaFallback(img);
-          return el;
         }
-        if (_shouldDeferLogos()) {
-          // Mientras hace scroll, usar una imagen transparente para evitar congestión de red
-          // Limpiar targetSrc para que _updateVisibleLogos lo re-encole al parar el scroll
-          img.dataset.targetSrc = '';
-          img.dataset.logoPriority = '';
-          _showLoadingFallback(el);
-        } else {
-          // Solo actualizar src si cambia para evitar parpadeos de red
-          if (img.getAttribute('src') !== src) {
-            _queueLogo(img, src, i);
-          }
-          if (img.getAttribute('src') !== src) _showLoadingFallback(el);
-          else img.style.display = '';
-        }
-      } else {
-        img.removeAttribute('src');
-        img.dataset.targetSrc = '';
-        img.dataset.logoPriority = '';
-        img.style.display = 'none';
-        _showMediaFallback(img);
-      }
     }
 
     const name = el._name;
@@ -464,7 +472,7 @@ export const VirtualList = (() => {
     const img = el._img;
     if (!_shouldDeferLogos() && img && ch && ch.logo) {
       const src = _safeStr(ch.logo);
-      if (src && img.getAttribute('src') !== src) _queueLogo(img, src, idx);
+      if (src && _needsLogoRetry(img, src)) _queueLogo(img, src, idx);
     }
   }
   function _unfocus(idx) {
@@ -529,7 +537,7 @@ export const VirtualList = (() => {
       const img = el._img;
       if (img && ch.logo) {
         const src = _safeStr(ch.logo);
-        if (img.getAttribute('src') !== src && img.dataset.targetSrc !== src) {
+        if (_needsLogoRetry(img, src)) {
           _queueLogo(img, src, i);
           img.style.display = '';
         }
