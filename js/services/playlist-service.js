@@ -137,7 +137,8 @@ function _extractYear(item) {
 }
 
 function _isSpanishTitle(name) {
-  return /^\s*(?:ES\b(?:\s*[-_.:]\s*|\s+)?|4K(?:\s*[-_.:]\s*|\s+)?ES\b(?:\s*[-_.:]\s*|\s+)?)/i.test(String(name || ''));
+  const n = String(name || '').trim().toUpperCase();
+  return /^(?:ES(?:\b|[-_.: ]|$)|(?:(?:4K|UHD|HDR|8K)(?:\s*[-_.: ]\s*)+)*ES(?:\b|[-_.: ]|$)|ES(?:\s*[-_.: ]\s*)+(?:4K|UHD|HDR|8K)\b)/i.test(n);
 }
 
 function _sortByGroupThenRecency(a, b) {

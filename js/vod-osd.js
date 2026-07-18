@@ -248,10 +248,6 @@ export const VodOSD = (() => {
       }
     }
     const candidates = [info.language, info.track_lang, info.lang, track?.language, track?.lang, track?.title, track?.name];
-    for (const value of candidates) {
-      const mapped = _labelFromText(value);
-      if (mapped) return mapped;
-    }
     const raw = candidates.find(v => String(v || '').trim()) || '';
     if (raw) return String(raw).trim();
     return `Pista ${index + 1}`;
