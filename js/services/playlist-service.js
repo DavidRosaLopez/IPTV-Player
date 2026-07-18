@@ -105,7 +105,6 @@ function _cleanSeriesCategoryName(rawName) {
   if (nUnaccented.match(/MOVISTAR/)) return 'Ⓜ️ Movistar+';
   if (nUnaccented.match(/PARAMOUNT/)) return '⛰️ Paramount+';
   if (nUnaccented.match(/ATRESPLAYER|RTVE|MITELE|SKYSHOWTIME/)) return '📺 Nacionales / Otras Apps';
-  if (nUnaccented.match(/TURCA|TURKISH|NOVELA/)) return '🇹🇷 Telenovelas y Turcas';
   if (nUnaccented.match(/INFANTIL|KIDS|ANIMACION|ANIMATION|FAMILIA|BARN|DZIECI|CARTOON|ANIME|MANGA/)) return '🦄 Infantil y Animación';
   if (nUnaccented.match(/ANIME|MANGA/)) return '🎌 Anime';
   if (nUnaccented.match(/DOCUMENTAL|DOCUMENTARY|DOCU|HISTORIA|HISTORY|NATURE|NATURALEZA/)) return '🌍 Documentales';

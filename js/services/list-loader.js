@@ -162,6 +162,11 @@ export function createListLoader() {
     Playlist.clearGroupCache();
     const channels = Store.peek('channels') || [];
     Store.set('groups', Playlist.getGroups(channels));
+    const expandedFolders = Store.get('expandedFolders') || {};
+    if (!Object.prototype.hasOwnProperty.call(expandedFolders, '__folder_plataformas__')) {
+      expandedFolders['__folder_plataformas__'] = false;
+      Store.set('expandedFolders', expandedFolders);
+    }
     Store.set('currentGroup', '__all__');
     Store.set('groupIdx', 0);
     Favorites.init();

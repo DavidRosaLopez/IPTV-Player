@@ -521,7 +521,7 @@ html, body {
 }
 .group-item.group-child {
   padding-left: 40px;
-  font-size: 14px;
+  font-size: 18px;
   border-left: 2px solid transparent; /* Override left border for children so it aligns */
 }
 .group-item.folder-item {

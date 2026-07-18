@@ -55,11 +55,35 @@ export const Playlist = (() => {
     return n.includes('4k / uhd') || n.includes('4k uhd') || n.includes('series en 4k') || n.includes('calidad 4k');
   }
 
-  function _vodSeriesGroupRank(name) {
-    if (_isLatestGroup(name)) return 0;
-    if (_is4kGroup(name)) return 1;
-    if (_isOtrasGroup(name)) return 99;
-    return 10;
+  function _isPlatformGroup(name) {
+    return ['netflix', 'hbo max', 'amazon prime', 'disney+', 'apple tv+', 'movistar+', 'paramount+']
+      .includes(_groupSortKey(name));
+  }
+
+  function _vodSeriesGroupRank(name, tabId) {
+    const n = _groupSortKey(name);
+    if (n === 'ultimos estrenos') return 0;
+    if (n === 'calidad 4k / uhd' || n === 'series en 4k / uhd') return 1;
+    if (n === 'plataformas') return 2;
+    if (n === 'nacionales / otras apps') return 3;
+    if (tabId === 'series' && n === 'telenovelas y turcas') return 4;
+    if (n === 'infantil y animacion') return 5;
+    if (tabId === 'series' && n === 'anime') return 6;
+    if (n === 'accion y aventuras') return 7;
+    if (n === 'ciencia ficcion y fantasia') return 8;
+    if (n === 'comedia') return 9;
+    if (n === 'terror y suspense') return 10;
+    if (n === 'drama y romance') return 11;
+    if (n === 'documentales') return 12;
+    if (tabId === 'vod' && n === 'clasicos y colecciones') return 13;
+    if (n === 'musica y conciertos') return 14;
+    if (tabId === 'vod' && n === 'western') return 15;
+    if (tabId === 'vod' && n === 'especial navidad') return 16;
+    if (tabId === 'vod' && n === 'deportes en diferido') return 17;
+    if (tabId === 'series' && n === 'reality shows') return 13;
+    if (tabId === 'series' && n === 'series generales') return 99;
+    if (_isOtrasGroup(name)) return 999;
+    return 50;
   }
 
   function _recencyKey(ch) {
@@ -151,21 +175,62 @@ export const Playlist = (() => {
 
       const dynamicGroups = Array.from(seen.values())
         .sort((a, b) => {
-          const rankA = _vodSeriesGroupRank(a.group);
-          const rankB = _vodSeriesGroupRank(b.group);
+          const rankA = _vodSeriesGroupRank(a.group, tabId);
+          const rankB = _vodSeriesGroupRank(b.group, tabId);
           if (rankA !== rankB) return rankA - rankB;
           if (b.score !== a.score) return b.score - a.score;
           return _groupSortKey(a.group).localeCompare(_groupSortKey(b.group), 'es');
         })
         .map(g => ({ id: g.group, name: g.group }));
 
-      const others = dynamicGroups.filter(g => _isOtrasGroup(g.name));
-      const rest = dynamicGroups.filter(g => !_isOtrasGroup(g.name));
-      const latest = rest.filter(g => _isLatestGroup(g.name));
-      const k4 = rest.filter(g => _is4kGroup(g.name) && !_isLatestGroup(g.name));
-      const middle = rest.filter(g => !_isLatestGroup(g.name) && !_is4kGroup(g.name));
+      const platformFolder = { id: '__folder_plataformas__', name: '🍿 Plataformas', isFolder: true };
+      const platformChildren = new Set(['🟥 Netflix', '🟣 HBO Max', '🟦 Amazon Prime', '✨ Disney+', '🍏 Apple TV+', 'Ⓜ️ Movistar+', '⛰️ Paramount+']);
+      const withParents = dynamicGroups.map(g => (platformChildren.has(g.name) ? { ...g, parentId: platformFolder.id } : g));
+      const groups = [];
+      const used = new Set();
+      const push = (g) => {
+        if (!g || used.has(g.id)) return;
+        used.add(g.id);
+        groups.push(g);
+      };
+      const pushBy = (label) => withParents.filter(g => _groupSortKey(g.name) === label).forEach(push);
 
-      const groups = [...staticGroups, ...latest, ...k4, ...middle, ...others];
+      staticGroups.forEach(push);
+      pushBy('ultimos estrenos');
+      pushBy('calidad 4k / uhd');
+      push(platformFolder);
+      withParents.filter(g => g.parentId === platformFolder.id).forEach(push);
+
+      if (tabId === 'series') {
+        pushBy('nacionales / otras apps');
+        pushBy('infantil y animacion');
+        pushBy('anime');
+        pushBy('documentales');
+        pushBy('reality shows');
+        pushBy('accion y aventuras');
+        pushBy('ciencia ficcion y fantasia');
+        pushBy('comedia');
+        pushBy('terror y suspense');
+        pushBy('drama y romance');
+        pushBy('musica y conciertos');
+        pushBy('series generales');
+      } else {
+        pushBy('nacionales / otras apps');
+        pushBy('infantil y animacion');
+        pushBy('accion y aventuras');
+        pushBy('ciencia ficcion y fantasia');
+        pushBy('comedia');
+        pushBy('terror y suspense');
+        pushBy('drama y romance');
+        pushBy('documentales');
+        pushBy('clasicos y colecciones');
+        pushBy('musica y conciertos');
+        pushBy('western');
+        pushBy('especial navidad');
+        pushBy('deportes en diferido');
+      }
+      if (tabId === 'vod') pushBy('otras');
+
       cache.set(cacheKey, groups);
       return groups;
     }
