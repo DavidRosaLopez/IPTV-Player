@@ -521,6 +521,18 @@ export const VirtualList = (() => {
       }
     }
   }
+
+  function refreshFavoriteBadges() {
+    if (!_container) return;
+    for (const key in _domCache) {
+      const i = parseInt(key);
+      const el = _domCache[key];
+      const ch = _items[i];
+      if (!ch) continue;
+      const fav = _ensureRefs(el)._favBadge;
+      if (fav) fav.style.display = _getFavBadge && _getFavBadge(ch.id) ? '' : 'none';
+    }
+  }
   function _unfocus(idx) {
     const el = _domCache[idx];
     if (el) el.classList.remove('focused');
@@ -597,5 +609,5 @@ export const VirtualList = (() => {
     return /^(https?:|data:image\/)/i.test(url) ? url : '';
   }
 
-  return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, refreshVisible };
+  return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, refreshVisible, refreshFavoriteBadges };
 })();

@@ -617,7 +617,7 @@ export const ViewChannels = (() => {
   function refreshUI() {
     _updateGroupCounts();
     if (typeof VirtualList !== 'undefined') {
-      VirtualList.refreshVisible();
+      VirtualList.refreshFavoriteBadges();
     }
   }
 

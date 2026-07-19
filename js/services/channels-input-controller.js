@@ -71,7 +71,7 @@ export function createChannelsInputController(deps) {
           Favorites.toggle(ch.id);
           deps.updateGroupCounts();
           if (deps.getCurrentGroup() === '__favs__') deps.renderChannels();
-          else VirtualList.refreshVisible();
+          else VirtualList.refreshFavoriteBadges();
         }
       }
       return true;
