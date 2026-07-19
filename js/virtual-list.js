@@ -254,6 +254,10 @@ export const VirtualList = (() => {
 
   function _showMediaImage(img, el) {
     if (!img) return;
+    const targetSrc = img.dataset.targetSrc;
+    if (!img.getAttribute('src') && targetSrc) {
+      img.src = targetSrc;
+    }
     img.style.display = '';
     if (el) _hideMediaFallback(el);
   }
