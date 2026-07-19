@@ -242,8 +242,7 @@ export const VirtualList = (() => {
     img.dataset.logoPriority = '3';
     img.dataset.logoGen = String(ImageQueue.getGeneration());
     img.onload = () => {
-      img.style.display = '';
-      if (el) _hideMediaFallback(el);
+      _showMediaImage(img, el);
     };
     img.onerror = () => {
       img.dataset.targetSrc = '';
@@ -251,6 +250,12 @@ export const VirtualList = (() => {
     };
     if (img.getAttribute('src') !== src) img.src = src;
     img.style.display = '';
+  }
+
+  function _showMediaImage(img, el) {
+    if (!img) return;
+    img.style.display = '';
+    if (el) _hideMediaFallback(el);
   }
 
   function _setFallbackIcon(el) {
@@ -419,7 +424,7 @@ export const VirtualList = (() => {
           if (_layout === 'poster') _applyDirectLogo(img, src);
           else if (_needsLogoRetry(img, src)) _queueLogo(img, src, i);
           if (_needsLogoRetry(img, src)) _showLoadingFallback(el);
-          else img.style.display = '';
+          else _showMediaImage(img, el);
         } else {
           img.removeAttribute('src');
           img.dataset.targetSrc = '';
@@ -481,7 +486,7 @@ export const VirtualList = (() => {
               _queueLogo(img, src, i);
             }
             if (_layout !== 'poster' && _needsLogoRetry(img, src)) _showLoadingFallback(el);
-            else img.style.display = '';
+            else _showMediaImage(img, el);
           }
         } else {
           img.removeAttribute('src');
@@ -577,7 +582,7 @@ export const VirtualList = (() => {
         if (_layout === 'poster') _applyDirectLogo(img, src);
         else if (_needsLogoRetry(img, src)) {
           _queueLogo(img, src, i);
-          img.style.display = '';
+          _showMediaImage(img, el);
         }
       }
     }
