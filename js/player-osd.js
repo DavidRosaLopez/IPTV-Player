@@ -23,11 +23,7 @@ export const PlayerOSD = (() => {
     }
 
     const num = document.getElementById('osd-num');
-    if (num) {
-      const idx = (typeof VirtualList !== 'undefined') ? VirtualList.getFocused() + 1 : currentCh.num;
-      if (idx) { num.textContent = idx; num.style.display = 'inline-block'; }
-      else { num.style.display = 'none'; }
-    }
+    if (num) num.style.display = 'none';
 
     const name = document.getElementById('osd-name');
     if (name) name.textContent = currentCh.name || '';
