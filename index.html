@@ -218,6 +218,7 @@
         <div class="vod-osd-bottom">
           <div class="vod-controls-row">
             <button id="btn-vod-audio" class="vod-btn"><span class="material-symbols-rounded">chat</span> Audio</button>
+            <button id="btn-vod-subs" class="vod-btn hidden"><span class="material-symbols-rounded">subtitles</span> Subtítulos</button>
             <button id="btn-vod-restart" class="vod-btn hidden"><span class="material-symbols-rounded">replay</span> Reiniciar</button>
             <button id="btn-vod-next" class="vod-btn hidden"><span class="material-symbols-rounded">skip_next</span> Siguiente Cap.</button>
           </div>
@@ -241,6 +242,14 @@
           <div class="vod-audio-menu-content">
             <h3>Pistas de Audio</h3>
             <ul id="vod-audio-list" class="vod-audio-list"></ul>
+          </div>
+        </div>
+
+        <!-- Menu de Subtitulos -->
+        <div id="vod-subs-menu" class="vod-audio-menu hidden">
+          <div class="vod-audio-menu-content">
+            <h3>Subtítulos</h3>
+            <ul id="vod-subs-list" class="vod-audio-list"></ul>
           </div>
         </div>
       </div>

@@ -1,16 +1,20 @@
 import { InfoPopup } from './info-popup.js';
 
+import { InfoPopup } from './info-popup.js';
+
 
 export const VodOSD = (() => {
   let _player = null;
   let _timer = null;
   let _progressTimer = null;
   let _isVisible = false;
-  let _focusState = 'default'; // 'default' | 'btn-audio' | 'audio-menu'
-  let _btnIdx = 0; // 0=audio, 1=restart, 2=next
+  let _focusState = 'default'; // 'default' | 'btn-audio' | 'audio-menu' | 'subs-menu'
+  let _btnIdx = 0; // 0=audio, 1=subs, 2=restart, 3=next
   let _visibleBtns = [];
   let _audioTracks = [];
   let _audioIdx = 0;
+  let _subsTracks = [];
+  let _subsIdx = 0;
   
   let _lastSeekTime = 0;
   let _seekVelocity = 0; // 0=parado, 1=3s, 2=5s, 3=10s, 4=30s, 5=60s
@@ -35,12 +39,18 @@ export const VodOSD = (() => {
     document.getElementById('vod-title').textContent = currentCh.name || 'Sin título';
     
     const btnAudio = document.getElementById('btn-vod-audio');
+    const btnSubs = document.getElementById('btn-vod-subs');
     const btnRestart = document.getElementById('btn-vod-restart');
     const btnNext = document.getElementById('btn-vod-next');
     
     _visibleBtns = ['btn-vod-audio'];
     
     if (btnAudio) btnAudio.classList.remove('focused');
+    if (btnSubs) {
+       btnSubs.classList.remove('focused');
+       btnSubs.classList.remove('hidden');
+       _visibleBtns.push('btn-vod-subs');
+    }
     if (btnRestart) {
        btnRestart.classList.remove('focused');
        btnRestart.classList.remove('hidden');
@@ -61,6 +71,8 @@ export const VodOSD = (() => {
     
     const audioMenu = document.getElementById('vod-audio-menu');
     if (audioMenu) audioMenu.classList.add('hidden');
+    const subsMenu = document.getElementById('vod-subs-menu');
+    if (subsMenu) subsMenu.classList.add('hidden');
 
     _updateProgress();
     _startProgressTimer();
@@ -75,6 +87,8 @@ export const VodOSD = (() => {
     if (osd) osd.classList.add('hidden');
     const audioMenu = document.getElementById('vod-audio-menu');
     if (audioMenu) audioMenu.classList.add('hidden');
+    const subsMenu = document.getElementById('vod-subs-menu');
+    if (subsMenu) subsMenu.classList.add('hidden');
     clearTimeout(_timer);
     clearInterval(_progressTimer);
   }
@@ -89,7 +103,7 @@ export const VodOSD = (() => {
   function _resetHideTimer() {
     clearTimeout(_timer);
     // Don't auto-hide if menu is open
-    if (_focusState === 'audio-menu') return;
+    if (_focusState === 'audio-menu' || _focusState === 'subs-menu') return;
     
     _timer = setTimeout(() => {
       if (_player && _player.getState() === 'PLAYING') {
@@ -149,7 +163,7 @@ export const VodOSD = (() => {
       }
       if (key === 'ENTER') {
         const track = _audioTracks[_audioIdx];
-        if (track && track.index !== -1) {
+        if (track && track.index !== undefined) {
           _player.setAudioTrack(track.index);
         }
         _closeAudioMenu();
@@ -157,6 +171,32 @@ export const VodOSD = (() => {
       }
       if (key === 'BACK' || key === 'LEFT' || key === 'RIGHT') {
         _closeAudioMenu();
+        return true;
+      }
+      return true;
+    }
+
+    if (_focusState === 'subs-menu') {
+      if (key === 'UP') {
+        _subsIdx = Math.max(0, _subsIdx - 1);
+        _renderSubsMenu();
+        return true;
+      }
+      if (key === 'DOWN') {
+        _subsIdx = Math.min(_subsTracks.length - 1, _subsIdx + 1);
+        _renderSubsMenu();
+        return true;
+      }
+      if (key === 'ENTER') {
+        const track = _subsTracks[_subsIdx];
+        if (track && track.index !== undefined) {
+          _player.setSubtitleTrack(track.index);
+        }
+        _closeSubsMenu();
+        return true;
+      }
+      if (key === 'BACK' || key === 'LEFT' || key === 'RIGHT') {
+        _closeSubsMenu();
         return true;
       }
       return true;
@@ -182,6 +222,8 @@ export const VodOSD = (() => {
         const activeId = _visibleBtns[_btnIdx];
         if (activeId === 'btn-vod-audio') {
            _openAudioMenu();
+        } else if (activeId === 'btn-vod-subs') {
+           _openSubsMenu();
         } else if (activeId === 'btn-vod-restart') {
            if (_player) _player.seekTo(0);
            hide();
@@ -321,6 +363,59 @@ export const VodOSD = (() => {
     } else {
       list.scrollTop = 0;
     }
+  }
+
+  function _openSubsMenu() {
+    if (!_player) return;
+    _subsTracks = _player.getSubtitleTracks() || [];
+    const current = _player.getCurrentSubtitleTrack();
+    
+    _subsTracks.unshift({ index: -1, extra_info: { language: 'Desactivados' } });
+
+    _subsIdx = 0;
+    if (current) {
+      const idx = _subsTracks.findIndex(t => t.index === current.index);
+      if (idx !== -1) _subsIdx = idx;
+    }
+
+    _focusState = 'subs-menu';
+    document.getElementById('vod-subs-menu')?.classList.remove('hidden');
+    _renderSubsMenu();
+  }
+
+  function _closeSubsMenu() {
+    _focusState = 'btn-audio';
+    document.getElementById('vod-subs-menu')?.classList.add('hidden');
+    _updateBtnFocus();
+    _resetHideTimer();
+  }
+
+  function _renderSubsMenu() {
+    const list = document.getElementById('vod-subs-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    const current = _player ? _player.getCurrentSubtitleTrack() : null;
+    
+    _subsTracks.forEach((t, i) => {
+      const li = document.createElement('li');
+      li.className = 'vod-audio-item' + (i === _subsIdx ? ' focused' : '');
+      if ((!current && t.index === -1) || (current && current.index === t.index)) li.classList.add('active');
+      
+      const lang = _getTrackLabel(t, i === 0 ? 0 : i - 1);
+      
+      const label = document.createElement('span');
+      label.textContent = lang;
+      li.appendChild(label);
+      if ((!current && t.index === -1) || (current && current.index === t.index)) {
+         const check = document.createElement('span');
+         check.className = 'material-symbols-rounded';
+         check.textContent = 'check';
+         li.appendChild(check);
+      }
+      
+      list.appendChild(li);
+    });
   }
 
   function isVisible() {
