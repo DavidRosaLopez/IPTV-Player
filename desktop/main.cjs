@@ -7,6 +7,7 @@ function createWindow() {
     height: 900,
     backgroundColor: '#0f1115',
     autoHideMenuBar: true,
+    icon: path.join(app.getAppPath(), 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

@@ -19,8 +19,10 @@
   "build": {
     "appId": "com.drosalop.iptvplayer",
     "productName": "IPTV Player",
+    "icon": "build/icon.ico",
     "asar": true,
     "files": [
+      "build/**/*",
       "index.html",
       "css/**/*",
       "img/**/*",
@@ -31,6 +33,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "build/icon.ico",
       "signAndEditExecutable": false,
       "signDlls": false,
       "target": [
