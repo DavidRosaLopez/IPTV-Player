@@ -1,7 +1,5 @@
 import { InfoPopup } from './info-popup.js';
 
-import { InfoPopup } from './info-popup.js';
-
 
 export const VodOSD = (() => {
   let _player = null;
@@ -280,6 +278,36 @@ export const VodOSD = (() => {
     return '';
   }
 
+  function _normalizeTrackName(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return '';
+
+    const mapped = _labelFromText(raw);
+    if (mapped) return mapped;
+
+    if (/^[a-z]{2,3}([-_][a-z0-9]+)?$/i.test(raw)) {
+      const code = raw.split(/[-_]/)[0].toLowerCase();
+      const codeMap = {
+        es: 'Español',
+        spa: 'Español',
+        esp: 'Español',
+        en: 'Inglés',
+        eng: 'Inglés',
+        pt: 'Portugués',
+        por: 'Portugués',
+        fr: 'Francés',
+        fra: 'Francés',
+        it: 'Italiano',
+        ita: 'Italiano',
+        de: 'Alemán',
+        ger: 'Alemán'
+      };
+      if (codeMap[code]) return codeMap[code];
+    }
+
+    return raw;
+  }
+
   function _getTrackLabel(track, index) {
     let info = track?.extra_info || {};
     if (typeof info === 'string') {
@@ -289,9 +317,24 @@ export const VodOSD = (() => {
         info = { language: info };
       }
     }
-    const candidates = [info.language, info.track_lang, info.lang, track?.language, track?.lang, track?.title, track?.name];
+    const candidates = [
+      info.language,
+      info.track_lang,
+      info.lang,
+      info.title,
+      info.name,
+      info.label,
+      info.display_name,
+      track?.language,
+      track?.lang,
+      track?.title,
+      track?.name,
+      track?.label,
+      track?.description,
+      track?.display_name
+    ];
     const raw = candidates.find(v => String(v || '').trim()) || '';
-    if (raw) return String(raw).trim();
+    if (raw) return _normalizeTrackName(raw);
     return `Pista ${index + 1}`;
   }
 

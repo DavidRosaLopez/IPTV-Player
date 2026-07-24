@@ -718,12 +718,34 @@
       } catch (e) { return null; }
     }
 
+    function getSubtitleTracks() {
+      try {
+        if (typeof webapis === 'undefined' || !webapis.avplay.getTotalTrackInfo) return [];
+        const tracks = webapis.avplay.getTotalTrackInfo() || [];
+        return tracks.filter(t => t.type === 'TEXT').map(_normalizeTrackInfo);
+      } catch (e) { return []; }
+    }
+    function setSubtitleTrack(index) {
+      try {
+        if (typeof webapis !== 'undefined' && webapis.avplay.setSelectTrack) {
+          webapis.avplay.setSelectTrack('TEXT', index);
+        }
+      } catch (e) { }
+    }
+    function getCurrentSubtitleTrack() {
+      try {
+        if (typeof webapis === 'undefined' || !webapis.avplay.getCurrentStreamInfo) return null;
+        const current = webapis.avplay.getCurrentStreamInfo() || [];
+        return _normalizeTrackInfo(current.find(t => t.type === 'TEXT'));
+      } catch (e) { return null; }
+    }
+
     function getCurrent() { return _current; }
     function getState() { return _state; }
     function getMode() { return _mode; }
     function reapplyPip() { if (_mode === 'PIP') _applyDisplayRect(); }
     function _isActive() { return document.getElementById('view-player')?.classList.contains('active'); }
 
-    return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack };
+    return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack, getSubtitleTracks, setSubtitleTrack, getCurrentSubtitleTrack };
   })();
 
