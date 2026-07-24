@@ -211,7 +211,7 @@ export function createListLoader() {
       })();
     }
 
-    if (fromCache && _shouldCheckUpdate(list.id)) {
+    if (fromCache) {
       if (_syncTimer) clearTimeout(_syncTimer);
       _syncTimer = setTimeout(() => {
         _syncTimer = null;
@@ -242,34 +242,22 @@ export function createListLoader() {
     });
   }
 
-  function _shouldCheckUpdate(listId) {
-    const lastSync = localStorage.getItem(`sync_${listId}`) || 0;
-    const hoursSince = (Date.now() - parseInt(lastSync)) / (1000 * 60 * 60);
-    return hoursSince > 12;
-  }
+
 
   async function _backgroundSync(list) {
-    if (Player.getMode() !== 'IDLE') {
-      if (_syncTimer) clearTimeout(_syncTimer);
-      _syncTimer = setTimeout(() => { _syncTimer = null; _backgroundSync(list); }, 30000);
-      return;
-    }
-    if (document.hidden || !Router.isView('channels')) return;
     const controller = new AbortController();
     try {
       const newChannels = (await ensureTabData('tv', list, controller.signal, () => {}, { forceReload: true })) || [];
-
       if (controller.signal.aborted) return;
       if (newChannels.length > 0) {
         Store.set('channels', newChannels);
-        localStorage.setItem(`sync_${list.id}`, Date.now().toString());
         Playlist.clearGroupCache();
         Store.set('groups', Playlist.getGroups(newChannels, Store.peek('currentCountry') || 'ALL', 'tv'));
         if (Router.isView('channels')) {
           ViewChannels.renderGroups();
           ViewChannels.renderChannels();
         }
-        Router.showToast('Lista actualizada en segundo plano', 'success');
+        Router.showToast('Lista actualizada', 'success');
       }
     } catch (e) {
       if (e.name !== 'AbortError') console.warn('Background Sync Fallido:', e);
