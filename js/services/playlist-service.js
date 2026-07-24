@@ -260,6 +260,7 @@ export async function loadXtream(server, user, pass, onProgress, signal) {
     countryCode: detectCountry(s.name, catMap[s.category_id] || 'Sin categoría'),
     url: _buildLiveUrl(server, user, pass, s.stream_id),
     streamId: s.stream_id,
+    epgChannelId: s.epg_channel_id || s.epg_id || s.epgId || s.tvg_id || null,
     streamMeta: _detectStreamMeta(s.name, catMap[s.category_id], s.stream_type, s.container_extension, s.direct_source)
   }));
   if (onProgress) onProgress(100);

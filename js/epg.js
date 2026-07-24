@@ -8,28 +8,42 @@ import { Store } from './store.js';
 
 export const EPG = (() => {
   const EPG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-  const _epgCache = new Map(); // streamId → { data, ts }
+  const _epgCache = new Map(); // epg key → { data, ts }
 
   async function fetchRealEpg(ch) {
-    if (!ch || !ch.streamId) return null;
+    if (!ch) return null;
     if (typeof Store === 'undefined') return null;
     const list = Store.peek('currentList');
     if (!list || list.type !== 'xtream') return null;
 
-    const cacheEntry = _epgCache.get(ch.streamId);
-    if (cacheEntry && (Date.now() - cacheEntry.ts) < EPG_CACHE_TTL) {
-      return cacheEntry.data;
+    const candidates = [...new Set([
+      ch.epgChannelId,
+      ch.epg_id,
+      ch.epgId,
+      ch.tvgId,
+      ch.streamId
+    ].filter(Boolean).map(v => String(v)) )];
+    if (candidates.length === 0) return null;
+
+    for (const candidate of candidates) {
+      const cacheEntry = _epgCache.get(candidate);
+      if (cacheEntry && (Date.now() - cacheEntry.ts) < EPG_CACHE_TTL) {
+        return cacheEntry.data;
+      }
     }
     
     try {
-      const url = `${list.server}/player_api.php?username=${encodeURIComponent(list.user)}&password=${encodeURIComponent(list.pass)}&action=get_short_epg&stream_id=${ch.streamId}`;
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data || !data.epg_listings || data.epg_listings.length === 0) return null;
-      
-      _epgCache.set(ch.streamId, { data: data.epg_listings, ts: Date.now() });
-      return data.epg_listings;
+      for (const candidate of candidates) {
+        const url = `${list.server}/player_api.php?username=${encodeURIComponent(list.user)}&password=${encodeURIComponent(list.pass)}&action=get_short_epg&stream_id=${encodeURIComponent(candidate)}`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const listings = data?.epg_listings || data?.epg || data?.results || [];
+        if (!Array.isArray(listings) || listings.length === 0) continue;
+        _epgCache.set(candidate, { data: listings, ts: Date.now() });
+        return listings;
+      }
+      return null;
     } catch (e) {
       console.error('Error fetching real EPG', e);
       return null;
