@@ -1,4 +1,5 @@
 import { normalizeCountryCode } from '../countries.js';
+import { Platform } from '../platform.js';
 
 function _normalize(str) {
   return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -20,6 +21,11 @@ function _normalizeMediaUrl(base, value) {
   } catch (e) {
     return '';
   }
+}
+
+function _buildLiveUrl(server, user, pass, streamId) {
+  const ext = Platform.isWindows ? 'm3u8' : 'ts';
+  return `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${streamId}.${ext}`;
 }
 
 const _countryDetectCache = new Map();
@@ -252,7 +258,7 @@ export async function loadXtream(server, user, pass, onProgress, signal) {
     logo: _normalizeMediaUrl(server, s.stream_icon),
     group: _cleanTvCategoryName(catMap[s.category_id]),
     countryCode: detectCountry(s.name, catMap[s.category_id] || 'Sin categoría'),
-    url: `${server}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.ts`,
+    url: _buildLiveUrl(server, user, pass, s.stream_id),
     streamId: s.stream_id,
     streamMeta: _detectStreamMeta(s.name, catMap[s.category_id], s.stream_type, s.container_extension, s.direct_source)
   }));

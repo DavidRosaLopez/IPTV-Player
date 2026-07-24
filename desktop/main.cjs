@@ -1,10 +1,14 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 
 function createWindow() {
+  const display = screen.getPrimaryDisplay();
+  const { width, height } = display.workAreaSize;
   const win = new BrowserWindow({
-    width: 1600,
-    height: 900,
+    width,
+    height,
+    useContentSize: true,
+    fullscreen: true,
     backgroundColor: '#0f1115',
     autoHideMenuBar: true,
     icon: path.join(app.getAppPath(), 'build', 'icon.ico'),

@@ -40,6 +40,7 @@ export const KeyHandler = (() => {
 
     document.addEventListener('keydown', _handleKeyDown);
     document.addEventListener('keyup', _handleKeyUp);
+    document.addEventListener('iptv-back', () => _dispatch(KEYS.BACK, { preventDefault: () => {}, stopPropagation: () => {} }));
   }
 
   let _okTimeout = null;

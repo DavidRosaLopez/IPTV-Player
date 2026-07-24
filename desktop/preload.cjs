@@ -3,6 +3,26 @@ const Hls = require('hls.js');
 
 const HlsCtor = Hls?.default || Hls;
 
+function emitBack() {
+  document.dispatchEvent(new Event('iptv-back'));
+}
+
+function bindDesktopBackGestures() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      e.preventDefault();
+      e.stopPropagation();
+      emitBack();
+    }
+  }, true);
+
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    emitBack();
+  }, true);
+}
+
 function createAvPlayShim() {
   let video = null;
   let hls = null;
@@ -102,6 +122,14 @@ function createAvPlayShim() {
     hls = null;
   };
 
+  const toWindowsCandidateUrls = (url) => {
+    const urls = [url];
+    if (/\.ts(\?|#|$)/i.test(url)) {
+      urls.unshift(url.replace(/\.ts(\?|#|$)/i, '.m3u8$1'));
+    }
+    return [...new Set(urls)];
+  };
+
   const attachSource = url => {
     const el = ensureVideo();
     if (!el) return;
@@ -111,7 +139,8 @@ function createAvPlayShim() {
     el.removeAttribute('src');
     el.load();
 
-    const isHls = /\.m3u8(\?|#|$)/i.test(url);
+    const candidates = toWindowsCandidateUrls(url);
+    const isHls = /\.m3u8(\?|#|$)/i.test(candidates[0]);
     const canPlayNativeHls = typeof el.canPlayType === 'function'
       && (el.canPlayType('application/vnd.apple.mpegurl') || el.canPlayType('application/x-mpegURL'));
 
@@ -129,11 +158,11 @@ function createAvPlayShim() {
         if (data?.fatal) listener.onerror?.(data);
       });
       hls.attachMedia(el);
-      hls.loadSource(url);
+      hls.loadSource(candidates[0]);
       return;
     }
 
-    el.src = url;
+    el.src = candidates[0];
   };
 
   const currentTimeMs = () => Math.max(0, Math.floor((video?.currentTime || 0) * 1000));
@@ -283,3 +312,5 @@ window.addEventListener('DOMContentLoaded', () => {
   video.style.objectFit = 'contain';
   layer.replaceChildren(video);
 });
+
+bindDesktopBackGestures();
