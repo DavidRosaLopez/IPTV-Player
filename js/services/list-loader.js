@@ -159,9 +159,14 @@ export function createListLoader() {
   }
 
   async function _afterLoad(list, fromCache = false) {
+    const yieldThread = () => new Promise(r => setTimeout(r, 50));
+
     Playlist.clearGroupCache();
     const channels = Store.peek('channels') || [];
+    
+    await yieldThread(); // Ceder UI antes de getGroups
     Store.set('groups', Playlist.getGroups(channels));
+    
     const expandedFolders = Storage.get(`expandedFolders_${Store.peek('currentTab') || 'tv'}`) || {};
     if (!Object.prototype.hasOwnProperty.call(expandedFolders, '__folder_plataformas__')) {
       expandedFolders['__folder_plataformas__'] = false;
@@ -172,6 +177,8 @@ export function createListLoader() {
     Favorites.init();
 
     Router.hideLoading();
+    
+    await yieldThread(); // Ceder UI antes de Search.init
     Search.init(channels);
     Player.init(dir => {
       if (typeof ViewChannels !== 'undefined') ViewChannels.playChannelRelative(dir);
@@ -179,6 +186,7 @@ export function createListLoader() {
 
     Router.showView('channels');
 
+    await yieldThread(); // Ceder UI antes de renderGroups/Channels
     const lastChannelId = Storage.getLastChannel(list.id);
     if (lastChannelId) {
       const ch = channels.find(c => c.id === lastChannelId);
