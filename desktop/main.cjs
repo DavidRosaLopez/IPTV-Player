@@ -10,7 +10,9 @@ function createWindow() {
     width,
     height,
     useContentSize: true,
-    fullscreen: true,
+    fullscreen: false,
+    maximizable: true,
+    resizable: true,
     backgroundColor: '#0f1115',
     autoHideMenuBar: true,
     icon: path.join(app.getAppPath(), 'build', 'icon.ico'),
@@ -21,6 +23,10 @@ function createWindow() {
       sandbox: false,
       backgroundThrottling: false
     }
+  });
+
+  win.once('ready-to-show', () => {
+    win.maximize();
   });
 
   win.loadFile(path.join(app.getAppPath(), 'index.html'));

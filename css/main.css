@@ -56,6 +56,12 @@ body.platform-windows #app {
   height: 100vh;
 }
 
+html.platform-windows,
+body.platform-windows {
+  width: 100vw;
+  height: 100vh;
+}
+
 /* ── VIEWS ── */
 .view { 
   position: absolute; inset: 0; 
