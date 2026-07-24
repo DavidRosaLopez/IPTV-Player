@@ -149,8 +149,14 @@ function _sortByGroupThenRecency(a, b) {
   return String(a.name || '').localeCompare(String(b.name || ''), 'es');
 }
 
+function _is4kName(name) {
+  return /\b(4K|UHD|2160P|3840P|8K)\b/i.test(String(name || ''));
+}
+
+
 function _detectStreamMeta(...values) {
   const raw = values.filter(Boolean).join(' ').toUpperCase();
+
   const heightMatch = raw.match(/\b(4320|2160|1440|1080|720|576|480)P?\b/);
   const height = heightMatch ? parseInt(heightMatch[1], 10) : 0;
   const is8K = /\b(8K|4320P?)\b/.test(raw) || height >= 4320;
@@ -277,7 +283,7 @@ export async function loadVod(server, user, pass, onProgress, signal) {
   const movies = streamsWithKeys.map(s => {
     const meta = _detectStreamMeta(s.name, catMap[s.category_id], s.container_extension, s.stream_type);
     const rawGroup = _cleanVodCategoryName(catMap[s.category_id]);
-    const group = rawGroup === '➕ Otras' && (meta.quality === 'uhd' || meta.quality === '8k') ? '💎 4K / UHD' : rawGroup;
+    const group = _is4kName(s.name) ? '💎 4K / UHD' : rawGroup;
     return {
       id: `vod_${s.stream_id}`,
       name: s.name?.trim() || '',
@@ -320,7 +326,7 @@ export async function loadSeries(server, user, pass, onProgress, signal) {
   const series = seriesWithKeys.map(s => {
     const meta2 = _detectStreamMeta(s.name, catMap[s.category_id]);
     const rawGroup2 = _cleanSeriesCategoryName(catMap[s.category_id]);
-    const group2 = rawGroup2 === '📺 Series Generales' && (meta2.quality === 'uhd' || meta2.quality === '8k') ? '💎 4K / UHD' : rawGroup2;
+    const group2 = _is4kName(s.name) ? '💎 4K / UHD' : rawGroup2;
     return {
       id: `series_${s.series_id}`,
       name: s.name?.trim() || '',
