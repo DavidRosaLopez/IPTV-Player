@@ -10,6 +10,7 @@ import { getCountryInfo, sortCountryCodes } from './countries.js';
 
 export const ViewSetup = (() => {
   let _setupEventsBound = false;
+  let _exitPopupBound = false;
   let _setupZone = 'tabs'; // 'tabs' | 'content' | 'exit'
   let _setupTabIdx = 0;
   let _setupContentIdx = 0;
@@ -92,6 +93,37 @@ export const ViewSetup = (() => {
     const confirm = document.getElementById('btn-exit-confirm');
     if (cancel) cancel.classList.toggle('focused', _exitFocusIdx === 0);
     if (confirm) confirm.classList.toggle('focused', _exitFocusIdx === 1);
+  }
+
+  function _requestAppExit() {
+    try {
+      if (window.tizen?.application?.getCurrentApplication) {
+        window.tizen.application.getCurrentApplication().exit();
+        return;
+      }
+    } catch {}
+    window.close();
+  }
+
+  function _bindExitPopupClicks() {
+    if (_exitPopupBound) return;
+    _exitPopupBound = true;
+    const el = document.getElementById('exit-popup');
+    const cancel = document.getElementById('btn-exit-cancel');
+    const confirm = document.getElementById('btn-exit-confirm');
+    cancel?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      _hideExitPopup();
+    });
+    confirm?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      _requestAppExit();
+    });
+    el?.addEventListener('click', (e) => {
+      if (e.target === el) _hideExitPopup();
+    });
   }
 
   function _switchTab(tab) {
@@ -478,6 +510,7 @@ export const ViewSetup = (() => {
   function onShow() {
     _renderSavedLists();
     _renderCountrySettings();
+    _bindExitPopupClicks();
 
     const handleRemoteList = (list) => {
       list.id = list.id || _uid();

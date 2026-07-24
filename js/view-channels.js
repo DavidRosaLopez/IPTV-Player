@@ -36,6 +36,7 @@ export const ViewChannels = (() => {
   let _pendingFocusAfterRender = null;
   let _lastGroupsRenderInput = null;
   let _lastChannelsRenderInput = null;
+  let _exitPopupBound = false;
   const _tabs = createTabViewController({
     virtualList: VirtualList,
     showToast: (...args) => Router.showToast(...args),
@@ -614,6 +615,37 @@ export const ViewChannels = (() => {
     _syncFocusStateFromController();
   }
 
+  function _requestAppExit() {
+    try {
+      if (window.tizen?.application?.getCurrentApplication) {
+        window.tizen.application.getCurrentApplication().exit();
+        return;
+      }
+    } catch {}
+    window.close();
+  }
+
+  function _bindExitPopupClicks() {
+    if (_exitPopupBound) return;
+    _exitPopupBound = true;
+    const el = document.getElementById('exit-popup');
+    const cancel = document.getElementById('btn-exit-cancel');
+    const confirm = document.getElementById('btn-exit-confirm');
+    cancel?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      _hideExitPopup();
+    });
+    confirm?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      _requestAppExit();
+    });
+    el?.addEventListener('click', (e) => {
+      if (e.target === el) _hideExitPopup();
+    });
+  }
+
   function refreshUI() {
     _updateGroupCounts();
     if (typeof VirtualList !== 'undefined') {
@@ -623,6 +655,7 @@ export const ViewChannels = (() => {
 
   function initKeys() {
     _input.init();
+    _bindExitPopupClicks();
   }
 
   
