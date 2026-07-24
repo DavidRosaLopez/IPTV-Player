@@ -49,6 +49,13 @@ html, body {
 
 #app { width: var(--screen-w); height: var(--screen-h); position: relative; }
 
+html.platform-windows,
+body.platform-windows,
+body.platform-windows #app {
+  width: 100vw;
+  height: 100vh;
+}
+
 /* ── VIEWS ── */
 .view { 
   position: absolute; inset: 0; 

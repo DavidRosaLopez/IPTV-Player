@@ -21,23 +21,45 @@ const loader = createListLoader();
 export const App = (() => {
   let _clockTimer = null;
   let _eventsBound = false;
+  let _layoutBound = false;
+
+  function _syncLayoutVars() {
+    const rootStyle = document.documentElement?.style;
+    if (!rootStyle) return;
+
+    const width = Platform.isWindows ? window.innerWidth : DeviceProfile.layoutResolution.width;
+    const height = Platform.isWindows ? window.innerHeight : DeviceProfile.layoutResolution.height;
+    const panelWidth = Platform.isWindows ? window.innerWidth : DeviceProfile.panelResolution.width;
+    const panelHeight = Platform.isWindows ? window.innerHeight : DeviceProfile.panelResolution.height;
+    const panelScaleX = Platform.isWindows ? 1 : DeviceProfile.panelScale.x;
+    const panelScaleY = Platform.isWindows ? 1 : DeviceProfile.panelScale.y;
+
+    rootStyle.setProperty('--screen-w', `${width}px`);
+    rootStyle.setProperty('--screen-h', `${height}px`);
+    rootStyle.setProperty('--panel-w', `${panelWidth}px`);
+    rootStyle.setProperty('--panel-h', `${panelHeight}px`);
+    rootStyle.setProperty('--panel-scale-x', `${panelScaleX}`);
+    rootStyle.setProperty('--panel-scale-y', `${panelScaleY}`);
+    rootStyle.setProperty('--pip-x', `${DeviceProfile.pip.x}px`);
+    rootStyle.setProperty('--pip-y', `${DeviceProfile.pip.y}px`);
+    rootStyle.setProperty('--pip-w', `${DeviceProfile.pip.width}px`);
+    rootStyle.setProperty('--pip-h', `${DeviceProfile.pip.height}px`);
+  }
+
+  function _bindLayoutEvents() {
+    if (_layoutBound) return;
+    _layoutBound = true;
+    window.addEventListener('resize', _syncLayoutVars);
+    window.addEventListener('orientationchange', _syncLayoutVars);
+  }
 
   function init() {
     const rootStyle = document.documentElement?.style;
+    document.documentElement?.classList.add(`platform-${Platform.name}`);
     document.body?.classList.add(`platform-${Platform.name}`);
     if (document.body) document.body.dataset.platform = Platform.name;
-    if (rootStyle) {
-      rootStyle.setProperty('--screen-w', `${DeviceProfile.layoutResolution.width}px`);
-      rootStyle.setProperty('--screen-h', `${DeviceProfile.layoutResolution.height}px`);
-      rootStyle.setProperty('--panel-w', `${DeviceProfile.panelResolution.width}px`);
-      rootStyle.setProperty('--panel-h', `${DeviceProfile.panelResolution.height}px`);
-      rootStyle.setProperty('--panel-scale-x', `${DeviceProfile.panelScale.x}`);
-      rootStyle.setProperty('--panel-scale-y', `${DeviceProfile.panelScale.y}`);
-      rootStyle.setProperty('--pip-x', `${DeviceProfile.pip.x}px`);
-      rootStyle.setProperty('--pip-y', `${DeviceProfile.pip.y}px`);
-      rootStyle.setProperty('--pip-w', `${DeviceProfile.pip.width}px`);
-      rootStyle.setProperty('--pip-h', `${DeviceProfile.pip.height}px`);
-    }
+    _syncLayoutVars();
+    _bindLayoutEvents();
 
     _bindAppEvents();
     KeyHandler.init();
