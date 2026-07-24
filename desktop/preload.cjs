@@ -1,4 +1,4 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 const Hls = require('hls.js');
 
 const HlsCtor = Hls?.default || Hls;
@@ -21,6 +21,26 @@ function bindDesktopBackGestures() {
     e.stopPropagation();
     emitBack();
   }, true);
+}
+
+function exposeDisplayMetrics() {
+  const bridge = {
+    getInitialMetrics() {
+      try {
+        return ipcRenderer.sendSync('iptv-get-display-metrics');
+      } catch {
+        return null;
+      }
+    },
+    onMetricsChanged(callback) {
+      if (typeof callback !== 'function') return () => {};
+      const handler = (_event, metrics) => callback(metrics);
+      ipcRenderer.on('iptv-display-metrics', handler);
+      return () => ipcRenderer.removeListener('iptv-display-metrics', handler);
+    }
+  };
+  contextBridge.exposeInMainWorld('__IPTV_DESKTOP__', bridge);
+  contextBridge.exposeInMainWorld('__IPTV_WINDOW_METRICS__', bridge.getInitialMetrics());
 }
 
 function createAvPlayShim() {
@@ -314,3 +334,4 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 bindDesktopBackGestures();
+exposeDisplayMetrics();
