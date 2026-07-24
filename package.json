@@ -31,6 +31,8 @@
       "package.json"
     ],
     "win": {
+      "signAndEditExecutable": false,
+      "signDlls": false,
       "target": [
         "portable"
       ]
