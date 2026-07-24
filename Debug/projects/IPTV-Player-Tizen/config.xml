@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://davidiptv.app/IPTVPlayer"
+        version="1.0.0"
+        viewmodes="fullscreen">
+
+  <tizen:application id="IPTVPlayer.Main"
+                     package="IPTVPlayer"
+                     required_version="9.0"/>
+
+  <content src="index.html"/>
+  <icon src="img/logo.png"/>
+  <name>IPTV Player</name>
+  <description>IPTV Player with EPG guide for Samsung TV</description>
+
+  <tizen:setting hwkey-event="enable"/>
+  <tizen:setting screen-orientation="landscape"/>
+
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <tizen:privilege name="http://tizen.org/privilege/storage"/>
+  <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+  <tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
+
+  <access origin="*" subdomains="true"/>
+  <feature name="http://tizen.org/feature/network.internet"/>
+</widget>

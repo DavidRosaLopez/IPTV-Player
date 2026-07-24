@@ -1,0 +1,319 @@
+/* components.css — additional micro-animations */
+
+/* Channel card number badge */
+.ch-badge {
+  position: absolute;
+  top: 6px; left: 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* Favorite star animation */
+@keyframes starPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.6); }
+  100% { transform: scale(1); }
+}
+.fav-pop { animation: starPop 0.3s ease; }
+
+/* Group item icon */
+.group-icon { font-size: 18px; }
+
+/* Scrollable channel grid smooth scroll */
+/* Eliminado: scroll-behavior smooth rompe el cálculo matemático del Virtual List en alta velocidad */
+
+/* EPG now-playing highlight */
+.epg-prog.now-prog .epg-prog-title { color: var(--green); }
+
+/* Skeleton loading shimmer */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+/* Volume/Error overlay */
+.error-overlay {
+  position: fixed; inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.8);
+  gap: 20px;
+  z-index: 200;
+}
+.error-overlay.hidden { display: none; }
+.error-icon { font-size: 72px; }
+.error-msg { font-size: 26px; color: var(--accent2); font-weight: 600; }
+.error-sub  { font-size: 18px; color: var(--text-sec); }
+
+/* Player OSD (Ubicado arriba, estilo TV Premium) */
+.player-osd {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 260px;
+  background: linear-gradient(to bottom, rgba(9, 11, 20, 0.98) 0%, rgba(9, 11, 20, 0.8) 60%, transparent 100%);
+  z-index: 100;
+  display: flex;
+  padding: 40px 60px;
+  gap: 30px;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(0);
+}
+.player-osd.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+.osd-left {
+  width: 130px; height: 130px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  align-self: center;
+}
+.osd-logo { max-width: 90px; max-height: 90px; object-fit: contain; }
+.osd-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.osd-channel { font-size: 36px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 15px; }
+
+
+/* EPG OSD Styles (Premium TV Layout) */
+.osd-epg {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font);
+  margin-top: 10px;
+}
+
+.osd-epg-current {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.osd-epg-current-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.osd-epg-now-label {
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(108, 99, 255, 0.4);
+}
+
+.osd-epg-title-text {
+  font-weight: 700;
+  color: #fff;
+  font-size: 22px;
+  letter-spacing: -0.2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.osd-current-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-sec);
+  font-size: 15px;
+  margin-left: 2px;
+}
+
+.osd-epg-time {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.osd-progress-bar {
+  width: 280px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.osd-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.osd-epg-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.osd-epg-next-label {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+  flex-shrink: 0;
+}
+
+.osd-epg-next .osd-epg-title-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  max-width: 450px;
+  margin-right: 0;
+}
+
+.osd-next-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.osd-epg-sep {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Seek Feedback Overlay */
+.seek-feedback { position: absolute; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, rgba(30,30,40,0.95), rgba(15,15,20,0.95)); color: #fff; padding: 30px; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 160px; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.15); z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.05); }
+.seek-feedback.hidden { display: none; }
+.seek-feedback .material-symbols-rounded { font-size: 72px; margin-bottom: 12px; color: var(--accent); filter: drop-shadow(0 0 10px rgba(229,9,20, 0.5)); }
+.seek-feedback .seek-time { font-size: 34px; font-weight: 800; letter-spacing: 1px; }
+.seek-left { left: 100px; }
+.seek-right { right: 100px; }
+@keyframes pop { 0% { transform: translateY(-50%) scale(0.8); opacity: 0; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
+
+#osd-fav-icon.hidden { display: none; }
+.osd-clock { position: absolute; top: 25px; right: 40px; font-size: 28px; font-weight: 600; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+.osd-now { font-size: 26px; color: var(--text); margin-bottom: 5px; }
+.osd-next { font-size: 20px; color: var(--text-sec); }
+
+/* Exit Popup */
+.exit-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300;
+}
+.exit-overlay.hidden { display: none; }
+.exit-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 50px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+.exit-title { font-size: 32px; font-weight: 600; margin-bottom: 40px; }
+.exit-actions { display: flex; gap: 20px; justify-content: center; }
+.exit-btn {
+  padding: 16px 40px;
+  font-size: 22px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+  transition: all 0.2s;
+}
+.exit-btn.focused {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #fff;
+  transform: scale(1.05);
+}
+.exit-btn.exit-danger.focused {
+  background: rgba(255, 60, 60, 0.2);
+  border-color: #ff3c3c;
+  color: #ff3c3c;
+}
+
+/* ── PiP (Picture-in-Picture) ───────────────────────── */
+/* Posición: esquina inferior-derecha de view-channels */
+/* El recuadro del video nativo (video-layer) se coloca 
+   exactamente sobre este elemento usando setDisplayRect */
+.pip-box {
+  position: absolute;
+  left: var(--pip-x);
+  top: var(--pip-y);
+  width: var(--pip-w);
+  height: var(--pip-h);
+  border-radius: 0;  /* el vídeo nativo de AVPlay ignora border-radius */
+  border: 2px solid rgba(255,255,255,0.3);
+  overflow: visible;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.08);
+  z-index: 60;
+  background: transparent;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.pip-box.hidden { display: none; }
+.pip-box.pip-loading { opacity: 0.6; }
+
+/* Barra de info en la parte inferior del PiP */
+.pip-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  z-index: 2;
+}
+.pip-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(var(--pip-w) - 40px);
+}
+
+/* Animación de entrada del PiP */
+@keyframes pipIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.pip-box:not(.hidden) {
+  animation: pipIn 0.3s ease forwards;
+}

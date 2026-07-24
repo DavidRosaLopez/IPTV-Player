@@ -1,0 +1,17 @@
+{
+  "name": "IPTV Remote Sync",
+  "short_name": "IPTV Remote",
+  "description": "Control remoto y gestor de listas para IPTV Player",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090B14",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

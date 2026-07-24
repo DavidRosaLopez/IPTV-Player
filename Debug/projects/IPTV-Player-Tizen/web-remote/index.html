@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>IPTV Remote Sync</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="logo">
+        <span class="icon">▶</span>
+        <h1>IPTV<span class="accent">Sync</span></h1>
+      </div>
+      <div id="conn-badge" class="badge">Desconectado</div>
+    </header>
+
+    <!-- PANTALLA DE CONEXIÓN -->
+    <main id="view-connect" class="view active">
+      <div class="glass-card">
+        <h2>Conectar a la TV</h2>
+        <p class="subtitle">Introduce el PIN de 4 dígitos que aparece en la pantalla de tu televisor.</p>
+        
+        <div class="pin-input-group">
+          <input type="number" id="pin-input" placeholder="0000" maxlength="4" pattern="\d{4}" />
+        </div>
+        
+        <button id="btn-connect" class="btn-primary">
+          <span>Vincular Televisor</span>
+          <div class="btn-glow"></div>
+        </button>
+        
+        <p id="connect-error" class="error-msg hidden">No se pudo conectar. Verifica el PIN.</p>
+      </div>
+    </main>
+
+    <!-- PANTALLA DE ENVÍO -->
+    <main id="view-dashboard" class="view hidden">
+      <div class="glass-card">
+        <h2>Añadir Lista</h2>
+        <div class="tabs">
+          <button class="tab active" data-type="m3u">M3U8</button>
+          <button class="tab" data-type="xtream">Xtream</button>
+        </div>
+
+        <form id="form-list" class="form">
+          <div class="form-group">
+            <label>Nombre de la lista</label>
+            <input type="text" id="list-name" placeholder="Ej: Deportes Premium" required>
+          </div>
+
+          <!-- M3U Fields -->
+          <div id="fields-m3u" class="fields-group active">
+            <div class="form-group">
+              <label>URL M3U8</label>
+              <input type="url" id="m3u-url" placeholder="http://..." required>
+            </div>
+            <div class="form-group">
+              <label>URL EPG (Opcional)</label>
+              <input type="url" id="m3u-epg" placeholder="http://...">
+            </div>
+          </div>
+
+          <!-- Xtream Fields -->
+          <div id="fields-xtream" class="fields-group hidden">
+            <div class="form-group">
+              <label>Servidor</label>
+              <input type="url" id="xt-server" placeholder="http://dominio.com:8080">
+            </div>
+            <div class="form-group">
+              <label>Usuario</label>
+              <input type="text" id="xt-user" placeholder="tu_usuario">
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <input type="password" id="xt-pass" placeholder="••••••••">
+            </div>
+          </div>
+
+          <button type="submit" id="btn-send" class="btn-primary success">
+            <span>Enviar a la TV</span>
+            <div class="btn-glow"></div>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="js/remote.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW Registrado', reg.scope))
+          .catch(err => console.error('Error registrando SW', err));
+      });
+    }
+  </script>
+</body>
+</html>
