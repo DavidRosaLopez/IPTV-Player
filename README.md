@@ -121,11 +121,13 @@ IPTV-Player/
 
 ## Optimizaciones visibles
 
-- Cache local de listas y contenido.
+- Cache local de listas y contenido mediante IndexedDB.
 - Carga y cache de datos Xtream con prefetch prudente de VOD/Series para no competir con AVPlay.
 - Listado virtual para catalogos grandes.
 - Cola de imagenes con concurrencia limitada y pausa breve de logos durante navegacion rapida por mando.
 - Busqueda con indice normalizado y debounce.
+- **Micro-pausas asíncronas (yielding) en la inicialización de listas masivas para no congelar la UI de Tizen**.
+- Transiciones CSS aceleradas por GPU (transform y opacity) sin reflows para asegurar 60 FPS en el OSD.
 - Reintentos automáticos en reproduccion.
 - PiP con retardo configurable para evitar reinicios de AVPlay al moverse rapido por la lista.
 - Persistencia de progreso para VOD y series.
