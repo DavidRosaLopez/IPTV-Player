@@ -88,6 +88,7 @@ export function createListLoader() {
         Storage.setLastList(list.id);
         Store.set('channels', cached);
         _throwIfCancelled(controller, isCurrentLoad);
+        Router.showView('channels');
         SetupProgress.hide();
         await _afterLoad(list, true);
         _currentAbortController = null;
@@ -110,6 +111,7 @@ export function createListLoader() {
       Storage.setLastList(list.id);
       Store.set('channels', loadedChannels);
       _throwIfCancelled(controller, isCurrentLoad);
+      Router.showView('channels');
       SetupProgress.hide();
       await _afterLoad(list, true);
     } catch (e) {
@@ -177,14 +179,12 @@ export function createListLoader() {
     Favorites.init();
 
     Router.hideLoading();
-    
+
     await yieldThread(); // Ceder UI antes de Search.init
     Search.init(channels);
     Player.init(dir => {
       if (typeof ViewChannels !== 'undefined') ViewChannels.playChannelRelative(dir);
     });
-
-    Router.showView('channels');
 
     await yieldThread(); // Ceder UI antes de renderGroups/Channels
     const lastChannelId = Storage.getLastChannel(list.id);
