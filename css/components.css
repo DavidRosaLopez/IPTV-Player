@@ -89,7 +89,7 @@
   gap: 12px;
 }
 .osd-channel { font-size: 36px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 15px; }
-.osd-num { color: var(--accent); font-size: 26px; font-weight: 800; background: rgba(108,99,255,0.15); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--accent); }
+
 
 /* EPG OSD Styles (Premium TV Layout) */
 .osd-epg {

@@ -22,8 +22,7 @@ export const PlayerOSD = (() => {
       else { logo.style.display = 'none'; }
     }
 
-    const num = document.getElementById('osd-num');
-    if (num) num.style.display = 'none';
+
 
     const name = document.getElementById('osd-name');
     if (name) name.textContent = currentCh.name || '';
