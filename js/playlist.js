@@ -5,6 +5,8 @@ import { Watching } from './watching.js';
 import { Favorites } from './favorites.js';
 import { loadXtream as _loadXtream, loadVod as _loadVod, loadSeries as _loadSeries, loadM3U as _loadM3U } from './services/playlist-service.js';
 
+
+
 export const Playlist = (() => {
   const VOD_GROUPS = [
     { id: '__all__', name: '<span class="material-symbols-rounded">movie</span> Películas' },
@@ -18,8 +20,7 @@ export const Playlist = (() => {
   ];
   const GLOBAL_GROUPS = new Set([
     '✨ Últimos Estrenos',
-    '💎 Calidad 4K / UHD',
-    '💎 Series en 4K / UHD',
+    '💎 4K / UHD',
     '__folder_plataformas__',
     '🍿 Plataformas',
     '🟥 Netflix',
@@ -31,6 +32,7 @@ export const Playlist = (() => {
     '⛰️ Paramount+',
     '📺 Nacionales / Otras Apps'
   ]);
+
 
   function _normalize(str) {
     return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -52,7 +54,7 @@ export const Playlist = (() => {
 
   function _is4kGroup(name) {
     const n = _groupSortKey(name);
-    return n.includes('4k / uhd') || n.includes('4k uhd') || n.includes('series en 4k') || n.includes('calidad 4k');
+    return n.includes('4k / uhd');
   }
 
   function _isPlatformGroup(name) {
@@ -63,7 +65,7 @@ export const Playlist = (() => {
   function _vodSeriesGroupRank(name, tabId) {
     const n = _groupSortKey(name);
     if (n === 'ultimos estrenos') return 0;
-    if (n === 'calidad 4k / uhd' || n === 'series en 4k / uhd') return 1;
+    if (n === '4k / uhd') return 1;
     if (n === 'plataformas') return 2;
     if (n === 'nacionales / otras apps') return 3;
     if (tabId === 'series' && n === 'telenovelas y turcas') return 4;

@@ -65,7 +65,7 @@ function _cleanVodCategoryName(rawName) {
   n = n.replace(/^[A-Z]{2,3}(?:\/[A-Z]{2,3})?\s*-\s*/, '').trim();
   const nUnaccented = n.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
-  if (nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/) || (nUnaccented.match(/\bHDR\b/) && nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/))) return '💎 4K / UHD';
+  if (nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/)) return '💎 4K / UHD';
   if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
   if (nUnaccented.match(/HBO|MAX/)) return '🟣 HBO Max';
   if (nUnaccented.match(/\b(PRIME|AMAZON)\b/)) return '🟦 Amazon Prime';
@@ -96,7 +96,7 @@ function _cleanSeriesCategoryName(rawName) {
   n = n.replace(/^(ESPA[ÑN]A|FRANCE|ITALY|GERMANY|NORDIC|QU[EÉ]BEC|TURKISH|GREECE|GREEK|INDIA|HINDI|SOMALIA|PAKISTAN|NETHERLANDS|BELGIUM|POLSKA|LATINO|PT\/BR|PERSIAN|KURDISH|HEBREW|ROMANIAN|BULGARIYA|HUNGARY|RUSSAIN|AFRICA|SOUTH AFRICA|CHINA|PHILIPPINES|SVENSK|SVENSKA|DANSK|DANSKE|NORSK|SUOMI|SUOMEN|ÍSLANDS)\s*/, '').trim();
   const nUnaccented = n.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   if (nUnaccented.match(/202[0-9]|ESTRENOS|NUEVAS|NEW RELEASE/)) return '✨ Últimos Estrenos';
-  if (nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/) || (nUnaccented.match(/\bHDR\b/) && nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/))) return '💎 4K / UHD';
+  if (nUnaccented.match(/\b(4K|UHD|2160P|3840P|8K)\b/)) return '💎 4K / UHD';
   if (nUnaccented.match(/NETFLIX/)) return '🟥 Netflix';
   if (nUnaccented.match(/HBO|MAX/)) return '🟣 HBO Max';
   if (nUnaccented.match(/\b(PRIME|AMAZON)\b/)) return '🟦 Amazon Prime';
@@ -274,20 +274,25 @@ export async function loadVod(server, user, pass, onProgress, signal) {
     return { ...s, _year: yr, _added: addedNum };
   });
   streamsWithKeys.sort(_sortByGroupThenRecency);
-  const movies = streamsWithKeys.map(s => ({
-    id: `vod_${s.stream_id}`,
-    name: s.name?.trim() || '',
-    _search: _normalize(s.name),
-    logo: _normalizeMediaUrl(server, s.stream_icon),
-    group: _cleanVodCategoryName(catMap[s.category_id]),
-    countryCode: detectCountry(s.name, catMap[s.category_id]),
-    url: `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
-    streamId: s.stream_id,
-    type: 'vod',
-    _year: s._year,
-    _added: s._added,
-    streamMeta: _detectStreamMeta(s.name, catMap[s.category_id], s.container_extension, s.stream_type)
-  }));
+  const movies = streamsWithKeys.map(s => {
+    const meta = _detectStreamMeta(s.name, catMap[s.category_id], s.container_extension, s.stream_type);
+    const rawGroup = _cleanVodCategoryName(catMap[s.category_id]);
+    const group = rawGroup === '➕ Otras' && (meta.quality === 'uhd' || meta.quality === '8k') ? '💎 4K / UHD' : rawGroup;
+    return {
+      id: `vod_${s.stream_id}`,
+      name: s.name?.trim() || '',
+      _search: _normalize(s.name),
+      logo: _normalizeMediaUrl(server, s.stream_icon),
+      group,
+      countryCode: detectCountry(s.name, catMap[s.category_id]),
+      url: `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
+      streamId: s.stream_id,
+      type: 'vod',
+      _year: s._year,
+      _added: s._added,
+      streamMeta: meta
+    };
+  });
   if (onProgress) onProgress(100);
   return movies;
 }
@@ -312,18 +317,23 @@ export async function loadSeries(server, user, pass, onProgress, signal) {
     return { ...s, _year: yr, _added: addedNum };
   });
   seriesWithKeys.sort(_sortByGroupThenRecency);
-  const series = seriesWithKeys.map(s => ({
-    id: `series_${s.series_id}`,
-    name: s.name?.trim() || '',
-    _search: _normalize(s.name),
-    logo: _normalizeMediaUrl(server, s.cover || s.stream_icon),
-    group: _cleanSeriesCategoryName(catMap[s.category_id]),
-    countryCode: detectCountry(s.name, catMap[s.category_id]),
-    streamId: s.series_id,
-    type: 'series',
-    _year: s._year,
-    _added: s._added
-  }));
+  const series = seriesWithKeys.map(s => {
+    const meta2 = _detectStreamMeta(s.name, catMap[s.category_id]);
+    const rawGroup2 = _cleanSeriesCategoryName(catMap[s.category_id]);
+    const group2 = rawGroup2 === '📺 Series Generales' && (meta2.quality === 'uhd' || meta2.quality === '8k') ? '💎 4K / UHD' : rawGroup2;
+    return {
+      id: `series_${s.series_id}`,
+      name: s.name?.trim() || '',
+      _search: _normalize(s.name),
+      logo: _normalizeMediaUrl(server, s.cover || s.stream_icon),
+      group: group2,
+      countryCode: detectCountry(s.name, catMap[s.category_id]),
+      streamId: s.series_id,
+      type: 'series',
+      _year: s._year,
+      _added: s._added
+    };
+  });
   if (onProgress) onProgress(100);
   return series;
 }
