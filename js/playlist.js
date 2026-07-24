@@ -199,7 +199,7 @@ export const Playlist = (() => {
 
       staticGroups.forEach(push);
       pushBy('ultimos estrenos');
-      pushBy('calidad 4k / uhd');
+      pushBy('4k / uhd');
       push(platformFolder);
       withParents.filter(g => g.parentId === platformFolder.id).forEach(push);
 
