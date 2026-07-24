@@ -27,15 +27,21 @@ export const App = (() => {
     const rootStyle = document.documentElement?.style;
     if (!rootStyle) return;
 
-    const width = Platform.isWindows ? window.innerWidth : DeviceProfile.layoutResolution.width;
-    const height = Platform.isWindows ? window.innerHeight : DeviceProfile.layoutResolution.height;
+    const designWidth = DeviceProfile.layoutResolution.width;
+    const designHeight = DeviceProfile.layoutResolution.height;
+    const width = Platform.isWindows ? window.innerWidth : designWidth;
+    const height = Platform.isWindows ? window.innerHeight : designHeight;
     const panelWidth = Platform.isWindows ? window.innerWidth : DeviceProfile.panelResolution.width;
     const panelHeight = Platform.isWindows ? window.innerHeight : DeviceProfile.panelResolution.height;
     const panelScaleX = Platform.isWindows ? 1 : DeviceProfile.panelScale.x;
     const panelScaleY = Platform.isWindows ? 1 : DeviceProfile.panelScale.y;
+    const scale = Platform.isWindows ? Math.min(width / designWidth, height / designHeight) : 1;
 
     rootStyle.setProperty('--screen-w', `${width}px`);
     rootStyle.setProperty('--screen-h', `${height}px`);
+    rootStyle.setProperty('--design-w', `${designWidth}px`);
+    rootStyle.setProperty('--design-h', `${designHeight}px`);
+    rootStyle.setProperty('--window-scale', `${scale}`);
     rootStyle.setProperty('--panel-w', `${panelWidth}px`);
     rootStyle.setProperty('--panel-h', `${panelHeight}px`);
     rootStyle.setProperty('--panel-scale-x', `${panelScaleX}`);

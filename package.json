@@ -19,6 +19,7 @@
   "build": {
     "appId": "com.drosalop.iptvplayer",
     "productName": "IPTV Player",
+    "artifactName": "IPTV Player.exe",
     "icon": "build/icon.ico",
     "asar": true,
     "files": [

@@ -29,6 +29,9 @@
   --font:       'Inter', sans-serif;
   --screen-w:   1920px;
   --screen-h:   1080px;
+  --design-w:   1920px;
+  --design-h:   1080px;
+  --window-scale: 1;
   --pip-x:      1400px;
   --pip-y:      770px;
   --pip-w:      480px;
@@ -50,16 +53,23 @@ html, body {
 #app { width: var(--screen-w); height: var(--screen-h); position: relative; }
 
 html.platform-windows,
-body.platform-windows,
-body.platform-windows #app {
-  width: 100vw;
-  height: 100vh;
+body.platform-windows {
+  width: 100%;
+  height: 100%;
 }
 
-html.platform-windows,
 body.platform-windows {
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+}
+
+body.platform-windows #app {
+  width: var(--design-w);
+  height: var(--design-h);
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+  transform: scale(var(--window-scale));
 }
 
 /* ── VIEWS ── */
