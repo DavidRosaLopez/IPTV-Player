@@ -1,13 +1,14 @@
 /**
  * device-profile.js — Centralized TV tuning for the target Samsung model
  */
+import { Platform } from './platform.js';
 
 const OVERRIDE = (typeof window !== 'undefined' && window.__IPTV_DEVICE_PROFILE__) || {};
 
 const BASE = {
-  name: 'Samsung 83" SF93',
-  model: 'TQ83S91FAEXXC',
-  family: 'S91F',
+  name: Platform.isWindows ? 'Windows Desktop' : 'Samsung 83" SF93',
+  model: Platform.isWindows ? 'electron-portable' : 'TQ83S91FAEXXC',
+  family: Platform.isWindows ? 'desktop' : 'S91F',
   platformYear: 2025,
   layoutResolution: { width: 1920, height: 1080 },
   panelResolution: { width: 3840, height: 2160 },

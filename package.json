@@ -28,8 +28,6 @@
       "scripts/**/*",
       "desktop/**/*",
       "web-remote/**/*",
-      "config.xml",
-      "tizen_web_project.yaml",
       "package.json"
     ],
     "win": {

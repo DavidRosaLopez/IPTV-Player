@@ -13,6 +13,7 @@ import { ViewChannels } from './view-channels.js';
 import { ViewSetup } from './view-setup.js';
 import { eventBus } from './eventBus.js';
 import { DeviceProfile } from './device-profile.js';
+import { Platform } from './platform.js';
 import { createListLoader } from './services/list-loader.js';
 
 const loader = createListLoader();
@@ -23,6 +24,8 @@ export const App = (() => {
 
   function init() {
     const rootStyle = document.documentElement?.style;
+    document.body?.classList.add(`platform-${Platform.name}`);
+    if (document.body) document.body.dataset.platform = Platform.name;
     if (rootStyle) {
       rootStyle.setProperty('--screen-w', `${DeviceProfile.layoutResolution.width}px`);
       rootStyle.setProperty('--screen-h', `${DeviceProfile.layoutResolution.height}px`);

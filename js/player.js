@@ -12,10 +12,11 @@
   import { KeyHandler } from './keyHandler.js';
   import { Router } from './router.js';
   import { PlayerOSD } from './player-osd.js';
-  import { VodOSD } from './vod-osd.js';
-  import { Watching } from './watching.js';
-  import { eventBus } from './eventBus.js';
-  import { DeviceProfile, getDisplayRect } from './device-profile.js';
+import { VodOSD } from './vod-osd.js';
+import { Watching } from './watching.js';
+import { eventBus } from './eventBus.js';
+import { DeviceProfile, getDisplayRect } from './device-profile.js';
+import { Platform } from './platform.js';
 
 
   export const Player = (() => {
@@ -76,6 +77,7 @@
     }
 
     function _applyPlaybackTuning(ch, pipMode = false) {
+      if (Platform.isWindows) return;
       const mode = _getStreamMode(ch);
       const limits = DeviceProfile.player.liveMaxBitrate;
       const maxBr = mode.is8K ? limits.uhd8k : mode.is4K ? limits.uhd : mode.isHD ? limits.hd : limits.raw;

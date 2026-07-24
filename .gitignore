@@ -14,3 +14,12 @@ Thumbs.db
 *.swp
 Debug/projects/IPTV-Player
 
+# Node / Electron
+node_modules/
+dist/
+release/
+out/
+*.blockmap
+*.nupkg
+*.7z
+
