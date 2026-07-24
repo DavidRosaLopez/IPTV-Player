@@ -1,6 +1,8 @@
 const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 
+app.setAppUserModelId('com.drosalop.iptvplayer');
+
 function createWindow() {
   const display = screen.getPrimaryDisplay();
   const { width, height } = display.workAreaSize;
