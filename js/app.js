@@ -22,6 +22,7 @@ export const App = (() => {
   let _clockTimer = null;
   let _eventsBound = false;
   let _layoutBound = false;
+  let _displayMetrics = null;
 
   function _syncLayoutVars() {
     const rootStyle = document.documentElement?.style;
@@ -29,12 +30,21 @@ export const App = (() => {
 
     const designWidth = DeviceProfile.layoutResolution.width;
     const designHeight = DeviceProfile.layoutResolution.height;
-    const width = Platform.isWindows ? window.innerWidth : designWidth;
-    const height = Platform.isWindows ? window.innerHeight : designHeight;
-    const panelWidth = Platform.isWindows ? window.innerWidth : DeviceProfile.panelResolution.width;
-    const panelHeight = Platform.isWindows ? window.innerHeight : DeviceProfile.panelResolution.height;
-    const panelScaleX = Platform.isWindows ? 1 : DeviceProfile.panelScale.x;
-    const panelScaleY = Platform.isWindows ? 1 : DeviceProfile.panelScale.y;
+    const metrics = Platform.isWindows ? (_displayMetrics || window.__IPTV_WINDOW_METRICS__ || {}) : {};
+    const workArea = metrics.workArea || {};
+    const workAreaSize = metrics.workAreaSize || {};
+    const width = Platform.isWindows
+      ? (window.innerWidth || workAreaSize.width || workArea.width || designWidth)
+      : designWidth;
+    const height = Platform.isWindows
+      ? (window.innerHeight || workAreaSize.height || workArea.height || designHeight)
+      : designHeight;
+    const screenScaleX = width / designWidth;
+    const screenScaleY = height / designHeight;
+    const panelWidth = Platform.isWindows ? width : DeviceProfile.panelResolution.width;
+    const panelHeight = Platform.isWindows ? height : DeviceProfile.panelResolution.height;
+    const panelScaleX = Platform.isWindows ? screenScaleX : DeviceProfile.panelScale.x;
+    const panelScaleY = Platform.isWindows ? screenScaleY : DeviceProfile.panelScale.y;
     const scale = Platform.isWindows ? Math.min(width / designWidth, height / designHeight) : 1;
 
     rootStyle.setProperty('--screen-w', `${width}px`);
@@ -46,10 +56,16 @@ export const App = (() => {
     rootStyle.setProperty('--panel-h', `${panelHeight}px`);
     rootStyle.setProperty('--panel-scale-x', `${panelScaleX}`);
     rootStyle.setProperty('--panel-scale-y', `${panelScaleY}`);
-    rootStyle.setProperty('--pip-x', `${DeviceProfile.pip.x}px`);
-    rootStyle.setProperty('--pip-y', `${DeviceProfile.pip.y}px`);
-    rootStyle.setProperty('--pip-w', `${DeviceProfile.pip.width}px`);
-    rootStyle.setProperty('--pip-h', `${DeviceProfile.pip.height}px`);
+    rootStyle.setProperty('--pip-x', `${Math.round(DeviceProfile.pip.x * screenScaleX)}px`);
+    rootStyle.setProperty('--pip-y', `${Math.round(DeviceProfile.pip.y * screenScaleY)}px`);
+    rootStyle.setProperty('--pip-w', `${Math.round(DeviceProfile.pip.width * screenScaleX)}px`);
+    rootStyle.setProperty('--pip-h', `${Math.round(DeviceProfile.pip.height * screenScaleY)}px`);
+  }
+
+  function _setDisplayMetrics(metrics) {
+    if (!metrics) return;
+    _displayMetrics = metrics;
+    _syncLayoutVars();
   }
 
   function _bindLayoutEvents() {
@@ -57,6 +73,7 @@ export const App = (() => {
     _layoutBound = true;
     window.addEventListener('resize', _syncLayoutVars);
     window.addEventListener('orientationchange', _syncLayoutVars);
+    window.__IPTV_DESKTOP__?.onMetricsChanged?.((metrics) => _setDisplayMetrics(metrics));
   }
 
   function init() {
@@ -64,6 +81,7 @@ export const App = (() => {
     document.documentElement?.classList.add(`platform-${Platform.name}`);
     document.body?.classList.add(`platform-${Platform.name}`);
     if (document.body) document.body.dataset.platform = Platform.name;
+    _setDisplayMetrics(window.__IPTV_WINDOW_METRICS__ || null);
     _syncLayoutVars();
     _bindLayoutEvents();
 

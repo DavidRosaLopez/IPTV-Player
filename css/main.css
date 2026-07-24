@@ -63,13 +63,18 @@ body.platform-windows {
 }
 
 body.platform-windows #app {
-  width: var(--design-w);
-  height: var(--design-h);
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-origin: top left;
-  transform: scale(var(--window-scale));
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform: none;
+}
+
+body.platform-windows #view-channels,
+body.platform-windows #view-player,
+body.platform-windows #view-setup,
+body.platform-windows .channels-layout {
+  width: 100%;
+  height: 100%;
 }
 
 /* ── VIEWS ── */

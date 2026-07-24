@@ -5,6 +5,11 @@ import { Platform } from './platform.js';
 
 const OVERRIDE = (typeof window !== 'undefined' && window.__IPTV_DEVICE_PROFILE__) || {};
 
+function getWindowsMetrics() {
+  if (!Platform.isWindows || typeof window === 'undefined') return null;
+  return window.__IPTV_WINDOW_METRICS__ || null;
+}
+
 const BASE = {
   name: Platform.isWindows ? 'Windows Desktop' : 'Samsung 83" SF93',
   model: Platform.isWindows ? 'electron-portable' : 'TQ83S91FAEXXC',
@@ -61,8 +66,29 @@ function merge(base, override) {
 export const DeviceProfile = Object.freeze(merge(BASE, OVERRIDE));
 
 export function getDisplayRect(mode = 'FULLSCREEN') {
-  if (mode === 'PIP') return { ...DeviceProfile.pip };
-  return { ...DeviceProfile.safeArea };
+  if (!Platform.isWindows) {
+    if (mode === 'PIP') return { ...DeviceProfile.pip };
+    return { ...DeviceProfile.safeArea };
+  }
+
+  const metrics = getWindowsMetrics();
+  const workArea = metrics?.workArea || {};
+  const workAreaSize = metrics?.workAreaSize || {};
+  const width = workAreaSize.width || workArea.width || DeviceProfile.layoutResolution.width;
+  const height = workAreaSize.height || workArea.height || DeviceProfile.layoutResolution.height;
+  const scaleX = width / DeviceProfile.layoutResolution.width;
+  const scaleY = height / DeviceProfile.layoutResolution.height;
+
+  if (mode === 'PIP') {
+    return {
+      x: Math.round(DeviceProfile.pip.x * scaleX),
+      y: Math.round(DeviceProfile.pip.y * scaleY),
+      width: Math.round(DeviceProfile.pip.width * scaleX),
+      height: Math.round(DeviceProfile.pip.height * scaleY)
+    };
+  }
+
+  return { x: 0, y: 0, width, height };
 }
 
 export function getAdaptiveLimits(kind = 'default') {
