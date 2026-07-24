@@ -112,11 +112,11 @@ export function createCacheStorage() {
     getChannelCache: (list) => _getFromDB(_cacheKey('ch_cache', list), CHANNEL_TTL),
     setChannelCache: (list, data) => _setToDB(_cacheKey('ch_cache', list), data),
     clearChannelCache: (list) => (typeof list === 'string' ? _clearByPrefix(`ch_cache_${list}`) : _delFromDB(_cacheKey('ch_cache', list))),
-    getVodCache: (list) => _getFromDB(_cacheKey('vod_cache_v3', list), CHANNEL_TTL),
-    setVodCache: (list, data) => _setToDB(_cacheKey('vod_cache_v3', list), data),
-    clearVodCache: (list) => (typeof list === 'string' ? _clearByPrefix(`vod_cache_v3_${list}`) : _delFromDB(_cacheKey('vod_cache_v3', list))),
-    getSeriesCache: (list) => _getFromDB(_cacheKey('series_cache_v3', list), CHANNEL_TTL),
-    setSeriesCache: (list, data) => _setToDB(_cacheKey('series_cache_v3', list), data),
-    clearSeriesCache: (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_v3_${list}`) : _delFromDB(_cacheKey('series_cache_v3', list))),
+    getVodCache: (list) => _getFromDB(_cacheKey('vod_cache_v4', list), CHANNEL_TTL),
+    setVodCache: (list, data) => _setToDB(_cacheKey('vod_cache_v4', list), data),
+    clearVodCache: (list) => (typeof list === 'string' ? _clearByPrefix(`vod_cache_v4_${list}`) : _delFromDB(_cacheKey('vod_cache_v4', list))),
+    getSeriesCache: (list) => _getFromDB(_cacheKey('series_cache_v4', list), CHANNEL_TTL),
+    setSeriesCache: (list, data) => _setToDB(_cacheKey('series_cache_v4', list), data),
+    clearSeriesCache: (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_v4_${list}`) : _delFromDB(_cacheKey('series_cache_v4', list))),
   };
 }
