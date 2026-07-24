@@ -7,7 +7,7 @@
 
   <tizen:application id="IPTVPlayer.Main"
                      package="IPTVPlayer"
-                     required_version="4.0"/>
+                     required_version="9.0"/>
 
   <content src="index.html"/>
   <icon src="img/logo.png"/>

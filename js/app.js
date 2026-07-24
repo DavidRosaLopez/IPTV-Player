@@ -26,6 +26,10 @@ export const App = (() => {
     if (rootStyle) {
       rootStyle.setProperty('--screen-w', `${DeviceProfile.layoutResolution.width}px`);
       rootStyle.setProperty('--screen-h', `${DeviceProfile.layoutResolution.height}px`);
+      rootStyle.setProperty('--panel-w', `${DeviceProfile.panelResolution.width}px`);
+      rootStyle.setProperty('--panel-h', `${DeviceProfile.panelResolution.height}px`);
+      rootStyle.setProperty('--panel-scale-x', `${DeviceProfile.panelScale.x}`);
+      rootStyle.setProperty('--panel-scale-y', `${DeviceProfile.panelScale.y}`);
       rootStyle.setProperty('--pip-x', `${DeviceProfile.pip.x}px`);
       rootStyle.setProperty('--pip-y', `${DeviceProfile.pip.y}px`);
       rootStyle.setProperty('--pip-w', `${DeviceProfile.pip.width}px`);
