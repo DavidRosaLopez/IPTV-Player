@@ -12,9 +12,9 @@ export const Favorites = (() => {
   let _version = 0;
 
   function _getKey() {
-    const list = typeof Store !== 'undefined' ? Store.peek('currentList') : null;
+    const list = Store.peek('currentList');
     const listId = list ? list.id : 'default';
-    const tabId = typeof Store !== 'undefined' ? (Store.peek('currentTab') || 'tv') : 'tv';
+    const tabId = Store.peek('currentTab') || 'tv';
     return `${listId}_${tabId}`;
   }
 

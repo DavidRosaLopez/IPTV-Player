@@ -4,11 +4,17 @@
 export const Store = (() => {
   const state = {
     channels: [],
+    currentTab: 'tv',
     groups: [],
     currentGroup: '__all__',
+    groupIdx: 0,
     currentList: null,
+    currentData: [],
     currentCountry: 'ALL',
-    countries: []
+    countries: ['ALL'],
+    allCountries: [],
+    expandedFolders: {},
+    loadCancelledAt: 0
   };
 
   const listeners = new Map();
