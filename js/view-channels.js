@@ -52,6 +52,11 @@ export const ViewChannels = (() => {
         VirtualList.setFocused(VirtualList.getFocused());
       }
     },
+    clearChannelSelection: () => {
+      if (typeof VirtualList !== 'undefined') {
+        VirtualList.setSelected(-1);
+      }
+    },
     getTabButtons: () => Array.from(document.querySelectorAll('.sidebar-tab-btn')),
     setFocusVisible: visible => VirtualList.setFocusVisible(visible),
     setChannelFocus: (el, skipScroll = false) => KeyHandler.setFocus(el, skipScroll),

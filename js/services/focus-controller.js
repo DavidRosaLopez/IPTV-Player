@@ -32,6 +32,9 @@ export function createFocusController(deps) {
     if (deps.setFocusVisible) {
       deps.setFocusVisible(zone === 'channels');
     }
+    if (zone !== 'channels') {
+      deps.clearChannelSelection?.();
+    }
 
     if (zone === 'groups') {
       const els = deps.getSidebarFocusables();
