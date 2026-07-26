@@ -389,7 +389,20 @@ export const ViewChannels = (() => {
       focusedIdx: _countryFocusIdx,
       onSelect: _selectCountry
     });
+    const targetIdx = _focusZone === 'countries'
+      ? _countryFocusIdx
+      : Math.max(0, codes.indexOf(_currentCountry));
+    _centerCountryItem(targetIdx);
     _updateCountryClasses();
+  }
+
+  function _centerCountryItem(idx) {
+    const container = document.getElementById('country-filter');
+    if (!container) return;
+    const item = container.children[idx];
+    if (!item) return;
+    const left = item.offsetLeft - ((container.clientWidth - item.offsetWidth) / 2);
+    container.scrollLeft = Math.max(0, left);
   }
 
   function _selectCountry(code, idx) {
@@ -416,7 +429,7 @@ export const ViewChannels = (() => {
     });
 
     if (focusedEl) {
-      focusedEl.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+      _centerCountryItem(_countryFocusIdx);
     }
   }
 
