@@ -758,6 +758,14 @@ export const ViewChannels = (() => {
         if (channelId) {
           const ch = channels.find(c => c.id === channelId);
           if (ch) {
+            const groups = Playlist.getGroups(channels, targetCountry, 'tv');
+            const channelGroupId = ch.group || '__all__';
+            Store.set('groups', groups);
+            Store.set('currentGroup', channelGroupId);
+            Store.set('groupIdx', Math.max(0, groups.findIndex(g => g.id === channelGroupId)));
+            _sidebarFocusIdx = (Store.get('groupIdx') || 0) + 2;
+            renderGroups();
+            _setFocusZone('groups');
             syncWithChannel(ch, { focusChannels: false });
             if (typeof Player !== 'undefined') {
               setTimeout(() => Player.schedulePreview(ch), 0);
