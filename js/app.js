@@ -2,12 +2,10 @@
  * app.js - Main Application Orchestrator
  */
 import { Config } from './config.js';
-import { Store } from './store.js';
 import { Storage } from './storage.js';
 import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
 import { Favorites } from './favorites.js';
-import { Search } from './search.js';
 import { Player } from './player.js';
 import { ViewChannels } from './view-channels.js';
 import { ViewSetup } from './view-setup.js';

@@ -3,7 +3,6 @@
  */
 import { Favorites } from './favorites.js';
 import { EPG } from './epg.js';
-import { VirtualList } from './virtual-list.js';
 
 
 export const PlayerOSD = (() => {

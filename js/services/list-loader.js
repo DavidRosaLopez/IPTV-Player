@@ -7,7 +7,6 @@ import { Player } from '../player.js';
 import { ViewChannels } from '../view-channels.js';
 import { Favorites } from '../favorites.js';
 import { Router } from '../router.js';
-import { DeviceProfile } from '../device-profile.js';
 import { eventBus } from '../eventBus.js';
 import { ensureTabData } from './tab-data-loader.js';
 
