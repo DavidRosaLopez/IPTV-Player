@@ -36,8 +36,6 @@ files:
   - js/epg.js
   - js/favorites.js
   - js/keyHandler.js
-  - js/lib/peerjs.min.js
-  - js/lib/qrcode.min.js
   - js/m3u-worker.js
   - js/player.js
   - js/playlist.js
@@ -46,13 +44,9 @@ files:
   - js/setup-progress.js
   - js/storage.js
   - js/store.js
-  - js/sync.js
   - js/view-channels.js
   - js/view-setup.js
   - js/virtual-list.js
-  - web-remote/css/style.css
-  - web-remote/index.html
-  - web-remote/js/remote.js
 
 # list of files to exclude based on the matched patterns
 excludes:

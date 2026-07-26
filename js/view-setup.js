@@ -3,7 +3,6 @@ import { Storage } from './storage.js';
 import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
 import { Playlist } from './playlist.js';
-import { Sync } from './sync.js';
 import { eventBus } from './eventBus.js';
 import { getCountryInfo, sortCountryCodes } from './countries.js';
 
@@ -478,17 +477,6 @@ export const ViewSetup = (() => {
   function onShow() {
     _renderSavedLists();
     _renderCountrySettings();
-
-    const handleRemoteList = (list) => {
-      list.id = list.id || _uid();
-      _saveList(list);
-      if (typeof Router !== 'undefined') Router.showToast('Lista remota sincronizada', 'success');
-      _requestLoadList(list);
-    };
-
-    if (typeof Sync !== 'undefined') {
-      Sync.init(handleRemoteList);
-    }
 
     const tabs = Array.from(_getSetupTabs());
     const lists = Storage.getLists();

@@ -10,14 +10,13 @@ Aplicacion IPTV nativa para Samsung Smart TV basada en Tizen, pensada para naveg
 
 | Area | Estado actual |
 |------|---------------|
-| Fuentes IPTV | Soporte para listas Xtream Codes y URLs M3U/M3U8, cargadas desde configuracion local o remota |
+| Fuentes IPTV | Soporte para listas Xtream Codes y URLs M3U/M3U8, cargadas desde configuracion local |
 | TV en directo | Reproduccion con AVPlay, agrupacion por categorias, filtro por pais y navegacion por lista |
 | VOD / Series | Exploracion y reproduccion de contenido Xtream con ficha informativa, temporadas y episodios |
 | Favoritos | Guardado por lista y persistencia local |
 | Busqueda | Busqueda rapida con debounce sobre el catalogo actual |
 | EPG | Lectura de guia cuando la API la proporciona |
 | UI TV-first | Diseno pensado para mando, foco visible, overlays y PiP |
-| Sincronizacion remota | Web remota para enviar listas a la TV mediante PeerJS |
 | Cache local | Cache de canales, VOD y series para acelerar arranques |
 | Perfil TV | Ajustes centralizados para el modelo objetivo, PiP, mando, prefetch y lista virtual |
 
@@ -51,7 +50,6 @@ IPTV-Player/
 |   |-- setup-progress.js
 |   |-- storage.js
 |   |-- store.js
-|   |-- sync.js
 |   |-- view-channels.js
 |   |-- view-setup.js
 |   |-- virtual-list.js
@@ -70,19 +68,12 @@ IPTV-Player/
 |       `-- view-state.js
 |-- scripts/
 |   `-- check-js.mjs
-`-- web-remote/
-    |-- index.html
-    |-- css/style.css
-    |-- js/remote.js
-    |-- icon.svg
-    |-- manifest.json
-    `-- sw.js
 ```
 
 ## Flujo tipico
 
 1. La app arranca en la pantalla de configuracion.
-2. El usuario anade una lista Xtream o una URL M3U/M3U8, o la recibe desde la web remota.
+2. El usuario anade una lista Xtream o una URL M3U/M3U8.
 3. La app guarda la configuracion, descarga la lista y genera grupos/categorias.
 4. El usuario filtra por pais, busca por nombre o entra en VOD/Series si la cuenta lo soporta.
 5. Al reproducir un canal, la app muestra OSD, usa PiP y permite volver al listado.
@@ -145,15 +136,6 @@ Incluyen:
 - Concurrencia de logos y pausa de carga durante navegacion.
 
 Tambien se puede sobrescribir el perfil en runtime con `window.__IPTV_DEVICE_PROFILE__` antes de inicializar la app.
-
-## Web remota
-
-La carpeta [`web-remote`](web-remote) contiene una interfaz pequena para vincular la TV mediante PeerJS y enviar configuraciones de listas desde un navegador movil o PC.
-
-Incluye:
-- Conexion con PIN de 4 digitos.
-- Envio de listas Xtream o M3U.
-- Persistencia de la ultima configuracion enviada.
 
 ## Desarrollo
 
