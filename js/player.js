@@ -319,6 +319,8 @@
       _mode = 'PIP';
       _setState('BUFFERING');
       _showPip(ch);
+      _applyDisplayRect();
+      _applyPlaybackTuning(ch, true);
 
       const box = document.getElementById('pip-box');
       if (box) box.classList.add('pip-loading');

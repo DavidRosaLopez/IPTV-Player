@@ -767,6 +767,9 @@ export const ViewChannels = (() => {
             renderGroups();
             _setFocusZone('groups');
             syncWithChannel(ch, { focusChannels: false });
+            if (typeof VirtualList !== 'undefined') {
+              VirtualList.setFocusVisible(true);
+            }
             if (typeof Player !== 'undefined') {
               setTimeout(() => Player.schedulePreview(ch), 0);
             }
