@@ -30,6 +30,7 @@ export const VirtualList = (() => {
   let _lastScrollAt = 0;
   let _logoResumeTimer = null;
   let _suppressLogosUntil = 0;
+  let _showFocusClass = true;
 
   const ImageQueue = (() => {
     const queue = [];
@@ -158,12 +159,27 @@ export const VirtualList = (() => {
 
   let _sentinel = null;
 
-  function update(items) {
+  function update(items, { preserveFocus = false } = {}) {
     ImageQueue.flush(); // Discard stale requests from previous country/group
+    const prevFocusedIdx = _focusedIdx;
+    const prevFocusedId = _items?.[_focusedIdx]?.id || null;
+    const prevScrollTop = _scrollTop;
     _items = items;
-    _focusedIdx = 0;
-    _scrollTop  = 0;
-    _container.scrollTop = 0;
+    if (preserveFocus) {
+      let nextIdx = prevFocusedIdx;
+      if (prevFocusedId) {
+        const foundIdx = _items.findIndex(item => item?.id === prevFocusedId);
+        if (foundIdx >= 0) nextIdx = foundIdx;
+      }
+      if (!Number.isFinite(nextIdx)) nextIdx = 0;
+      _focusedIdx = _items.length > 0 ? Math.max(0, Math.min(_items.length - 1, nextIdx)) : -1;
+      _scrollTop = Math.max(0, prevScrollTop);
+      _container.scrollTop = _scrollTop;
+    } else {
+      _focusedIdx = 0;
+      _scrollTop  = 0;
+      _container.scrollTop = 0;
+    }
     _domCache   = {};
     _container.innerHTML = '';
     _pool = [];
@@ -183,6 +199,19 @@ export const VirtualList = (() => {
   }
 
   function getFocused() { return _focusedIdx; }
+
+  function setFocusVisible(visible) {
+    const next = Boolean(visible);
+    if (_showFocusClass === next) return;
+    _showFocusClass = next;
+    if (_showFocusClass) {
+      if (_focusedIdx < 0) return;
+      _focus(_focusedIdx);
+      _scrollToVisible(_focusedIdx);
+    } else {
+      _unfocus(_focusedIdx);
+    }
+  }
 
   function move(dir) {
     _suspendLogoLoading(DeviceProfile.virtualList.logoPauseAfterNavMs);
@@ -450,7 +479,7 @@ export const VirtualList = (() => {
     const y   = PADDING + row * (ITEM_H + ITEM_GAP);
     const x   = PADDING + col * (_colW + ITEM_GAP);
 
-    el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx ? ' focused' : '');
+    el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx && _showFocusClass ? ' focused' : '');
     el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${x}px,${y}px,0);width:${_colW}px;height:${ITEM_H}px;`;
     el.dataset.idx = i;
     el.dataset.mediaType = ch.type || (_layout === 'poster' ? 'vod' : 'tv');
@@ -511,7 +540,7 @@ export const VirtualList = (() => {
   function _focus(idx) {
     const el = _domCache[idx];
     if (!el) return;
-    el.classList.add('focused');
+    if (_showFocusClass) el.classList.add('focused');
     const ch = _items[idx];
     const img = el._img;
     if (!_shouldDeferLogos() && img && ch && ch.logo) {
@@ -609,5 +638,5 @@ export const VirtualList = (() => {
     return /^(https?:|data:image\/)/i.test(url) ? url : '';
   }
 
-  return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, refreshVisible, refreshFavoriteBadges };
+  return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, refreshVisible, refreshFavoriteBadges, setFocusVisible };
 })();

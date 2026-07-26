@@ -53,6 +53,7 @@ export const ViewChannels = (() => {
       }
     },
     getTabButtons: () => Array.from(document.querySelectorAll('.sidebar-tab-btn')),
+    setFocusVisible: visible => VirtualList.setFocusVisible(visible),
     setChannelFocus: (el, skipScroll = false) => KeyHandler.setFocus(el, skipScroll),
     isVodOrSeries: () => _currentTab === 'vod' || _currentTab === 'series',
     getCountries: () => Store.get('countries') || ['ALL'],
@@ -520,8 +521,9 @@ export const ViewChannels = (() => {
     return result;
   }
 
-  function renderChannels(list) {
+  function renderChannels(list, options = {}) {
     const ctx = _viewState.getFilterContext();
+    const preserveFocus = Boolean(options.preserveFocus);
     let items;
     if (list) {
       items = list;
@@ -554,6 +556,10 @@ export const ViewChannels = (() => {
     _lastChannelsRenderInput = channelsInput;
     setChannelHeader({ currentGroup: ctx.currentGroup, currentTab: ctx.currentTab, count: items.length });
 
+    if (preserveFocus && _focusZone !== 'channels') {
+      VirtualList.setFocusVisible(false);
+    }
+
     if (_currentLayoutMode !== layout) {
       // Layout change requires full re-init
       _currentLayoutMode = layout;
@@ -566,7 +572,11 @@ export const ViewChannels = (() => {
       });
     } else {
       // Same layout: just swap items (much faster, preserves DOM pool)
-      VirtualList.update(items);
+      VirtualList.update(items, { preserveFocus });
+    }
+
+    if (preserveFocus && _focusZone !== 'channels') {
+      VirtualList.setFocusVisible(false);
     }
 
     _updateGroupCounts();
@@ -748,7 +758,7 @@ export const ViewChannels = (() => {
         if (channelId) {
           const ch = channels.find(c => c.id === channelId);
           if (ch) {
-            syncWithChannel(ch, { focusChannels: true });
+            syncWithChannel(ch, { focusChannels: false });
             if (typeof Player !== 'undefined') {
               setTimeout(() => Player.schedulePreview(ch), 0);
             }

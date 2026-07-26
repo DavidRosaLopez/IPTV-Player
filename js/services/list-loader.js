@@ -315,22 +315,8 @@ export function createListLoader() {
         Playlist.clearGroupCache();
         Store.set('groups', Playlist.getGroups(newChannels, Store.peek('currentCountry') || 'ALL', 'tv'));
         if (Router.isView('channels')) {
-          const saved = Storage.getLastViewState(list.id);
-          if (saved?.tab === 'tv' && saved.channelId) {
-            const ch = newChannels.find(c => c.id === saved.channelId);
-            if (ch) {
-              ViewChannels.syncWithChannel(ch, { focusChannels: true });
-              if (!Player.getCurrent() || Player.getCurrent().id !== ch.id || Player.getMode() !== 'PIP') {
-                setTimeout(() => Player.schedulePreview(ch), 0);
-              }
-            } else {
-              ViewChannels.renderGroups();
-              ViewChannels.renderChannels();
-            }
-          } else {
-            ViewChannels.renderGroups();
-            ViewChannels.renderChannels();
-          }
+          ViewChannels.renderGroups();
+          ViewChannels.renderChannels(null, { preserveFocus: true });
         }
         Router.showToast('Lista actualizada', 'success');
       }

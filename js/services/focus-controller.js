@@ -29,6 +29,10 @@ export function createFocusController(deps) {
     if (viewEl) viewEl.setAttribute('data-focus', zone);
     _clearZoneFocus();
 
+    if (deps.setFocusVisible) {
+      deps.setFocusVisible(zone === 'channels');
+    }
+
     if (zone === 'groups') {
       const els = deps.getSidebarFocusables();
       if (isEnteringGroups && restoreActive) {
