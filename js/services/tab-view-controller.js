@@ -1,4 +1,4 @@
-import { loadTabData } from './tab-data-loader.js';
+import { ensureTabData } from './tab-data-loader.js';
 
 const TAB_LABELS = {
   tv: 'TV',
@@ -75,7 +75,7 @@ export function createTabViewController({ virtualList, showToast, getCurrentTab 
     if (getCurrentTab() !== tabId) return null;
 
     try {
-      return await loadTabData(tabId, list, signal);
+      return await ensureTabData(tabId, list, signal);
     } catch (e) {
       if (e.name === 'AbortError') return null;
       showToast(TAB_ERROR_MESSAGES[tabId] || TAB_ERROR_MESSAGES.tv, 'error');

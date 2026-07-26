@@ -110,17 +110,6 @@ export function renderGroupList({
   list.appendChild(fragment);
 }
 
-export function renderChannelList({ items, layout, containerId, onSelect, getFavBadge }) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  // VirtualList owns DOM updates after this init/update call.
-  return { container, items, layout, onSelect, getFavBadge };
-}
-
-export function getGroupLabel(g) {
-  return _getGroupLabel(g);
-}
-
 export function setChannelHeader({ currentGroup, currentTab, count }) {
   const groupNameEl = document.getElementById('current-group-name');
   if (groupNameEl) {

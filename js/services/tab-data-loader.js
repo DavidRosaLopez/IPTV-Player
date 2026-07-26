@@ -23,10 +23,6 @@ async function _loadFresh(tabId, list, signal, onProgress = null) {
   return [];
 }
 
-export async function loadTabData(tabId, list, signal, onProgress = null) {
-  return ensureTabData(tabId, list, signal, onProgress);
-}
-
 export async function ensureTabData(tabId, list, signal, onProgress = null, { forceReload = false } = {}) {
   const cacheLoader = tabId === 'tv'
     ? Storage.getChannelCache
