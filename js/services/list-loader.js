@@ -195,28 +195,12 @@ export function createListLoader() {
           _syncTimer = null;
         }
 
-        if (list && list.type === 'xtream') {
-          if (_prefetchController) _prefetchController.abort();
-          _prefetchController = new AbortController();
-          const signal = _prefetchController.signal;
-          void (async () => {
-            try {
-              await _prefetchTab('vod', list, signal);
-              if (signal.aborted) return;
-              await _prefetchTab('series', list, signal);
-            } catch (e) {
-              if (e.name !== 'AbortError') console.error('Prefetch error', e);
-            } finally {
-              _prefetchController = null;
-            }
-          })();
-        }
-
         if (_syncTimer) clearTimeout(_syncTimer);
         _syncTimer = setTimeout(() => {
           _syncTimer = null;
           _backgroundSync(list);
         }, 500);
+        _schedulePrefetch(list);
         return;
       }
     }
@@ -236,7 +220,24 @@ export function createListLoader() {
       ViewChannels.renderChannels();
     }
 
-    if (list && list.type === 'xtream') {
+    if (fromCache) {
+      if (_syncTimer) clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(() => {
+        _syncTimer = null;
+        _backgroundSync(list);
+      }, 500);
+    }
+
+    _schedulePrefetch(list);
+  }
+
+  function _schedulePrefetch(list) {
+    if (!list || list.type !== 'xtream') return;
+    if (_prefetchTimer) clearTimeout(_prefetchTimer);
+    _prefetchTimer = setTimeout(() => {
+      _prefetchTimer = null;
+      if (!Router.isView('channels')) return;
+      if (Store.peek('currentList')?.id !== list.id) return;
       if (_prefetchController) _prefetchController.abort();
       _prefetchController = new AbortController();
       const signal = _prefetchController.signal;
@@ -251,15 +252,7 @@ export function createListLoader() {
           _prefetchController = null;
         }
       })();
-    }
-
-    if (fromCache) {
-      if (_syncTimer) clearTimeout(_syncTimer);
-      _syncTimer = setTimeout(() => {
-        _syncTimer = null;
-        _backgroundSync(list);
-      }, 500);
-    }
+    }, 1200);
   }
 
   async function _prefetchTab(tabId, list, signal) {
