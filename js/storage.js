@@ -37,7 +37,4 @@ export const Storage = {
   ...Prefs,
   ...Cache,
   ...StorageProgress,
-  Prefs,
-  Cache,
-  Progress: StorageProgress,
 };

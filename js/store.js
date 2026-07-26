@@ -51,14 +51,6 @@ export const Store = (() => {
         if (next.length) listeners.set(key, next);
         else listeners.delete(key);
       };
-    },
-    getAll: () => {
-      const copy = {};
-      for (const k in state) {
-        copy[k] = _clone(state[k]);
-      }
-      return copy;
-    },
-    clearListeners: () => listeners.clear()
+    }
   };
 })();
