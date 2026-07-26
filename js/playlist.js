@@ -48,20 +48,6 @@ export const Playlist = (() => {
     return _groupSortKey(name) === 'otras';
   }
 
-  function _isLatestGroup(name) {
-    return _groupSortKey(name) === 'ultimos estrenos';
-  }
-
-  function _is4kGroup(name) {
-    const n = _groupSortKey(name);
-    return n.includes('4k / uhd');
-  }
-
-  function _isPlatformGroup(name) {
-    return ['netflix', 'hbo max', 'amazon prime', 'disney+', 'apple tv+', 'movistar+', 'paramount+']
-      .includes(_groupSortKey(name));
-  }
-
   function _vodSeriesGroupRank(name, tabId) {
     const n = _groupSortKey(name);
     if (n === 'ultimos estrenos') return 0;
@@ -99,6 +85,14 @@ export const Playlist = (() => {
   let _indexedChannels = null;
   let _groupCache = new WeakMap();
   let _visibleCache = new WeakMap();
+  function _getCachedMap(weakMap, channels) {
+    let cache = weakMap.get(channels);
+    if (!cache) {
+      cache = new Map();
+      weakMap.set(channels, cache);
+    }
+    return cache;
+  }
 
   function _buildGroupIndex(channels) {
     if (_indexedChannels === channels) return;
@@ -156,15 +150,11 @@ export const Playlist = (() => {
   }
 
   function getGroups(channels, countryCode = 'ALL', tabId = 'tv') {
-    if (tabId === 'vod' || tabId === 'series') {
-      let cache = _groupCache.get(channels);
-      if (!cache) {
-        cache = new Map();
-        _groupCache.set(channels, cache);
-      }
-      const cacheKey = `${countryCode}_${tabId}`;
-      if (cache.has(cacheKey)) return cache.get(cacheKey);
+    const cache = _getCachedMap(_groupCache, channels);
+    const cacheKey = `${countryCode}_${tabId}`;
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
 
+    if (tabId === 'vod' || tabId === 'series') {
       const staticGroups = _groupsForTab(tabId);
       const list = getVisibleChannels(channels, countryCode);
       const seen = new Map();
@@ -236,14 +226,6 @@ export const Playlist = (() => {
       cache.set(cacheKey, groups);
       return groups;
     }
-
-    let cache = _groupCache.get(channels);
-    if (!cache) {
-      cache = new Map();
-      _groupCache.set(channels, cache);
-    }
-    const cacheKey = `${countryCode}_${tabId}`;
-    if (cache.has(cacheKey)) return cache.get(cacheKey);
 
     const FOLDERS = {
       '__folder_plataformas__': {
@@ -392,16 +374,11 @@ export const Playlist = (() => {
     return _fetchInfo(_infoCache.series, `${base}&action=get_series_info&series_id=${series_id}`, signal);
   }
 
-  async function loadXtream(server, user, pass, onProgress, signal) { return _loadXtream(server, user, pass, onProgress, signal); }
-  async function loadVod(server, user, pass, onProgress, signal) { return _loadVod(server, user, pass, onProgress, signal); }
-  async function loadSeries(server, user, pass, onProgress, signal) { return _loadSeries(server, user, pass, onProgress, signal); }
-  async function loadM3U(url, onProgress, signal) { return _loadM3U(url, onProgress, signal); }
-
   return {
-    loadXtream,
-    loadVod,
-    loadSeries,
-    loadM3U,
+    loadXtream: _loadXtream,
+    loadVod: _loadVod,
+    loadSeries: _loadSeries,
+    loadM3U: _loadM3U,
     search,
     filterByGroup,
     getVisibleChannels,
