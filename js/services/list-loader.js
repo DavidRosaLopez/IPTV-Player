@@ -287,14 +287,7 @@ export function createListLoader() {
 
   function _channelSignature(channels) {
     if (!Array.isArray(channels) || channels.length === 0) return '';
-    return channels.map(ch => [
-      ch?.id || '',
-      ch?.group || '',
-      ch?.countryCode || '',
-      ch?.name || '',
-      ch?.type || '',
-      ch?.logo || '',
-    ].join('~')).join('|');
+    return channels.map(ch => String(ch?.id || '')).sort().join('|');
   }
 
 

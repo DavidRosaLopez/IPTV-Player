@@ -184,9 +184,9 @@ export const VirtualList = (() => {
     }
     if (prevSelectedId) {
       const foundSelectedIdx = _items.findIndex(item => item?.id === prevSelectedId);
-      _selectedIdx = foundSelectedIdx >= 0 ? foundSelectedIdx : _focusedIdx;
+      _selectedIdx = foundSelectedIdx >= 0 ? foundSelectedIdx : -1;
     } else {
-      _selectedIdx = _focusedIdx;
+      _selectedIdx = -1;
     }
     _domCache   = {};
     _container.innerHTML = '';

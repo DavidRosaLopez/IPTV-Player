@@ -269,6 +269,16 @@
       vl.style.opacity = visible ? '1' : '0';
     }
 
+    function _showVideoLayerAfterLayout() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (_mode === 'PIP' || _mode === 'FULLSCREEN') {
+            _setVideoLayerVisible(true);
+          }
+        });
+      });
+    }
+
     function _showPip(ch) {
       const box = document.getElementById('pip-box');
       const nameEl = document.getElementById('pip-name');
@@ -288,7 +298,6 @@
       _showPip(_current);
       _setVideoLayerVisible(false);
       _applyDisplayRect();
-      _setVideoLayerVisible(true);
     }
 
     // â€”â€”â€” EXPANDIR PIP A PANTALLA COMPLETA â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
@@ -351,15 +360,15 @@
             onbufferingcomplete: () => {
               _setState('PLAYING');
               _retryCount = 0;
-              _setVideoLayerVisible(true);
-              _applyDisplayRect(); // reconfirmar posiciÃ³n despuÃ©s de buffering
+              _applyDisplayRect(); // reconfirmar posici�n despu�s de buffering
+              _showVideoLayerAfterLayout();
               document.getElementById('pip-box')?.classList.remove('pip-loading');
             },
             oncurrentplaytime: () => {
               if (_state === 'BUFFERING') {
                 _setState('PLAYING');
                 _retryCount = 0;
-                _setVideoLayerVisible(true);
+                _showVideoLayerAfterLayout();
                 document.getElementById('pip-box')?.classList.remove('pip-loading');
               }
             },
@@ -367,13 +376,13 @@
               if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
                 if (_state === 'BUFFERING') {
                   _setState('PLAYING');
-                  _setVideoLayerVisible(true);
+                  _showVideoLayerAfterLayout();
                   document.getElementById('pip-box')?.classList.remove('pip-loading');
                 }
               }
             },
             onerror: () => {
-              _setVideoLayerVisible(true);
+              _showVideoLayerAfterLayout();
               _hidePip();
             },
             ondrmevent: () => { },
@@ -382,12 +391,12 @@
           webapis.avplay.prepareAsync(
             () => { if (pipSeq === _pipSeq) { try { webapis.avplay.play(); } catch (e) { } } },
             () => {
-              _setVideoLayerVisible(true);
+              _showVideoLayerAfterLayout();
               _hidePip();
             }
           );
         } catch (e) {
-          _setVideoLayerVisible(true);
+          _showVideoLayerAfterLayout();
           _hidePip();
         }
       }, 150);
@@ -775,4 +784,5 @@
 
     return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack, getSubtitleTracks, setSubtitleTrack, getCurrentSubtitleTrack };
   })();
+
 
