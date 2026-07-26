@@ -40,6 +40,8 @@ export function createPrefsStorage(getCurrentListId) {
     setDefaultList: (id) => _set('default_list', id),
     getLastChannel: (listId = null) => _get('last_channel_' + getCurrentListId(listId), null),
     setLastChannel: (id, listId = null) => _set('last_channel_' + getCurrentListId(listId), id),
+    getLastViewState: (listId = null) => _get('last_view_state_' + getCurrentListId(listId), null),
+    setLastViewState: (state, listId = null) => _set('last_view_state_' + getCurrentListId(listId), state),
     getVisibleCountries: () => _get('visible_countries', null),
     setVisibleCountries: (list) => _set('visible_countries', list),
   };

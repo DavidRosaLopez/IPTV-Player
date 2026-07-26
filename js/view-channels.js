@@ -36,6 +36,8 @@ export const ViewChannels = (() => {
   let _pendingFocusAfterRender = null;
   let _lastGroupsRenderInput = null;
   let _lastChannelsRenderInput = null;
+  let _suspendViewStateSave = false;
+  let _cacheRestorePending = false;
   const _tabs = createTabViewController({
     virtualList: VirtualList,
     showToast: (...args) => Router.showToast(...args),
@@ -240,7 +242,13 @@ export const ViewChannels = (() => {
     }
     _tabs.activate(_currentTab);
     initKeys();
-    
+
+    if (fromView !== 'player' && _cacheRestorePending) {
+      _suspendViewStateSave = true;
+      _setFocusZone('groups');
+      return;
+    }
+
     if (fromView !== 'player') {
       _updateCountriesList();
     }
@@ -284,6 +292,33 @@ export const ViewChannels = (() => {
 
   function _getCurrentGroup() {
     return Store.peek('currentGroup');
+  }
+
+  function _saveCurrentViewState(extra = {}) {
+    if (_suspendViewStateSave) return;
+    const listId = _getCurrentListId();
+    if (!listId) return;
+
+    const tab = _currentTab || 'tv';
+    Storage.setLastViewState({
+      tab,
+      currentCountry: tab === 'tv' ? _getCurrentCountry() : 'ALL',
+      currentGroup: _getCurrentGroup() || '__all__',
+      channelId: tab === 'tv'
+        ? (extra.channelId || Storage.getLastChannel(listId) || null)
+        : null,
+      updatedAt: Date.now(),
+    }, listId);
+  }
+
+  function _getSavedViewState() {
+    const listId = _getCurrentListId();
+    if (!listId) return null;
+    return Storage.getLastViewState(listId);
+  }
+
+  function prepareCacheRestore(enabled) {
+    _cacheRestorePending = Boolean(enabled);
   }
 
   function _getGroupIcon(g) {
@@ -355,7 +390,9 @@ export const ViewChannels = (() => {
     if (_currentTab === 'tv') {
       _lastTvCountry = code || 'ALL';
     }
-    return _viewState.selectCountry(code, idx);
+    const result = _viewState.selectCountry(code, idx);
+    _saveCurrentViewState();
+    return result;
   }
 
   function _updateCountryClasses() {
@@ -478,7 +515,9 @@ export const ViewChannels = (() => {
   }
 
   function _selectGroup(g, autoFocusChannels = true) {
-    return _viewState.selectGroup(g, autoFocusChannels);
+    const result = _viewState.selectGroup(g, autoFocusChannels);
+    _saveCurrentViewState();
+    return result;
   }
 
   function renderChannels(list) {
@@ -537,6 +576,7 @@ export const ViewChannels = (() => {
     if (!ch) return;
     const listId = _getCurrentListId();
     Storage.setLastChannel(ch.id, listId);
+    _saveCurrentViewState({ channelId: ch.id });
 
     // Si estamos en "Seguir viendo" y tiene un episodio guardado
     if (_getCurrentGroup() === '__watching__' && ch.type === 'series') {
@@ -664,6 +704,7 @@ export const ViewChannels = (() => {
       Store.set('currentData', Store.peek('channels') || []);
       Store.set('currentGroup', null);
       _renderData(Store.peek('channels') || []);
+      _saveCurrentViewState();
       return;
     }
 
@@ -678,6 +719,73 @@ export const ViewChannels = (() => {
     Store.set('currentGroup', null);
 
     _renderData(data);
+    _saveCurrentViewState();
+  }
+
+  async function restoreFromCache() {
+    const saved = _getSavedViewState();
+    if (!saved) return false;
+
+    _suspendViewStateSave = true;
+    try {
+      const targetTab = saved.tab || 'tv';
+      if (_currentTab !== targetTab) {
+        await _switchTab(targetTab);
+      }
+
+      if (targetTab === 'tv') {
+        _updateCountriesList();
+        const channels = Store.peek('channels') || [];
+        const targetCountry = saved.currentCountry || 'ALL';
+        const countryIdx = (Store.get('countries') || ['ALL']).indexOf(targetCountry);
+
+        _lastTvCountry = targetCountry;
+        Store.set('currentCountry', targetCountry);
+        _countryFocusIdx = countryIdx >= 0 ? countryIdx : 0;
+        renderCountries();
+
+        const channelId = saved.channelId || Storage.getLastChannel(_getCurrentListId());
+        if (channelId) {
+          const ch = channels.find(c => c.id === channelId);
+          if (ch) {
+            syncWithChannel(ch, { focusChannels: true });
+            return true;
+          }
+        }
+
+        const groups = Playlist.getGroups(channels, targetCountry, 'tv');
+        Store.set('groups', groups);
+        const groupId = saved.currentGroup || '__all__';
+        const targetGroupId = groups.some(g => g.id === groupId) ? groupId : '__all__';
+        Store.set('currentGroup', targetGroupId);
+        Store.set('groupIdx', Math.max(0, groups.findIndex(g => g.id === targetGroupId)));
+        _sidebarFocusIdx = (Store.get('groupIdx') || 0) + 2;
+        renderGroups();
+        renderChannels();
+        _setFocusZone('groups');
+        return true;
+      }
+
+      Store.set('currentCountry', 'ALL');
+      _countryFocusIdx = 0;
+      renderCountries();
+
+      const currentData = Store.peek('currentData') || [];
+      const groups = Store.get('groups') || Playlist.getGroups(currentData, 'ALL', targetTab);
+      Store.set('groups', groups);
+      const groupId = saved.currentGroup || '__all__';
+      const targetGroupId = groups.some(g => g.id === groupId) ? groupId : '__all__';
+      Store.set('currentGroup', targetGroupId);
+      Store.set('groupIdx', Math.max(0, groups.findIndex(g => g.id === targetGroupId)));
+      _sidebarFocusIdx = (Store.get('groupIdx') || 0) + 2;
+      renderGroups();
+      renderChannels();
+      _setFocusZone('groups');
+      return true;
+    } finally {
+      _suspendViewStateSave = false;
+      _cacheRestorePending = false;
+    }
   }
 
   function _renderData(data) {
@@ -714,5 +822,5 @@ export const ViewChannels = (() => {
 
   Search.configure({ getCurrentTab, renderChannels, focusSearchResults, setSidebarFocusToSearch });
 
-  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch, focusSearchResults };
+  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch, focusSearchResults, restoreFromCache, prepareCacheRestore };
 })();

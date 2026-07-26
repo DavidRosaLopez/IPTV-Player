@@ -87,6 +87,7 @@ export function createListLoader() {
         Store.set('currentList', list);
         Storage.setLastList(list.id);
         Store.set('channels', cached);
+        ViewChannels.prepareCacheRestore(Boolean(Storage.getLastViewState(list.id)));
         _throwIfCancelled(controller, isCurrentLoad);
         Router.showView('channels');
         SetupProgress.hide();
@@ -187,6 +188,40 @@ export function createListLoader() {
     });
 
     await yieldThread(); // Ceder UI antes de renderGroups/Channels
+    if (fromCache) {
+      const restored = await ViewChannels.restoreFromCache();
+      if (restored) {
+        if (_syncTimer) {
+          clearTimeout(_syncTimer);
+          _syncTimer = null;
+        }
+
+        if (list && list.type === 'xtream') {
+          if (_prefetchController) _prefetchController.abort();
+          _prefetchController = new AbortController();
+          const signal = _prefetchController.signal;
+          void (async () => {
+            try {
+              await _prefetchTab('vod', list, signal);
+              if (signal.aborted) return;
+              await _prefetchTab('series', list, signal);
+            } catch (e) {
+              if (e.name !== 'AbortError') console.error('Prefetch error', e);
+            } finally {
+              _prefetchController = null;
+            }
+          })();
+        }
+
+        if (_syncTimer) clearTimeout(_syncTimer);
+        _syncTimer = setTimeout(() => {
+          _syncTimer = null;
+          _backgroundSync(list);
+        }, 500);
+        return;
+      }
+    }
+
     const lastChannelId = Storage.getLastChannel(list.id);
     if (lastChannelId) {
       const ch = channels.find(c => c.id === lastChannelId);
