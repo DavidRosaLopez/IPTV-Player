@@ -1,26 +1,6 @@
-const PREFIX = 'iptv_';
+import { createJsonStorage } from './storage-json.js';
 
-function _get(key, fallback = null) {
-  try {
-    const v = localStorage.getItem(PREFIX + key);
-    return v !== null ? JSON.parse(v) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function _set(key, val) {
-  try {
-    localStorage.setItem(PREFIX + key, JSON.stringify(val));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function _del(key) {
-  localStorage.removeItem(PREFIX + key);
-}
+const { get: _get, set: _set, del: _del } = createJsonStorage();
 
 export function createPrefsStorage(getCurrentListId) {
   return {
