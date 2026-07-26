@@ -285,6 +285,18 @@ export function createListLoader() {
     });
   }
 
+  function _channelSignature(channels) {
+    if (!Array.isArray(channels) || channels.length === 0) return '';
+    return channels.map(ch => [
+      ch?.id || '',
+      ch?.group || '',
+      ch?.countryCode || '',
+      ch?.name || '',
+      ch?.type || '',
+      ch?.logo || '',
+    ].join('~')).join('|');
+  }
+
 
 
   async function _backgroundSync(list) {
@@ -292,13 +304,33 @@ export function createListLoader() {
     try {
       const newChannels = (await ensureTabData('tv', list, controller.signal, () => {}, { forceReload: true })) || [];
       if (controller.signal.aborted) return;
+
+      const currentChannels = Store.peek('channels') || [];
+      const currentSig = _channelSignature(currentChannels);
+      const nextSig = _channelSignature(newChannels);
+      if (currentSig === nextSig) return;
+
       if (newChannels.length > 0) {
         Store.set('channels', newChannels);
         Playlist.clearGroupCache();
         Store.set('groups', Playlist.getGroups(newChannels, Store.peek('currentCountry') || 'ALL', 'tv'));
         if (Router.isView('channels')) {
-          ViewChannels.renderGroups();
-          ViewChannels.renderChannels();
+          const saved = Storage.getLastViewState(list.id);
+          if (saved?.tab === 'tv' && saved.channelId) {
+            const ch = newChannels.find(c => c.id === saved.channelId);
+            if (ch) {
+              ViewChannels.syncWithChannel(ch, { focusChannels: true });
+              if (!Player.getCurrent() || Player.getCurrent().id !== ch.id || Player.getMode() !== 'PIP') {
+                setTimeout(() => Player.schedulePreview(ch), 0);
+              }
+            } else {
+              ViewChannels.renderGroups();
+              ViewChannels.renderChannels();
+            }
+          } else {
+            ViewChannels.renderGroups();
+            ViewChannels.renderChannels();
+          }
         }
         Router.showToast('Lista actualizada', 'success');
       }

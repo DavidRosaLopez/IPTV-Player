@@ -749,6 +749,9 @@ export const ViewChannels = (() => {
           const ch = channels.find(c => c.id === channelId);
           if (ch) {
             syncWithChannel(ch, { focusChannels: true });
+            if (typeof Player !== 'undefined') {
+              setTimeout(() => Player.schedulePreview(ch), 0);
+            }
             return true;
           }
         }
