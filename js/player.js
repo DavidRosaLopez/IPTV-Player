@@ -147,6 +147,7 @@
       _mode = 'FULLSCREEN';
       _setState('BUFFERING');
       _hidePip();
+      _setVideoLayerVisible(true);
 
       Router.showView('player');
       if (_current && (_current.type === 'vod' || _current.type === 'series')) {
@@ -261,6 +262,13 @@
       }
     }
 
+    function _setVideoLayerVisible(visible) {
+      const vl = _videoLayerEl || document.getElementById('video-layer');
+      if (!vl) return;
+      vl.style.visibility = visible ? 'visible' : 'hidden';
+      vl.style.opacity = visible ? '1' : '0';
+    }
+
     function _showPip(ch) {
       const box = document.getElementById('pip-box');
       const nameEl = document.getElementById('pip-name');
@@ -278,7 +286,9 @@
       if (!_current || _mode === 'PIP') return;
       _mode = 'PIP';
       _showPip(_current);
+      _setVideoLayerVisible(false);
       _applyDisplayRect();
+      _setVideoLayerVisible(true);
     }
 
     // â€”â€”â€” EXPANDIR PIP A PANTALLA COMPLETA â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
@@ -314,6 +324,7 @@
       const pipSeq = ++_pipSeq;
 
       _retryCount = 0;
+      _setVideoLayerVisible(false);
       _safeStop();
       _current = ch;
       _mode = 'PIP';
@@ -340,6 +351,7 @@
             onbufferingcomplete: () => {
               _setState('PLAYING');
               _retryCount = 0;
+              _setVideoLayerVisible(true);
               _applyDisplayRect(); // reconfirmar posiciÃ³n despuÃ©s de buffering
               document.getElementById('pip-box')?.classList.remove('pip-loading');
             },
@@ -347,6 +359,7 @@
               if (_state === 'BUFFERING') {
                 _setState('PLAYING');
                 _retryCount = 0;
+                _setVideoLayerVisible(true);
                 document.getElementById('pip-box')?.classList.remove('pip-loading');
               }
             },
@@ -354,19 +367,29 @@
               if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
                 if (_state === 'BUFFERING') {
                   _setState('PLAYING');
+                  _setVideoLayerVisible(true);
                   document.getElementById('pip-box')?.classList.remove('pip-loading');
                 }
               }
             },
-            onerror: () => _hidePip(),
+            onerror: () => {
+              _setVideoLayerVisible(true);
+              _hidePip();
+            },
             ondrmevent: () => { },
             onstreamcompleted: () => { },
           });
           webapis.avplay.prepareAsync(
             () => { if (pipSeq === _pipSeq) { try { webapis.avplay.play(); } catch (e) { } } },
-            () => { _hidePip(); }
+            () => {
+              _setVideoLayerVisible(true);
+              _hidePip();
+            }
           );
-        } catch (e) { _hidePip(); }
+        } catch (e) {
+          _setVideoLayerVisible(true);
+          _hidePip();
+        }
       }, 150);
     }
 
@@ -380,6 +403,8 @@
           vl.style.top = '0px';
           vl.style.width = '0px';
           vl.style.height = '0px';
+          vl.style.visibility = 'hidden';
+          vl.style.opacity = '0';
         }
         const s = webapis.avplay.getState();
         if (s !== 'NONE' && s !== 'IDLE') webapis.avplay.stop();

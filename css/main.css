@@ -628,6 +628,16 @@ html, body {
   box-shadow: var(--focus-ring);
   /* sin scale en tarjetas: evita reflow en cada tecla pulsada */
 }
+.channel-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: var(--focus-ring);
+}
+.channel-card.selected.focused {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
 .channel-card.playing { border-color: var(--green); }
 .channel-card.playing::after {
   content: '▶';

@@ -18,6 +18,7 @@ export const VirtualList = (() => {
   let _onSelect    = null;
   let _getFavBadge = null;
   let _focusedIdx  = 0;
+  let _selectedIdx = -1;
   let _scrollTop   = 0;
   let _rafId       = null;
   let _domCache    = {};    // index → DOM element
@@ -163,6 +164,7 @@ export const VirtualList = (() => {
     ImageQueue.flush(); // Discard stale requests from previous country/group
     const prevFocusedIdx = _focusedIdx;
     const prevFocusedId = _items?.[_focusedIdx]?.id || null;
+    const prevSelectedId = _items?.[_selectedIdx]?.id || null;
     const prevScrollTop = _scrollTop;
     _items = items;
     if (preserveFocus) {
@@ -180,6 +182,12 @@ export const VirtualList = (() => {
       _scrollTop  = 0;
       _container.scrollTop = 0;
     }
+    if (prevSelectedId) {
+      const foundSelectedIdx = _items.findIndex(item => item?.id === prevSelectedId);
+      _selectedIdx = foundSelectedIdx >= 0 ? foundSelectedIdx : _focusedIdx;
+    } else {
+      _selectedIdx = _focusedIdx;
+    }
     _domCache   = {};
     _container.innerHTML = '';
     _pool = [];
@@ -188,6 +196,7 @@ export const VirtualList = (() => {
   }
 
   function setFocused(idx) {
+    setSelected(idx);
     if (_focusedIdx >= 0) _unfocus(_focusedIdx);
     if (idx < 0) {
       _focusedIdx = -1;
@@ -199,6 +208,16 @@ export const VirtualList = (() => {
   }
 
   function getFocused() { return _focusedIdx; }
+
+  function setSelected(idx) {
+    if (_selectedIdx >= 0) _unselect(_selectedIdx);
+    if (idx < 0) {
+      _selectedIdx = -1;
+      return;
+    }
+    _selectedIdx = Math.max(0, Math.min(_items.length - 1, idx));
+    _select(_selectedIdx);
+  }
 
   function setFocusVisible(visible) {
     const next = Boolean(visible);
@@ -228,6 +247,7 @@ export const VirtualList = (() => {
   function getItems() { return _items; }
   function getCurrentItem() { return _items[_focusedIdx]; }
   function getFocusedElement() { return _domCache[_focusedIdx] || null; }
+  function getSelectedElement() { return _domCache[_selectedIdx] || null; }
   function _ensureRefs(el) {
     if (el._favBadge && el._img && el._fallback && el._name) return el;
     el._favBadge = el._favBadge || el.querySelector('.fav-badge');
@@ -479,7 +499,7 @@ export const VirtualList = (() => {
     const y   = PADDING + row * (ITEM_H + ITEM_GAP);
     const x   = PADDING + col * (_colW + ITEM_GAP);
 
-    el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx && _showFocusClass ? ' focused' : '');
+    el.className   = 'channel-card' + (_layout === 'poster' ? ' poster' : '') + (i === _focusedIdx && _showFocusClass ? ' focused' : '') + (i === _selectedIdx ? ' selected' : '');
     el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${x}px,${y}px,0);width:${_colW}px;height:${ITEM_H}px;`;
     el.dataset.idx = i;
     el.dataset.mediaType = ch.type || (_layout === 'poster' ? 'vod' : 'tv');
@@ -567,6 +587,16 @@ export const VirtualList = (() => {
     if (el) el.classList.remove('focused');
   }
 
+  function _select(idx) {
+    const el = _domCache[idx];
+    if (el) el.classList.add('selected');
+  }
+
+  function _unselect(idx) {
+    const el = _domCache[idx];
+    if (el) el.classList.remove('selected');
+  }
+
   function _scrollToVisible(idx) {
     if (!_container) return;
     const row = Math.floor(idx / COLS);
@@ -638,5 +668,5 @@ export const VirtualList = (() => {
     return /^(https?:|data:image\/)/i.test(url) ? url : '';
   }
 
-  return { init, update, setFocused, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, refreshVisible, refreshFavoriteBadges, setFocusVisible };
+  return { init, update, setFocused, setSelected, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, getSelectedElement, refreshVisible, refreshFavoriteBadges, setFocusVisible };
 })();

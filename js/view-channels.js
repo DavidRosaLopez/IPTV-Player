@@ -575,6 +575,10 @@ export const ViewChannels = (() => {
       VirtualList.update(items, { preserveFocus });
     }
 
+    if (_focusZone !== 'channels' && !_cacheRestorePending) {
+      VirtualList.setSelected(-1);
+    }
+
     if (preserveFocus && _focusZone !== 'channels') {
       VirtualList.setFocusVisible(false);
     }
@@ -767,9 +771,6 @@ export const ViewChannels = (() => {
             renderGroups();
             _setFocusZone('groups');
             syncWithChannel(ch, { focusChannels: false });
-            if (typeof VirtualList !== 'undefined') {
-              VirtualList.setFocusVisible(true);
-            }
             if (typeof Player !== 'undefined') {
               setTimeout(() => Player.schedulePreview(ch), 0);
             }
