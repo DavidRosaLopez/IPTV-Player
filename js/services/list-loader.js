@@ -313,7 +313,7 @@ export function createListLoader() {
         Router.showToast('Lista actualizada', 'success');
       }
     } catch (e) {
-      if (e.name !== 'AbortError') console.warn('Background Sync Fallido:', e);
+      if (e.name !== 'AbortError') console.warn('Background refresh failed:', e);
     } finally {
       controller.abort();
     }
