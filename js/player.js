@@ -147,7 +147,7 @@
       _mode = 'FULLSCREEN';
       _setState('BUFFERING');
       _hidePip();
-      _setVideoLayerVisible(true);
+      _setVideoLayerVisible(false);
 
       Router.showView('player');
       if (_current && (_current.type === 'vod' || _current.type === 'series')) {
