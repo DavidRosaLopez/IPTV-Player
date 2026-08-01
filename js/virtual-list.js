@@ -1,4 +1,4 @@
-/**
+﻿/**
  * virtual-list.js — Virtual scroll renderer for channel grid
  * Only renders visible rows — handles 10,000+ channels smoothly
  * Performance: pre-cached sub-element references on card creation.
@@ -176,11 +176,11 @@ export const VirtualList = (() => {
       if (!Number.isFinite(nextIdx)) nextIdx = 0;
       _focusedIdx = _items.length > 0 ? Math.max(0, Math.min(_items.length - 1, nextIdx)) : -1;
       _scrollTop = Math.max(0, prevScrollTop);
-      _container.scrollTop = _scrollTop;
+      if (_container) _container.scrollTop = _scrollTop;
     } else {
       _focusedIdx = 0;
       _scrollTop  = 0;
-      _container.scrollTop = 0;
+      if (_container) _container.scrollTop = 0;
     }
     if (prevSelectedId) {
       const foundSelectedIdx = _items.findIndex(item => item?.id === prevSelectedId);
@@ -604,22 +604,22 @@ export const VirtualList = (() => {
     const centerTarget = Math.max(0, y - Math.max(0, (_vH - ITEM_H) / 2));
     if (_layout === 'poster') {
       _scrollTop = centerTarget;
-      _container.scrollTop = _scrollTop;
+      if (_container) _container.scrollTop = _scrollTop;
       return;
     }
     // Usar la posición cacheada evita leer .scrollTop y forzar un reflow síncrono por cada pulsación
     if (y < _scrollTop) {
       _scrollTop = y - PADDING;
-      _container.scrollTop = _scrollTop;
+      if (_container) _container.scrollTop = _scrollTop;
     }
     else if (y + ITEM_H > _scrollTop + _vH) {
       _scrollTop = y + ITEM_H - _vH + PADDING;
-      _container.scrollTop = _scrollTop;
+      if (_container) _container.scrollTop = _scrollTop;
     }
   }
 
   function _onScroll() {
-    _scrollTop = _container.scrollTop; // Actualizar el caché real cuando ocurre el evento
+    if (_container) _scrollTop = _container.scrollTop; // Actualizar el caché real cuando ocurre el evento
     _lastScrollAt = performance.now();
     if (!_scrolling && _layout !== 'poster') ImageQueue.flush();
     _scrolling = true;
