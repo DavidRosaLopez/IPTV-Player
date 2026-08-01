@@ -1,4 +1,4 @@
-function _getGroupIcon(g) {
+﻿function _getGroupIcon(g) {
   if (g?.icon) return g.icon;
   const match = String(g?.name || '').match(/<span[^>]*material-symbols-rounded[^>]*>([^<]+)<\/span>/);
   return match ? match[1].trim() : null;
@@ -108,6 +108,11 @@ export function renderGroupList({
     if (!newIds.has(id)) li.remove();
   }
   list.appendChild(fragment);
+
+  const activeLi = list.querySelector('.group-item.active') || list.querySelector('.group-item.focused');
+  if (activeLi) {
+    activeLi.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }
 }
 
 export function setChannelHeader({ currentGroup, currentTab, count }) {

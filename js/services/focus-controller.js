@@ -1,4 +1,4 @@
-export function createFocusController(deps) {
+﻿export function createFocusController(deps) {
   let focusZone = 'channels';
   let sidebarFocusIdx = 2;
   let exitFocusIdx = 0;
@@ -45,7 +45,7 @@ export function createFocusController(deps) {
       const next = els[sidebarFocusIdx];
       if (next) {
         next.classList.add('focused');
-        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        next.scrollIntoView({ block: 'center', behavior: 'auto' });
         prevFocusedEl = next;
       }
     } else if (zone === 'countries') {
@@ -130,7 +130,7 @@ export function createFocusController(deps) {
       if (next) {
         next.classList.add('focused');
         prevFocusedEl = next;
-        next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        next.scrollIntoView({ block: 'center', behavior: 'auto' });
         deps.previewGroup(next);
       }
       return;
