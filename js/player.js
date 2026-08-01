@@ -1,4 +1,4 @@
-  /**
+﻿  /**
    * player.js â€” AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
    * Samsung 83" SF93 OLED
    *
@@ -200,12 +200,16 @@
               if (_state === 'BUFFERING') {
                 _setState('PLAYING');
                 _retryCount = 0;
+                if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
               }
             },
             onevent: (type) => {
               if (type === 'PLAYER_MSG_END_OF_STREAM') handleStreamEnd();
               if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
-                if (_state === 'BUFFERING') _setState('PLAYING');
+                if (_state === 'BUFFERING') {
+                  _setState('PLAYING');
+                  if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
+                }
                 // Tizen a veces no escala el video si la resoluciÃ³n cambia al vuelo (HLS)
                 if (type === 'PLAYER_MSG_RESOLUTION_CHANGED') _applyDisplayRect();
               }
@@ -360,7 +364,7 @@
             onbufferingcomplete: () => {
               _setState('PLAYING');
               _retryCount = 0;
-              _applyDisplayRect(); // reconfirmar posici�n despu�s de buffering
+              _applyDisplayRect(); // reconfirmar posici�n despu�s de buffering
               _showVideoLayerAfterLayout();
               document.getElementById('pip-box')?.classList.remove('pip-loading');
             },
@@ -423,7 +427,11 @@
 
     // â€”â€”â€” EVENTS â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     function _onBufferingStart() { _setState('BUFFERING'); }
-    function _onBufferingComplete() { _setState('PLAYING'); _retryCount = 0; }
+    function _onBufferingComplete() {
+      _setState('PLAYING');
+      _retryCount = 0;
+      if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
+    }
 
     function _onError(err) {
       console.error('AVPlay error', err);
