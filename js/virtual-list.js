@@ -1,4 +1,4 @@
-﻿/**
+/**
  * virtual-list.js — Virtual scroll renderer for channel grid
  * Only renders visible rows — handles 10,000+ channels smoothly
  * Performance: pre-cached sub-element references on card creation.
@@ -189,7 +189,7 @@ export const VirtualList = (() => {
       _selectedIdx = -1;
     }
     _domCache   = {};
-    _container.innerHTML = '';
+    if (_container) _container.innerHTML = '';
     _pool = [];
     _sentinel = null;
     _render();
