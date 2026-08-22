@@ -195,7 +195,7 @@ export const ViewSetup = (() => {
     if (_setupZone === 'exit') {
       if (_exitFocusIdx === 0) _hideExitPopup();
       else {
-        try { tizen?.application?.getCurrentApplication()?.exit(); } catch(e) {}
+        try { tizen?.application?.getCurrentApplication()?.exit(); } catch (e) { }
       }
       return true;
     }
@@ -282,7 +282,7 @@ export const ViewSetup = (() => {
       const deleteBtn = makeAction('saved-item-del', 'delete');
       actions.append(defaultBtn, editBtn, deleteBtn);
       item.appendChild(actions);
-      
+
       defaultBtn.addEventListener('click', e => { e.stopPropagation(); _toggleDefaultList(list.id); });
       editBtn.addEventListener('click', e => { e.stopPropagation(); _editList(list); });
       deleteBtn.addEventListener('click', e => { e.stopPropagation(); _deleteList(list.id); });
@@ -339,37 +339,37 @@ export const ViewSetup = (() => {
   }
 
   async function _addXtream() {
-    const name   = _val('xt-name') || 'Xtream IPTV';
+    const name = _val('xt-name') || 'Xtream IPTV';
     const server = _val('xt-server').replace(/\/+$/, '');
-    const user   = _val('xt-user');
-    const pass   = _val('xt-pass');
+    const user = _val('xt-user');
+    const pass = _val('xt-pass');
     if (!server || !user || !pass) { _setStatus('xt-status', 'Rellena todos los campos', 'error'); return; }
 
     const list = { id: _editingListId || _uid(), name, type: 'xtream', server, user, pass };
     _saveList(list);
     _editingListId = null;
     document.getElementById('btn-add-xtream').textContent = 'Añadir lista';
-    
+
     if (typeof App !== 'undefined') {
       _requestLoadList(list);
     }
   }
 
   async function _testXtream() {
-    const server = _val('xt-server').replace(/\/+$/,'');
-    const user   = _val('xt-user');
-    const pass   = _val('xt-pass');
+    const server = _val('xt-server').replace(/\/+$/, '');
+    const user = _val('xt-user');
+    const pass = _val('xt-pass');
     if (!server || !user || !pass) {
       _setStatus('xt-status', 'Rellena todos los campos', 'error');
       return;
     }
     _setStatus('xt-status', 'Probando...', '');
     try {
-      const r  = await fetch(`${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`);
-      const d  = await r.json();
+      const r = await fetch(`${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`);
+      const d = await r.json();
       const ok = d?.user_info?.auth === 1;
-      _setStatus('xt-status', ok ? 'âœ“ Credenciales correctas' : 'âœ— Credenciales incorrectas', ok ? 'success' : 'error');
-    } catch { _setStatus('xt-status', 'âœ— No se puede conectar', 'error'); }
+      _setStatus('xt-status', ok ? 'Credenciales correctas' : 'Credenciales incorrectas', ok ? 'success' : 'error');
+    } catch { _setStatus('xt-status', 'No se puede conectar', 'error'); }
   }
 
 
