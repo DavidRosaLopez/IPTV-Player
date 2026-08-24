@@ -1,4 +1,4 @@
-﻿import { Store } from './store.js';
+import { Store } from './store.js';
 import { Storage } from './storage.js';
 import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
@@ -350,9 +350,7 @@ export const ViewSetup = (() => {
     _editingListId = null;
     document.getElementById('btn-add-xtream').textContent = 'Añadir lista';
 
-    if (typeof App !== 'undefined') {
-      _requestLoadList(list);
-    }
+    _requestLoadList(list);
   }
 
   async function _testXtream() {
