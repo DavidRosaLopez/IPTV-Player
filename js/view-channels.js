@@ -777,14 +777,39 @@ export const ViewChannels = (() => {
           const ch = channels.find(c => c.id === channelId);
           if (ch) {
             const groups = Playlist.getGroups(channels, targetCountry, 'tv');
-            const channelGroupId = ch.group || '__all__';
             Store.set('groups', groups);
-            Store.set('currentGroup', channelGroupId);
-            Store.set('groupIdx', Math.max(0, groups.findIndex(g => g.id === channelGroupId)));
+
+            // Respetar el grupo guardado (ej: '__favs__') en vez de usar siempre ch.group
+            const savedGroup = saved.currentGroup;
+            let resolvedGroupId;
+            if (savedGroup && savedGroup === '__favs__' && Favorites.isFav(ch.id)) {
+              // El canal estaba en Favoritos
+              resolvedGroupId = '__favs__';
+            } else if (savedGroup && savedGroup !== '__favs__' && groups.some(g => g.id === savedGroup)) {
+              // El grupo guardado existe en la lista actual
+              resolvedGroupId = savedGroup;
+            } else {
+              // Fallback: grupo real del canal o __all__
+              resolvedGroupId = ch.group || '__all__';
+            }
+
+            Store.set('currentGroup', resolvedGroupId);
+            Store.set('groupIdx', Math.max(0, groups.findIndex(g => g.id === resolvedGroupId)));
             _sidebarFocusIdx = (Store.get('groupIdx') || 0) + 2;
             renderGroups();
             _setFocusZone('groups');
-            syncWithChannel(ch, { focusChannels: true });
+
+            if (resolvedGroupId === '__favs__') {
+              // En favoritos, syncWithChannel buscaría por ch.group → usar renderChannels directo
+              renderChannels();
+              const filtered = Playlist.filterByGroup(channels, '__favs__', Favorites.getSet(), targetCountry);
+              const chIdx = filtered.findIndex(c => c.id === ch.id);
+              if (chIdx >= 0 && typeof VirtualList !== 'undefined') VirtualList.setFocused(chIdx);
+              _setFocusZone('channels');
+            } else {
+              syncWithChannel(ch, { focusChannels: true });
+            }
+
             if (typeof Player !== 'undefined') {
               setTimeout(() => Player.schedulePreview(ch), 0);
             }
