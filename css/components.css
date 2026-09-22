@@ -255,15 +255,18 @@
   transition: all 0.2s;
 }
 .exit-btn.focused {
-  background: var(--accent-dim);
-  border-color: var(--accent);
+  background: var(--accent);
+  border-color: #FFFFFF;
   color: #fff;
-  transform: scale(1.05);
+  transform: scale(1.06) translate3d(0,0,0);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px #FFFFFF, 0 0 20px rgba(108,99,255,0.7);
 }
 .exit-btn.exit-danger.focused {
-  background: rgba(255, 60, 60, 0.2);
-  border-color: #ff3c3c;
-  color: #ff3c3c;
+  background: #ff3c3c;
+  border-color: #FFFFFF;
+  color: #fff;
+  transform: scale(1.06) translate3d(0,0,0);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px #FFFFFF, 0 0 22px rgba(255,60,60,0.75);
 }
 
 /* ── PiP (Picture-in-Picture) ───────────────────────── */
