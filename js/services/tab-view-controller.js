@@ -12,6 +12,18 @@ const TAB_LOADING_MESSAGES = {
   series: 'Cargando series...'
 };
 
+const TAB_CACHE_MESSAGES = {
+  tv: 'Comprobando caché de canales...',
+  vod: 'Comprobando caché de películas...',
+  series: 'Comprobando caché de series...'
+};
+
+const TAB_DOWNLOAD_MESSAGES = {
+  tv: 'Cargando canales...',
+  vod: 'Cargando películas...',
+  series: 'Cargando series...'
+};
+
 const TAB_ERROR_MESSAGES = {
   tv: 'Error cargando canales',
   vod: 'Error cargando películas',
@@ -72,6 +84,13 @@ export function createTabViewController({ virtualList, showToast, getCurrentTab 
     hideLoading();
   }
 
+  function updateLoadingSource(tabId, source) {
+    const loaderMsg = document.getElementById('tab-loader-msg');
+    if (!loaderMsg) return;
+    const messages = source === 'cache' ? TAB_CACHE_MESSAGES : TAB_DOWNLOAD_MESSAGES;
+    loaderMsg.textContent = messages[tabId] || messages.tv;
+  }
+
   async function load(tabId, list) {
     abortPendingLoad();
     const controller = new AbortController();
@@ -84,7 +103,9 @@ export function createTabViewController({ virtualList, showToast, getCurrentTab 
       await nextFrame();
       if (getCurrentTab() !== tabId) return null;
 
-      const result = await ensureTabData(tabId, list, signal);
+      const result = await ensureTabData(tabId, list, signal, null, {
+        onSource: source => updateLoadingSource(tabId, source)
+      });
       if (getCurrentTab() !== tabId) return null;
       return result;
     } catch (e) {

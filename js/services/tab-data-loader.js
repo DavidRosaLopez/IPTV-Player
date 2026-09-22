@@ -23,7 +23,7 @@ async function _loadFresh(tabId, list, signal, onProgress = null) {
   return [];
 }
 
-export async function ensureTabData(tabId, list, signal, onProgress = null, { forceReload = false } = {}) {
+export async function ensureTabData(tabId, list, signal, onProgress = null, { forceReload = false, onSource = null } = {}) {
   const cacheLoader = tabId === 'tv'
     ? Storage.getChannelCache
     : tabId === 'vod'
@@ -36,11 +36,13 @@ export async function ensureTabData(tabId, list, signal, onProgress = null, { fo
       : Storage.setSeriesCache;
 
   if (!forceReload) {
+    onSource?.('cache');
     const cached = await cacheLoader(list);
     _throwIfAborted(signal);
     if (cached && cached.length > 0) return cached;
   }
 
+  onSource?.('network');
   const fresh = await _loadFresh(tabId, list, signal, onProgress);
   _throwIfAborted(signal);
   if (fresh.length > 0) await cacheSaver(list, fresh);

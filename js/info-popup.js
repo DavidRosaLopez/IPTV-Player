@@ -18,6 +18,9 @@ export const InfoPopup = (() => {
   let _actionIdx = 0; // 0: Play, 1: Fav
   let _seasonIdx = 0;
   let _episodeIdx = 0;
+  let _posterRequestId = 0;
+  let _posterState = 'idle';
+  let _metadataPending = false;
 
   let _seasons = [];
   let _episodesMap = {};
@@ -54,15 +57,33 @@ export const InfoPopup = (() => {
   function _setImage(id, url) {
     const safe = _safeMediaUrl(url);
     const el = document.getElementById(id);
-    if (!el) return;
+    if (!el) return false;
     if (!safe) {
-      _showPosterFallback();
-      return;
+      return false;
     }
-    el.onload = () => _hidePosterFallback();
-    el.onerror = () => _showPosterFallback();
-    el.src = safe;
-    el.style.display = '';
+    const requestId = ++_posterRequestId;
+    const hadVisiblePoster = _posterState === 'loaded' && el.style.display !== 'none';
+    _posterState = 'loading';
+    const loader = new Image();
+    loader.onload = () => {
+      if (requestId !== _posterRequestId) return;
+      el.src = safe;
+      _posterState = 'loaded';
+      _hidePosterFallback();
+    };
+    loader.onerror = () => {
+      if (requestId !== _posterRequestId) return;
+      if (hadVisiblePoster) {
+        _posterState = 'loaded';
+        return;
+      }
+      _posterState = 'failed';
+      el.removeAttribute('src');
+      el.style.display = 'none';
+      if (!_metadataPending) _showPosterFallback();
+    };
+    loader.src = safe;
+    return true;
   }
   function _setBackground(id, url) {
     const safe = _safeMediaUrl(url).replace(/["\\\r\n]/g, '');
@@ -86,11 +107,25 @@ export const InfoPopup = (() => {
     if (img) img.style.display = '';
     if (fallback) fallback.style.display = 'none';
   }
+  function _hidePosterUntilResolved() {
+    _posterRequestId++;
+    _posterState = 'idle';
+    const img = document.getElementById('info-poster');
+    const fallback = document.getElementById('info-poster-fallback');
+    if (img) {
+      img.onload = null;
+      img.onerror = null;
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+    if (fallback) fallback.style.display = 'none';
+  }
 
   async function show(ch) {
     if (!ch || (ch.type !== 'vod' && ch.type !== 'series')) return;
     _current = ch;
     _isVisible = true;
+    _metadataPending = true;
 
     const popup = document.getElementById('info-popup');
     popup.classList.remove('hidden');
@@ -117,6 +152,11 @@ export const InfoPopup = (() => {
     } catch (e) {
       console.error(e);
       document.getElementById('info-plot').textContent = 'Error al cargar la información.';
+    } finally {
+      if (_current === ch) {
+        _metadataPending = false;
+        if (_posterState === 'idle' || _posterState === 'failed') _showPosterFallback();
+      }
     }
 
     _updateFavIcon();
@@ -169,6 +209,8 @@ export const InfoPopup = (() => {
     _current = null;
     _data = null;
     _playingEpisode = null;
+    _metadataPending = false;
+    _posterRequestId++;
     document.getElementById('info-popup').classList.add('hidden');
     document.getElementById('info-popup-bg').style.backgroundImage = 'none';
   }
@@ -184,7 +226,7 @@ export const InfoPopup = (() => {
     document.getElementById('info-seasons-list').innerHTML = '';
     document.getElementById('info-episodes-list').innerHTML = '';
     document.getElementById('info-popup-bg').style.backgroundImage = 'none';
-    _showPosterFallback();
+    _hidePosterUntilResolved();
 
     document.getElementById('info-year').textContent = '';
     document.getElementById('info-duration').textContent = '';

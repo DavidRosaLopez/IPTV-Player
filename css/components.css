@@ -238,7 +238,7 @@
 .exit-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 40px 50px;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0,0,0,0.5);
@@ -248,18 +248,18 @@
 .exit-btn {
   padding: 16px 40px;
   font-size: 22px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 2px solid transparent;
   background: rgba(255,255,255,0.1);
   color: var(--text);
   transition: all 0.2s;
 }
 .exit-btn.focused {
-  background: var(--accent);
-  border-color: #FFFFFF;
+  background: var(--focus-bg);
+  border-color: var(--focus-border);
   color: #fff;
-  transform: scale(1.06) translate3d(0,0,0);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px #FFFFFF, 0 0 20px rgba(108,99,255,0.7);
+  transform: scale(1.05) translate3d(0,0,0);
+  box-shadow: var(--focus-glow);
 }
 .exit-btn.exit-danger.focused {
   background: #ff3c3c;
