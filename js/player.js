@@ -1,4 +1,4 @@
-﻿/**
+/**
  * player.js â€” AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
  * Samsung 83" SF93 OLED
  *
@@ -532,6 +532,8 @@ export const Player = (() => {
             if (VodOSD.isVisible()) VodOSD.handleKey('UP');
             else VodOSD.show(_current);
           }
+        } else {
+          _onChannelChange?.('next');
         }
         return true;
       }
@@ -544,6 +546,8 @@ export const Player = (() => {
             if (VodOSD.isVisible()) VodOSD.handleKey('DOWN');
             else VodOSD.show(_current);
           }
+        } else {
+          _onChannelChange?.('prev');
         }
         return true;
       }
