@@ -5,6 +5,12 @@
 *.wgt
 *.wgt.sign
 
+# Tizen RDS (Remote Device Service) - estado local de build/deploy
+.tizen-rds/
+
+# Debug build artifacts
+Debug/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -12,5 +18,7 @@ Thumbs.db
 # IDE
 .vscode/
 *.swp
-Debug/projects/IPTV-Player
 
+# Configuración privada (credenciales, URLs de listas)
+# IMPORTANTE: copiar config.js.example y rellenar los valores
+js/config.js

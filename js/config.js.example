@@ -1,0 +1,18 @@
+/**
+ * config.js — Configuration file
+ * Copia este fichero como config.js y rellena tus valores.
+ * DO NOT COMMIT config.js TO VERSION CONTROL
+ */
+export const Config = {
+  defaultLists: [
+    {
+      id: 'predef_1',
+      name: 'Nombre de la lista',
+      type: 'xtream',          // 'xtream' | 'm3u'
+      server: 'http://tu-servidor.com',
+      user: 'tu_usuario',
+      pass: 'tu_password'
+    }
+    // Añade más listas según necesites
+  ]
+};
