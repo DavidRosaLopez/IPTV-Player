@@ -59,29 +59,47 @@ export function createTabViewController({ virtualList, showToast, getCurrentTab 
     if (loaderMsg) loaderMsg.textContent = TAB_LOADING_MESSAGES[tabId] || TAB_LOADING_MESSAGES.tv;
   }
 
+  function hideLoading() {
+    const loader = document.getElementById('tab-loader');
+    if (loader) loader.classList.add('hidden');
+    const grid = document.getElementById('channel-grid');
+    if (grid) grid.classList.remove('hidden');
+  }
+
   function abortPendingLoad() {
-    if (!abortController) return;
-    abortController.abort();
+    if (abortController) abortController.abort();
     abortController = null;
+    hideLoading();
   }
 
   async function load(tabId, list) {
     abortPendingLoad();
-    abortController = new AbortController();
-    const signal = abortController.signal;
+    const controller = new AbortController();
+    abortController = controller;
+    const signal = controller.signal;
 
     showLoading(tabId);
-    await nextFrame();
-    if (getCurrentTab() !== tabId) return null;
 
     try {
-      return await ensureTabData(tabId, list, signal);
+      await nextFrame();
+      if (getCurrentTab() !== tabId) return null;
+
+      const result = await ensureTabData(tabId, list, signal);
+      if (getCurrentTab() !== tabId) return null;
+      return result;
     } catch (e) {
       if (e.name === 'AbortError') return null;
       showToast(TAB_ERROR_MESSAGES[tabId] || TAB_ERROR_MESSAGES.tv, 'error');
       return [];
+    } finally {
+      // Solo la carga que sigue siendo activa puede retirar su loader. Así una
+      // respuesta antigua no oculta el spinner de una pestaña más reciente.
+      if (abortController === controller) {
+        abortController = null;
+        hideLoading();
+      }
     }
   }
 
-  return { activate, load, abortPendingLoad };
+  return { activate, load, abortPendingLoad, hideLoading };
 }

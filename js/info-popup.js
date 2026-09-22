@@ -307,17 +307,48 @@ export const InfoPopup = (() => {
         img.src = epCover;
         img.className = 'info-ep-img';
         img.loading = 'lazy';
-        img.onerror = () => { img.style.display = 'none'; };
+        img.onerror = () => {
+          img.remove();
+          const fallback = document.createElement('div');
+          fallback.className = 'info-ep-thumb-fallback';
+          fallback.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+          li.prepend(fallback);
+        };
         li.appendChild(img);
+      } else {
+        const fallback = document.createElement('div');
+        fallback.className = 'info-ep-thumb-fallback';
+        fallback.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+        li.appendChild(fallback);
       }
 
       const details = document.createElement('div');
       details.className = 'info-ep-details';
 
+      const titleRow = document.createElement('div');
+      titleRow.className = 'info-ep-title-row';
+
       const title = document.createElement('div');
       title.className = 'info-ep-title';
       title.textContent = String(ep.episode_num || '') + '. ' + String(info.name || ep.title || 'Episodio ' + ep.episode_num).trim();
-      details.appendChild(title);
+      titleRow.appendChild(title);
+
+      const durVal = info.duration ? info.duration : (info.duration_secs ? `${Math.round(info.duration_secs / 60)} min` : '');
+      if (durVal) {
+        const dur = document.createElement('span');
+        dur.className = 'info-ep-duration';
+        dur.textContent = durVal;
+        titleRow.appendChild(dur);
+      }
+      details.appendChild(titleRow);
+
+      const epPlot = (info.plot || info.overview || '').trim();
+      if (epPlot) {
+        const plotEl = document.createElement('div');
+        plotEl.className = 'info-ep-plot';
+        plotEl.textContent = epPlot;
+        details.appendChild(plotEl);
+      }
       
       const epId = 'ep_' + ep.id;
       const savedMs = Storage.getEpisodeProgress(epId);
@@ -338,7 +369,7 @@ export const InfoPopup = (() => {
 
         const resume = document.createElement('span');
         resume.className = 'info-ep-resume';
-        resume.textContent = '> ' + timeStr;
+        resume.textContent = 'Reanudar en ' + timeStr;
         details.appendChild(resume);
       }
 

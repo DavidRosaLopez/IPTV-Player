@@ -18,7 +18,7 @@ Aplicacion IPTV nativa para Samsung Smart TV basada en Tizen, pensada para naveg
 | EPG | Lectura de guia cuando la API la proporciona |
 | UI TV-first | Diseno pensado para mando, foco visible, overlays y PiP |
 | Cache local | Cache de canales, VOD y series para acelerar arranques |
-| Perfil TV | Ajustes centralizados para el modelo objetivo, PiP, mando, prefetch y lista virtual |
+| Perfil TV | Ajustes centralizados para el modelo objetivo, PiP, mando y lista virtual |
 
 ## Estructura
 
@@ -108,12 +108,12 @@ IPTV-Player/
 - `store.js` mantiene el estado de sesion de la UI.
 - `eventBus.js` centraliza eventos entre vistas y servicios.
 - `virtual-list.js` renderiza listas grandes sin perder rendimiento.
-- `device-profile.js` centraliza parametros del televisor objetivo: resolucion de layout, PiP, bitrate, buffers, throttling, prefetch y carga de logos.
+- `device-profile.js` centraliza parametros del televisor objetivo: resolucion de layout, PiP, bitrate, buffers, throttling y carga de logos.
 
 ## Optimizaciones visibles
 
 - Cache local de listas y contenido mediante IndexedDB.
-- Carga y cache de datos Xtream con prefetch prudente de VOD/Series para no competir con AVPlay.
+- Carga y cache bajo demanda de VOD/Series al seleccionar su pestaña.
 - Listado virtual para catalogos grandes.
 - Cola de imagenes con concurrencia limitada y pausa breve de logos durante navegacion rapida por mando.
 - Busqueda con indice normalizado y debounce.
@@ -132,7 +132,7 @@ Incluyen:
 - Throttle de navegacion y duracion de OK largo.
 - Bitrates maximos, buffers y timeout de AVPlay.
 - Retardo de preview PiP.
-- Retardo y separacion del prefetch de VOD/Series.
+- Carga bajo demanda de VOD/Series para acelerar la entrada en la app.
 - Concurrencia de logos y pausa de carga durante navegacion.
 
 Tambien se puede sobrescribir el perfil en runtime con `window.__IPTV_DEVICE_PROFILE__` antes de inicializar la app.

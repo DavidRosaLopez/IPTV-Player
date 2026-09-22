@@ -12,9 +12,6 @@ import { ensureTabData } from './tab-data-loader.js';
 
 export function createListLoader() {
   let _currentAbortController = null;
-  let _prefetchTimer = null;
-  let _prefetchController = null;
-  let _syncTimer = null;
   let _loadSeq = 0;
   let _loadingListId = null;
   let _lastCancelledListId = null;
@@ -146,18 +143,6 @@ export function createListLoader() {
     SetupProgress.hide();
     eventBus.emit('load:cancelled');
     Router.showView('setup');
-    if (_prefetchController) {
-      _prefetchController.abort();
-      _prefetchController = null;
-    }
-    if (_prefetchTimer) {
-      clearTimeout(_prefetchTimer);
-      _prefetchTimer = null;
-    }
-    if (_syncTimer) {
-      clearTimeout(_syncTimer);
-      _syncTimer = null;
-    }
   }
 
   async function _afterLoad(list, fromCache = false) {
@@ -190,17 +175,6 @@ export function createListLoader() {
     if (fromCache) {
       const restored = await ViewChannels.restoreFromCache();
       if (restored) {
-        if (_syncTimer) {
-          clearTimeout(_syncTimer);
-          _syncTimer = null;
-        }
-
-        if (_syncTimer) clearTimeout(_syncTimer);
-        _syncTimer = setTimeout(() => {
-          _syncTimer = null;
-          _backgroundSync(list);
-        }, 500);
-        _schedulePrefetch(list);
         return;
       }
     }
@@ -220,96 +194,6 @@ export function createListLoader() {
       ViewChannels.renderChannels();
     }
 
-    if (fromCache) {
-      if (_syncTimer) clearTimeout(_syncTimer);
-      _syncTimer = setTimeout(() => {
-        _syncTimer = null;
-        _backgroundSync(list);
-      }, 500);
-    }
-
-    _schedulePrefetch(list);
-  }
-
-  function _schedulePrefetch(list) {
-    if (!list || list.type !== 'xtream') return;
-    if (_prefetchTimer) clearTimeout(_prefetchTimer);
-    _prefetchTimer = setTimeout(() => {
-      _prefetchTimer = null;
-      if (!Router.isView('channels')) return;
-      if (Store.peek('currentList')?.id !== list.id) return;
-      if (_prefetchController) _prefetchController.abort();
-      _prefetchController = new AbortController();
-      const signal = _prefetchController.signal;
-      void (async () => {
-        try {
-          await _prefetchTab('vod', list, signal);
-          if (signal.aborted) return;
-          await _prefetchTab('series', list, signal);
-        } catch (e) {
-          if (e.name !== 'AbortError') console.error('Prefetch error', e);
-        } finally {
-          _prefetchController = null;
-        }
-      })();
-    }, 1200);
-  }
-
-  async function _prefetchTab(tabId, list, signal) {
-    try {
-      await ensureTabData(tabId, list, signal, null);
-    } catch (e) {
-      if (e.name !== 'AbortError') console.error(`Prefetch ${tabId} error`, e);
-    }
-  }
-
-  function _idleDelay(ms, signal) {
-    return new Promise((resolve, reject) => {
-      if (signal.aborted) {
-        reject(new DOMException('Aborted', 'AbortError'));
-        return;
-      }
-      const timer = setTimeout(resolve, ms);
-      signal.addEventListener('abort', () => {
-        clearTimeout(timer);
-        reject(new DOMException('Aborted', 'AbortError'));
-      }, { once: true });
-    });
-  }
-
-  function _channelSignature(channels) {
-    if (!Array.isArray(channels) || channels.length === 0) return '';
-    return channels.map(ch => String(ch?.id || '')).sort().join('|');
-  }
-
-
-
-  async function _backgroundSync(list) {
-    const controller = new AbortController();
-    try {
-      const newChannels = (await ensureTabData('tv', list, controller.signal, () => {}, { forceReload: true })) || [];
-      if (controller.signal.aborted) return;
-
-      const currentChannels = Store.peek('channels') || [];
-      const currentSig = _channelSignature(currentChannels);
-      const nextSig = _channelSignature(newChannels);
-      if (currentSig === nextSig) return;
-
-      if (newChannels.length > 0) {
-        Store.set('channels', newChannels);
-        Playlist.clearGroupCache();
-        Store.set('groups', Playlist.getGroups(newChannels, Store.peek('currentCountry') || 'ALL', 'tv'));
-        if (Router.isView('channels')) {
-          ViewChannels.renderGroups();
-          ViewChannels.renderChannels(null, { preserveFocus: true });
-        }
-        Router.showToast('Lista actualizada', 'success');
-      }
-    } catch (e) {
-      if (e.name !== 'AbortError') console.warn('Background refresh failed:', e);
-    } finally {
-      controller.abort();
-    }
   }
 
   function _preconnect(url) {

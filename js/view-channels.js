@@ -247,6 +247,7 @@ export const ViewChannels = (() => {
       _currentTab = 'tv';
     }
     _tabs.activate(_currentTab);
+    _tabs.hideLoading();
     initKeys();
 
     if (fromView !== 'player' && _cacheRestorePending) {
@@ -742,7 +743,10 @@ export const ViewChannels = (() => {
     }
 
     const data = await _tabs.load(tabId, list);
-    if (data === null || _currentTab !== tabId) return;
+    if (data === null || _currentTab !== tabId) {
+      _tabs.hideLoading();
+      return;
+    }
 
     Store.set('currentGroup', null);
 
@@ -754,9 +758,17 @@ export const ViewChannels = (() => {
     const saved = _getSavedViewState();
     if (!saved) return false;
 
+    // Un estado de VOD/Series no es reutilizable para la vista TV: contiene
+    // grupos y foco de otro catálogo. Dejamos que _afterLoad pinte TV limpia.
+    if (saved.tab && saved.tab !== 'tv') {
+      _cacheRestorePending = false;
+      return false;
+    }
+
     _suspendViewStateSave = true;
+    _tabs.hideLoading();
     try {
-      const targetTab = saved.tab || 'tv';
+      const targetTab = 'tv';
       if (_currentTab !== targetTab) {
         await _switchTab(targetTab);
       }
