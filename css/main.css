@@ -468,6 +468,7 @@ html, body {
   list-style: none;
   overflow-y: auto;
   overflow-x: hidden;
+  scroll-behavior: auto;
   padding: 8px 0;
 }
 
@@ -478,16 +479,17 @@ html, body {
   padding: 18px 20px;
   cursor: pointer;
   border-left: 3px solid transparent;
-  transition: transform 0.15s, opacity 0.15s, background-color 0.15s, color 0.15s, border-color 0.15s;
+  box-sizing: border-box;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
   font-size: 18px;
   color: var(--text-sec);
 }
 .group-item:hover, .group-item.focused {
   background: linear-gradient(90deg, rgba(108,99,255,0.28) 0%, rgba(108,99,255,0.06) 100%);
   color: #fff;
-  border-left: 4px solid #FFFFFF;
+  border-left-color: #FFFFFF;
   box-shadow: inset 4px 0 14px rgba(108,99,255,0.45);
-  transform: translateX(6px) translate3d(0,0,0);
+  transform: none;
 }
 .group-item.focused .group-count {
   background: var(--accent);
@@ -504,9 +506,9 @@ html, body {
 .group-item.active.focused {
   background: linear-gradient(90deg, rgba(108,99,255,0.42) 0%, rgba(108,99,255,0.12) 100%);
   color: #fff;
-  border-left: 4px solid #FFFFFF;
+  border-left-color: #FFFFFF;
   box-shadow: inset 4px 0 18px rgba(108,99,255,0.65), 0 4px 15px rgba(0,0,0,0.35);
-  transform: translateX(6px) translate3d(0,0,0);
+  transform: none;
 }
 .group-item > span:first-child {
   white-space: nowrap;

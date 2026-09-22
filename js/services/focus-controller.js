@@ -45,7 +45,9 @@
       const next = els[sidebarFocusIdx];
       if (next) {
         next.classList.add('focused');
-        next.scrollIntoView({ block: 'center', behavior: 'auto' });
+        next.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+        const groupList = next.closest('.group-list');
+        if (groupList) groupList.scrollLeft = 0;
         prevFocusedEl = next;
       }
     } else if (zone === 'countries') {
@@ -130,7 +132,9 @@
       if (next) {
         next.classList.add('focused');
         prevFocusedEl = next;
-        next.scrollIntoView({ block: 'center', behavior: 'auto' });
+        next.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+        const groupList = next.closest('.group-list');
+        if (groupList) groupList.scrollLeft = 0;
         deps.previewGroup(next);
       }
       return;

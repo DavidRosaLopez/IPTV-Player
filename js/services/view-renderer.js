@@ -111,7 +111,8 @@ export function renderGroupList({
 
   const activeLi = list.querySelector('.group-item.active') || list.querySelector('.group-item.focused');
   if (activeLi) {
-    activeLi.scrollIntoView({ block: 'center', behavior: 'auto' });
+    activeLi.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+    list.scrollLeft = 0;
   }
 }
 
