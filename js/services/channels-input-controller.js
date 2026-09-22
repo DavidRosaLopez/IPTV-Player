@@ -153,6 +153,15 @@ export function createChannelsInputController(deps) {
   function handleBack() {
     const domZone = deps.getVisibleFocusZone();
     const currentTab = deps.getCurrentTab();
+
+    if (domZone === 'groups') {
+      const focusedSidebarItem = deps.getSidebarFocusables()[deps.getSidebarFocusIdx()];
+      if (focusedSidebarItem?.id === 'btn-open-search' || focusedSidebarItem?.id === 'btn-open-setup') {
+        deps.showExitPopup();
+        return;
+      }
+    }
+
     const targetZone = (() => {
       if (domZone === 'channels') return 'groups';
       if (domZone === 'groups') return currentTab === 'tv' ? 'countries' : 'tabs';
