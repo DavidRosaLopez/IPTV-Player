@@ -1431,8 +1431,10 @@ html, body {
   line-height: 1.65;
   color: rgba(255,255,255,0.88);
   margin-bottom: 20px;
-  display: block;
-  overflow: visible;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   text-shadow: 0 2px 8px rgba(0,0,0,0.6);
 }
 .info-cast-container {
