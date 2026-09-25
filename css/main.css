@@ -1426,15 +1426,26 @@ html, body {
   color: #fff;
   box-shadow: 0 6px 20px rgba(148, 163, 184, 0.4);
 }
+.quality-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #E2E8F0;
+  box-shadow: none;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: normal;
+  min-width: 0;
+}
 .info-plot {
   font-size: 19px;
   line-height: 1.65;
   color: rgba(255,255,255,0.88);
   margin-bottom: 20px;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: block;
+  max-height: 240px;
+  overflow-y: auto;
   text-shadow: 0 2px 8px rgba(0,0,0,0.6);
 }
 .info-cast-container {
