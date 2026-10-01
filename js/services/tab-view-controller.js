@@ -41,9 +41,6 @@ export function createTabViewController({ virtualList, showToast, getCurrentTab 
     document.querySelectorAll('.sidebar-tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.type === tabId);
     });
-
-    const groupNameEl = document.getElementById('current-group-name');
-    if (groupNameEl) groupNameEl.textContent = TAB_LABELS[tabId] || TAB_LABELS.tv;
   }
 
   function showLoading(tabId) {
