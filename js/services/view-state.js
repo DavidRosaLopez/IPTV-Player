@@ -13,7 +13,8 @@ export function createViewState(deps) {
 
   function resolveSyncContext(ch) {
     const currentTab = deps.getCurrentTab();
-    const currentCountry = currentTab === 'vod' || currentTab === 'series' ? 'ALL' : (ch.countryCode || 'ALL');
+    const existingCountry = deps.getCurrentCountry();
+    const currentCountry = currentTab === 'vod' || currentTab === 'series' ? 'ALL' : (existingCountry || ch.countryCode || 'ALL');
     deps.setCurrentCountry(currentCountry);
     deps.setCountryFocusIdx((deps.getCountries() || ['ALL']).indexOf(currentCountry));
     if (deps.getCountryFocusIdx() < 0) deps.setCountryFocusIdx(0);
