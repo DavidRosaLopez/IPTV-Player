@@ -1,4 +1,3 @@
-import { Storage } from '../storage.js';
 import { Playlist } from '../playlist.js';
 
 function _throwIfAborted(signal) {
@@ -23,28 +22,8 @@ async function _loadFresh(tabId, list, signal, onProgress = null) {
   return [];
 }
 
-export async function ensureTabData(tabId, list, signal, onProgress = null, { forceReload = false, onSource = null } = {}) {
-  const cacheLoader = tabId === 'tv'
-    ? Storage.getChannelCache
-    : tabId === 'vod'
-      ? Storage.getVodCache
-      : Storage.getSeriesCache;
-  const cacheSaver = tabId === 'tv'
-    ? Storage.setChannelCache
-    : tabId === 'vod'
-      ? Storage.setVodCache
-      : Storage.setSeriesCache;
-
-  if (!forceReload) {
-    onSource?.('cache');
-    const cached = await cacheLoader(list);
-    _throwIfAborted(signal);
-    if (cached && cached.length > 0) return cached;
-  }
-
-  onSource?.('network');
+export async function ensureTabData(tabId, list, signal, onProgress = null) {
   const fresh = await _loadFresh(tabId, list, signal, onProgress);
   _throwIfAborted(signal);
-  if (fresh.length > 0) await cacheSaver(list, fresh);
   return fresh;
 }

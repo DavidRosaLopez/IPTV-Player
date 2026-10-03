@@ -61,44 +61,22 @@ export function createListLoader() {
 
     const prevList = Store.peek('currentList');
     const steps = [
-      { id: 'cache', label: 'Comprobando caché local' },
       { id: 'connect', label: 'Conectando al servidor' },
       { id: 'download', label: 'Descargando lista' },
       { id: 'parse', label: 'Procesando lista' },
     ];
 
     SetupProgress.show('Cargando Lista', list.name, steps);
-    SetupProgress.step('cache');
+    SetupProgress.step('connect');
     SetupProgress.progress(0);
 
     try {
-      const cached = await Storage.getChannelCache(list);
-      _throwIfCancelled(controller, isCurrentLoad);
-
-      if (cached && cached.length > 0) {
-        SetupProgress.progress(100);
-        await _delay(400, controller, isCurrentLoad);
-        _throwIfCancelled(controller, isCurrentLoad);
-
-        Store.set('currentList', list);
-        Storage.setLastList(list.id);
-        Store.set('channels', cached);
-        ViewChannels.prepareCacheRestore(Boolean(Storage.getLastViewState(list.id)));
-        _throwIfCancelled(controller, isCurrentLoad);
-        Router.showView('channels');
-        SetupProgress.hide();
-        await _afterLoad(list, true);
-        _currentAbortController = null;
-        return;
-      }
-
-      SetupProgress.step('connect');
       if (list.type === 'xtream') _preconnect(list.server);
       SetupProgress.step('download');
       const loadedChannels = await ensureTabData('tv', list, controller.signal, pct => {
         SetupProgress.progress(Math.round(pct * 0.8));
         if (pct > 50) SetupProgress.step('parse');
-      }, { forceReload: false });
+      });
 
       SetupProgress.progress(100);
       await _delay(400, controller, isCurrentLoad);
@@ -107,10 +85,11 @@ export function createListLoader() {
       Store.set('currentList', list);
       Storage.setLastList(list.id);
       Store.set('channels', loadedChannels);
+      ViewChannels.prepareCacheRestore(Boolean(Storage.getLastViewState(list.id)));
       _throwIfCancelled(controller, isCurrentLoad);
       Router.showView('channels');
       SetupProgress.hide();
-      await _afterLoad(list, true);
+      await _afterLoad(list);
     } catch (e) {
       SetupProgress.hide();
       if (e.name === 'AbortError') {
@@ -145,7 +124,7 @@ export function createListLoader() {
     Router.showView('setup');
   }
 
-  async function _afterLoad(list, fromCache = false) {
+  async function _afterLoad(list) {
     const yieldThread = () => new Promise(r => setTimeout(r, 50));
 
     Playlist.clearGroupCache();
@@ -172,11 +151,9 @@ export function createListLoader() {
     });
 
     await yieldThread(); // Ceder UI antes de renderGroups/Channels
-    if (fromCache) {
-      const restored = await ViewChannels.restoreFromCache();
-      if (restored) {
-        return;
-      }
+    const restored = await ViewChannels.restoreFromCache();
+    if (restored) {
+      return;
     }
 
     const lastChannelId = Storage.getLastChannel(list.id);

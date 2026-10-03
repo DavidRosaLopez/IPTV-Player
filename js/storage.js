@@ -3,7 +3,6 @@
  */
 import { Store } from './store.js';
 import { createPrefsStorage } from './services/storage-prefs.js';
-import { createCacheStorage } from './services/storage-cache.js';
 import { StorageProgress } from './services/storage-progress.js';
 
 const _getCurrentListId = (listId = null) => {
@@ -14,7 +13,6 @@ const _getCurrentListId = (listId = null) => {
 };
 
 const Prefs = createPrefsStorage(_getCurrentListId);
-const Cache = createCacheStorage();
 
 export const Storage = {
   get: (key, fallback = null) => {
@@ -35,6 +33,5 @@ export const Storage = {
   },
   del: (key) => localStorage.removeItem(`iptv_${key}`),
   ...Prefs,
-  ...Cache,
   ...StorageProgress,
 };
