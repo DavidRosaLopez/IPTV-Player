@@ -730,23 +730,19 @@ export const ViewChannels = (() => {
     _setFocusZone('tabs');
 
     const list = Store.peek('currentList');
-    if (tabId === 'tv') {
-      Store.set('currentData', Store.peek('channels') || []);
-      Store.set('currentGroup', null);
-      _renderData(Store.peek('channels') || []);
-      _saveCurrentViewState();
-      return;
-    }
-
-    if (!list || list.type !== 'xtream') {
+    if (!list) return;
+    if (tabId !== 'tv' && list.type !== 'xtream') {
       Router.showToast('VOD y Series solo disponibles en cuentas Xtream Codes', 'info');
       return;
     }
 
     const data = await _tabs.load(tabId, list);
     if (data === null || _currentTab !== tabId) {
-      _tabs.hideLoading();
       return;
+    }
+
+    if (tabId === 'tv') {
+      Store.set('channels', data);
     }
 
     Store.set('currentGroup', null);
