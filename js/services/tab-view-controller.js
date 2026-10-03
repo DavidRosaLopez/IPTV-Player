@@ -70,13 +70,18 @@ export function createTabViewController({ virtualList, showToast, getCurrentTab 
   }
 
   function abortPendingLoad() {
-    if (abortController) abortController.abort();
-    abortController = null;
-    hideLoading();
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+      hideLoading();
+    }
   }
 
   async function load(tabId, list) {
-    abortPendingLoad();
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
     const controller = new AbortController();
     abortController = controller;
     const signal = controller.signal;
