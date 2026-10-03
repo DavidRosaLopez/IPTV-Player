@@ -724,6 +724,7 @@ export const ViewChannels = (() => {
       _countryFocusIdx = 0;
     }
     renderCountries();
+    setChannelHeader({ currentGroup: null, currentTab: tabId, count: 0 });
     
     _tabs.activate(tabId);
     _setFocusZone('tabs');
