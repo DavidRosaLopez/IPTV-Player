@@ -1,4 +1,4 @@
-/**
+﻿/**
  * player.js — AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
  * Samsung 83" SF93 OLED
  *
@@ -16,7 +16,6 @@ import { VodOSD } from './vod-osd.js';
 import { Watching } from './watching.js';
 import { eventBus } from './eventBus.js';
 import { DeviceProfile, getDisplayRect } from './device-profile.js';
-
 
 export const Player = (() => {
   let _current = null;
@@ -431,7 +430,7 @@ export const Player = (() => {
     } catch (e) { }
   }
 
-  // === EVENTS ===
+  // Section: AVPlay Event Listeners
   function _onBufferingStart() { _setState('BUFFERING'); }
   function _onBufferingComplete() {
     _setState('PLAYING');
@@ -485,8 +484,6 @@ export const Player = (() => {
     const spinner = document.getElementById('buffer-spinner');
     if (spinner) spinner.classList.toggle('hidden', s !== 'BUFFERING');
   }
-
-
 
   // ——— KEY BINDINGS —————————————————————————————————————
   function _bindKeys() {
@@ -613,9 +610,6 @@ export const Player = (() => {
         return true;
       }
     });
-
-
-
 
   }
 
@@ -823,5 +817,4 @@ export const Player = (() => {
 
   return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack, getSubtitleTracks, setSubtitleTrack, getCurrentSubtitleTrack };
 })();
-
 
