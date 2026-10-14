@@ -1,11 +1,11 @@
 /**
- * player.js â€” AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
+ * player.js — AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
  * Samsung 83" SF93 OLED
  *
  * Arquitectura:
  *  - view-player activa cuando se reproduce en pantalla completa
  *  - setPreviewMode() encoge el video al preview-box de la vista channels
- *  - Dimensiones y Hz se detectan automÃ¡ticamente al arrancar
+ *  - Dimensiones y Hz se detectan automáticamente al arrancar
  */
 import { Store } from './store.js';
 import { Storage } from './storage.js';
@@ -34,9 +34,9 @@ export const Player = (() => {
     seek: null
   };
   let _wasPlayingOnHide = false;
-  let _retryCount = 0;      // declarado explÃ­citamente (evita fuga al scope global)
+  let _retryCount = 0;      // declarado explícitamente (evita fuga al scope global)
   let _videoLayerEl = null;   // referencia cacheada a #video-layer
-  let _progressSaveTimer = null; // guardado periÃ³dico de progreso (series/vod)
+  let _progressSaveTimer = null; // guardado periódico de progreso (series/vod)
   let _playSeq = 0;
   let _pipSeq = 0;
 
@@ -102,7 +102,7 @@ export const Player = (() => {
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowResumeBufferSeconds || DeviceProfile.player.lowBufferSeconds); } catch (e) { }
     }
   }
-  // â€”â€”â€” INIT â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— INIT ————————————————————————————
   function init(onChannelChange) {
     if (_initialized) return;
     _initialized = true;
@@ -133,7 +133,7 @@ export const Player = (() => {
       } else {
         if (_wasPlayingOnHide && _current) {
           _wasPlayingOnHide = false;
-          // Restaurar reproducciÃ³n en el modo en el que estaba
+          // Restaurar reproducción en el modo en el que estaba
           if (_mode === 'FULLSCREEN') play(_current);
           else if (_mode === 'PIP') _startPip(_current);
         }
@@ -141,7 +141,7 @@ export const Player = (() => {
     });
   }
 
-  // â€”â€”â€” PLAY (pantalla completa) â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— PLAY (pantalla completa) ————————————————————————————
   function play(ch) {
     if (!ch || !ch.url) return;
     if (_current && _current.id !== ch.id) _retryCount = 0;
@@ -178,7 +178,7 @@ export const Player = (() => {
 
         webapis.avplay.open(playUrl);
 
-        // â€”â€”â€” CONFIGURACIÃ“N SEGÃšN MODO â€”â€”â€”
+        // ——— CONFIGURACIÓN SEGÚN MODO ———
         _applyDisplayRect();
 
         _applyPlaybackTuning(_current, false);
@@ -189,12 +189,12 @@ export const Player = (() => {
             if (typeof Router !== 'undefined') Router.showView('channels');
             eventBus.emit('info-popup:resume-requested');
           } else if (_current && _current.type === 'vod') {
-            // PelÃ­cula terminada: volver a la ficha, no relanzar en bucle
+            // Película terminada: volver a la ficha, no relanzar en bucle
             stop();
             if (typeof Router !== 'undefined') Router.showView('channels');
             eventBus.emit('info-popup:resume-requested');
           } else {
-            // Canal TV en directo: relanzar automÃ¡ticamente
+            // Canal TV en directo: relanzar automáticamente
             _setTimer('liveRestart', () => { if (_current && playSeq === _playSeq) play(_current); }, 1000);
           }
         };
@@ -216,7 +216,7 @@ export const Player = (() => {
                 _setState('PLAYING');
                 if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
               }
-              // Tizen a veces no escala el video si la resoluciÃ³n cambia al vuelo (HLS)
+              // Tizen a veces no escala el video si la resolución cambia al vuelo (HLS)
               if (type === 'PLAYER_MSG_RESOLUTION_CHANGED') _applyDisplayRect();
             }
           },
@@ -231,12 +231,12 @@ export const Player = (() => {
             try {
               webapis.avplay.play();
               if (_current && (_current.type === 'vod' || _current.type === 'series')) {
-                // Buscar progreso: primero en Storage (persiste entre reinicios), luego en Store (sesiÃ³n actual)
+                // Buscar progreso: primero en Storage (persiste entre reinicios), luego en Store (sesión actual)
                 const saved = Storage.getEpisodeProgress(_current.id) || Store.get('progress_' + _current.id);
                 if (saved && saved > 10000) {
                   _setTimer('resumeSeek', () => {
                     if (playSeq !== _playSeq) return;
-                    // seekTo es posiciÃ³n absoluta (ms), jumpForward es relativa â†’ seekTo es el correcto aquÃ­
+                    // seekTo es posición absoluta (ms), jumpForward es relativa → seekTo es el correcto aquí
                     try { webapis.avplay.seekTo(saved); } catch (e) { }
                   }, 200);
                 }
@@ -301,7 +301,7 @@ export const Player = (() => {
     document.getElementById('pip-box')?.classList.add('hidden');
   }
 
-  // â€”â€”â€” MODO PIP (volver desde pantalla completa a lista) â€”
+  // ——— MODO PIP (volver desde pantalla completa a lista) —
   function shrinkToPip() {
     if (!_current || _mode === 'PIP') return;
     _mode = 'PIP';
@@ -310,7 +310,7 @@ export const Player = (() => {
     _applyDisplayRect();
   }
 
-  // â€”â€”â€” EXPANDIR PIP A PANTALLA COMPLETA â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— EXPANDIR PIP A PANTALLA COMPLETA —————————————————
   function expandToFullscreen() {
     if (!_current || _mode === 'FULLSCREEN') return;
     cancelPreview();
@@ -355,7 +355,7 @@ export const Player = (() => {
     const box = document.getElementById('pip-box');
     if (box) box.classList.add('pip-loading');
 
-    // NO ponemos video-layer en 1920x1080 aquÃ­; _applyDisplayRect lo ajustarÃ¡
+    // NO ponemos video-layer en 1920x1080 aquí; _applyDisplayRect lo ajustará
 
     _setTimer('pipDelay', () => {
       if (pipSeq !== _pipSeq || _mode !== 'PIP' || !_current || _current.id !== ch.id) return;
@@ -370,7 +370,7 @@ export const Player = (() => {
           onbufferingcomplete: () => {
             _setState('PLAYING');
             _retryCount = 0;
-            _applyDisplayRect(); // reconfirmar posici�n despu�s de buffering
+            _applyDisplayRect(); // reconfirmar posici?n despu?s de buffering
             _showVideoLayerAfterLayout();
             document.getElementById('pip-box')?.classList.remove('pip-loading');
           },
@@ -412,7 +412,7 @@ export const Player = (() => {
     }, 150);
   }
 
-  // â€”â€”â€” SAFE STOP â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— SAFE STOP ————————————————————————————————————————
   function _safeStop() {
     _clearTimers(['retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek']);
     try {
@@ -431,7 +431,7 @@ export const Player = (() => {
     } catch (e) { }
   }
 
-  // â€”â€”â€” EVENTS â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // === EVENTS ===
   function _onBufferingStart() { _setState('BUFFERING'); }
   function _onBufferingComplete() {
     _setState('PLAYING');
@@ -488,7 +488,7 @@ export const Player = (() => {
 
 
 
-  // â€”â€”â€” KEY BINDINGS â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— KEY BINDINGS —————————————————————————————————————
   function _bindKeys() {
     KeyHandler.on('CH_UP', () => { if (_isActive()) { _onChannelChange?.('prev'); return true; } });
     KeyHandler.on('CH_DOWN', () => { if (_isActive()) { _onChannelChange?.('next'); return true; } });
@@ -571,7 +571,7 @@ export const Player = (() => {
       }
     });
 
-    // â€”â€”â€” TECLAS DE MEDIOS DEL MANDO FÃSICO â€”â€”â€”â€”â€”â€”â€”â€”
+    // ——— TECLAS DE MEDIOS DEL MANDO FÍSICO ————————
     KeyHandler.on('PLAY_PAUSE', () => {
       if (_isActive()) { togglePlayPause(); if (typeof VodOSD !== 'undefined' && (_current?.type === 'vod' || _current?.type === 'series')) VodOSD.show(_current); return true; }
     });
@@ -619,7 +619,7 @@ export const Player = (() => {
 
   }
 
-  // â€”â€”â€” SEEK LOGIC â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— SEEK LOGIC ——————————————————————————————————————
   let _seekAccumulator = 0;
   let _seekLastTime = 0;
 
@@ -637,7 +637,7 @@ export const Player = (() => {
     }
     _seekLastTime = now;
 
-    // AceleraciÃ³n dinÃ¡mica: mÃ¡s veces pulsado = saltos mÃ¡s grandes
+    // Aceleración dinámica: más veces pulsado = saltos más grandes
     let stepSecs = 10;
     const absAcc = Math.abs(_seekAccumulator);
     if (absAcc >= 300) stepSecs = 120; // +2 mins
@@ -696,7 +696,7 @@ export const Player = (() => {
     _setTimer('seek', _resetSeekFeedback, 600);
   }
 
-  // â€”â€”â€” UTILS â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+  // ——— UTILS ————————————————————————————————————————————
   function stop() {
     if (_current && (_current.type === 'vod' || _current.type === 'series')) {
       const ms = getCurrentTime();
