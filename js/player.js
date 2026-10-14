@@ -82,6 +82,7 @@ export const Player = (() => {
     const adaptive = pipMode ? DeviceProfile.player.pipAdaptiveInfo : `${DeviceProfile.player.defaultAdaptiveInfo}|MAXBITRATE=${maxBr}`;
 
     try { webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', adaptive); } catch (e) { }
+    try { webapis.avplay.setStreamingProperty('USER_AGENT', 'Mozilla/5.0 (SMART-TV; Linux; Tizen 7.0) AppleWebKit/537.36'); } catch (e) { }
     if (mode.isLive) {
       try { webapis.avplay.setStreamingProperty('IS_LIVE', 'true'); } catch (e) { }
     }
@@ -439,11 +440,12 @@ export const Player = (() => {
   }
 
   function _onError(err) {
-    console.error('AVPlay error', err);
-    _handleError();
+    const errStr = (err && typeof err === 'object') ? (err.message || err.name || JSON.stringify(err)) : String(err || 'UNKNOWN');
+    console.error('AVPlay error:', errStr, 'Channel:', _current?.name);
+    _handleError(errStr);
   }
 
-  function _handleError() {
+  function _handleError(reason = '') {
     _safeStop();
     _clearTimers(['retry', 'error']);
 
@@ -467,11 +469,15 @@ export const Player = (() => {
 
     _retryCount = 0;
     const errEl = document.getElementById('player-error');
+    const errDetailEl = document.getElementById('player-error-detail');
+    if (errDetailEl) {
+      errDetailEl.textContent = reason ? `Detalle: ${reason}` : '';
+    }
     if (errEl) errEl.classList.remove('hidden');
     _setTimer('error', () => {
       if (errEl) errEl.classList.add('hidden');
       if (_isActive()) Router.showView('channels');
-    }, 3000);
+    }, 4000);
   }
 
   function _setState(s) {
