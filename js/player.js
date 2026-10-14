@@ -85,15 +85,20 @@ export const Player = (() => {
     if (mode.isLive) {
       try { webapis.avplay.setStreamingProperty('IS_LIVE', 'true'); } catch (e) { }
     }
-    if (mode.is4K || mode.is8K || mode.isHEVC || mode.isRaw) {
+    if (pipMode) {
+      const pipBuf = DeviceProfile.player.pipBufferSeconds || 2;
+      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutMs); } catch (e) { }
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', pipBuf); } catch (e) { }
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', pipBuf); } catch (e) { }
+    } else if (mode.is4K || mode.is8K || mode.isHEVC || mode.isRaw) {
       try { webapis.avplay.setStreamingProperty('SET_MIX_RESOLUTION', DeviceProfile.player.resolutionMarker); } catch (e) { }
       try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.heavyBufferingTimeoutMs); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highBufferSeconds); } catch (e) { }
-      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highBufferSeconds); } catch (e) { }
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highResumeBufferSeconds || DeviceProfile.player.highBufferSeconds); } catch (e) { }
     } else {
       try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutMs); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowBufferSeconds); } catch (e) { }
-      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowBufferSeconds); } catch (e) { }
+      try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowResumeBufferSeconds || DeviceProfile.player.lowBufferSeconds); } catch (e) { }
     }
   }
   // â€”â€”â€” INIT â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
@@ -442,15 +447,22 @@ export const Player = (() => {
     _safeStop();
     _clearTimers(['retry', 'error']);
 
-    if (_isActive() && _current && _retryCount < 3) {
-      _retryCount++;
-      if (typeof Router !== 'undefined' && Router.showToast) {
-        Router.showToast(`Error de conexión. Reconectando (${_retryCount}/3)...`, 'error');
+    if (_isActive() && _current) {
+      const isLive = _current.type !== 'vod' && _current.type !== 'series';
+      const maxRetries = isLive ? 5 : 3;
+
+      if (_retryCount < maxRetries) {
+        _retryCount++;
+        // En canales en directo reconectamos de inmediato al directo (500ms) sin esperar 2s
+        const reconnectDelayMs = isLive ? 500 : 1500;
+        if (typeof Router !== 'undefined' && Router.showToast && _retryCount > 1) {
+          Router.showToast(`Reconectando al directo (${_retryCount}/${maxRetries})...`, 'info');
+        }
+        _setTimer('retry', () => {
+          if (_isActive() && _current) play(_current);
+        }, reconnectDelayMs);
+        return;
       }
-      _setTimer('retry', () => {
-        if (_isActive() && _current) play(_current);
-      }, 2000);
-      return;
     }
 
     _retryCount = 0;
@@ -459,7 +471,7 @@ export const Player = (() => {
     _setTimer('error', () => {
       if (errEl) errEl.classList.add('hidden');
       if (_isActive()) Router.showView('channels');
-    }, 4000);
+    }, 3000);
   }
 
   function _setState(s) {
@@ -574,18 +586,23 @@ export const Player = (() => {
     });
 
     KeyHandler.on('BACK', () => {
-      if (_isActive() && _current) {
-        if (_current.type === 'vod' || _current.type === 'series') {
+      if (_isActive()) {
+        const errEl = document.getElementById('player-error');
+        if (errEl) errEl.classList.add('hidden');
+        if (_current && (_current.type === 'vod' || _current.type === 'series')) {
           if (typeof VodOSD !== 'undefined' && VodOSD.isVisible()) {
             if (VodOSD.handleKey('BACK')) return true;
           }
           stop();
           Router.showView('channels');
-        } else {
+        } else if (_current && _state === 'PLAYING') {
           _mode = 'PIP';
           Router.showView('channels');
           _showPip(_current);
           _applyDisplayRect();
+        } else {
+          stop();
+          Router.showView('channels');
         }
         return true;
       }
@@ -689,6 +706,10 @@ export const Player = (() => {
     _hidePip();
     _clearTimer('seek');
     _resetSeekFeedback();
+    const errEl = document.getElementById('player-error');
+    if (errEl) errEl.classList.add('hidden');
+    const spinner = document.getElementById('buffer-spinner');
+    if (spinner) spinner.classList.add('hidden');
     _clearTimers(['preview', 'retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek']);
     if (typeof PlayerOSD !== 'undefined') PlayerOSD.hide();
     if (typeof VodOSD !== 'undefined') VodOSD.hide();
