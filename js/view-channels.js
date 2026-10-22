@@ -244,7 +244,11 @@ export const ViewChannels = (() => {
 
   function onShow(fromView) {
     if (fromView !== 'player') {
-      _currentTab = 'tv';
+      // Si hay restauración pendiente de VOD/Series, no forzar TV ahora
+      const pendingSaved = _cacheRestorePending ? _getSavedViewState() : null;
+      if (!pendingSaved || pendingSaved.tab === 'tv') {
+        _currentTab = 'tv';
+      }
     }
     _tabs.activate(_currentTab);
     _tabs.hideLoading();
@@ -755,22 +759,17 @@ export const ViewChannels = (() => {
     const saved = _getSavedViewState();
     if (!saved) return false;
 
-    // Un estado de VOD/Series no es reutilizable para la vista TV: contiene
-    // grupos y foco de otro catálogo. Dejamos que _afterLoad pinte TV limpia.
-    if (saved.tab && saved.tab !== 'tv') {
-      _cacheRestorePending = false;
-      return false;
-    }
+    const savedTab = saved.tab || 'tv';
 
     _suspendViewStateSave = true;
     _tabs.hideLoading();
     try {
-      const targetTab = 'tv';
-      if (_currentTab !== targetTab) {
-        await _switchTab(targetTab);
-      }
+      // --- Rama TV ---
+      if (savedTab === 'tv') {
+        if (_currentTab !== 'tv') {
+          await _switchTab('tv');
+        }
 
-      if (targetTab === 'tv') {
         _updateCountriesList();
         const channels = Store.peek('channels') || [];
         const targetCountry = saved.currentCountry || 'ALL';
@@ -788,17 +787,13 @@ export const ViewChannels = (() => {
             const groups = Playlist.getGroups(channels, targetCountry, 'tv');
             Store.set('groups', groups);
 
-            // Respetar el grupo guardado (ej: '__favs__') en vez de usar siempre ch.group
             const savedGroup = saved.currentGroup;
             let resolvedGroupId;
             if (savedGroup && savedGroup === '__favs__' && Favorites.isFav(ch.id)) {
-              // El canal estaba en Favoritos
               resolvedGroupId = '__favs__';
             } else if (savedGroup && savedGroup !== '__favs__' && groups.some(g => g.id === savedGroup)) {
-              // El grupo guardado existe en la lista actual
               resolvedGroupId = savedGroup;
             } else {
-              // Fallback: grupo real del canal o __all__
               resolvedGroupId = ch.group || '__all__';
             }
 
@@ -809,7 +804,6 @@ export const ViewChannels = (() => {
             _setFocusZone('groups');
 
             if (resolvedGroupId === '__favs__') {
-              // En favoritos, syncWithChannel buscaría por ch.group → usar renderChannels directo
               renderChannels();
               const filtered = Playlist.filterByGroup(channels, '__favs__', Favorites.getSet(), targetCountry);
               const chIdx = filtered.findIndex(c => c.id === ch.id);
@@ -839,12 +833,16 @@ export const ViewChannels = (() => {
         return true;
       }
 
-      Store.set('currentCountry', 'ALL');
-      _countryFocusIdx = 0;
-      renderCountries();
+      // --- Rama VOD / Series ---
+      const list = Store.peek('currentList');
+      if (!list || list.type !== 'xtream') return false;
+
+      // Cambiar a la pestaña guardada (carga datos, puede usar caché IndexedDB)
+      await _switchTab(savedTab);
+      if (_currentTab !== savedTab) return false; // cancelado
 
       const currentData = Store.peek('currentData') || [];
-      const groups = Store.get('groups') || Playlist.getGroups(currentData, 'ALL', targetTab);
+      const groups = Playlist.getGroups(currentData, 'ALL', savedTab);
       Store.set('groups', groups);
       const groupId = saved.currentGroup || '__all__';
       const targetGroupId = groups.some(g => g.id === groupId) ? groupId : '__all__';

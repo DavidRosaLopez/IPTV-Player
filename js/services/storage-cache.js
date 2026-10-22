@@ -1,4 +1,5 @@
-const CHANNEL_TTL = 6 * 3600 * 1000;
+const CHANNEL_TTL = 6 * 3600 * 1000;   // 6h para canales TV
+const VOD_TTL     = 24 * 3600 * 1000;  // 24h para VOD y Series
 const DB_NAME = 'IPTV_DB_V11';
 const STORE_NAME = 'cache';
 
@@ -112,10 +113,10 @@ export function createCacheStorage() {
     getChannelCache: (list) => _getFromDB(_cacheKey('ch_cache', list), CHANNEL_TTL),
     setChannelCache: (list, data) => _setToDB(_cacheKey('ch_cache', list), data),
     clearChannelCache: (list) => (typeof list === 'string' ? _clearByPrefix(`ch_cache_${list}`) : _delFromDB(_cacheKey('ch_cache', list))),
-    getVodCache: (list) => _getFromDB(_cacheKey('vod_cache_v4', list), CHANNEL_TTL),
+    getVodCache: (list) => _getFromDB(_cacheKey('vod_cache_v4', list), VOD_TTL),
     setVodCache: (list, data) => _setToDB(_cacheKey('vod_cache_v4', list), data),
     clearVodCache: (list) => (typeof list === 'string' ? _clearByPrefix(`vod_cache_v4_${list}`) : _delFromDB(_cacheKey('vod_cache_v4', list))),
-    getSeriesCache: (list) => _getFromDB(_cacheKey('series_cache_v4', list), CHANNEL_TTL),
+    getSeriesCache: (list) => _getFromDB(_cacheKey('series_cache_v4', list), VOD_TTL),
     setSeriesCache: (list, data) => _setToDB(_cacheKey('series_cache_v4', list), data),
     clearSeriesCache: (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_v4_${list}`) : _delFromDB(_cacheKey('series_cache_v4', list))),
   };
