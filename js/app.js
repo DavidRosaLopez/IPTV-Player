@@ -61,6 +61,7 @@ export const App = (() => {
     if (!listToLoad && lists.length === 1) listToLoad = lists[0];
 
     _startClock();
+    setTimeout(() => { if (typeof Storage.cleanExpiredCache === 'function') Storage.cleanExpiredCache(); }, 4000);
 
     if (listToLoad) {
       loader.loadList(listToLoad);

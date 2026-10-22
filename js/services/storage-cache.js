@@ -109,6 +109,32 @@ export function createCacheStorage() {
     }
   };
 
+  const _cleanExpired = async () => {
+    try {
+      const db = await _getDB();
+      const now = Date.now();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) { resolve(true); return; }
+          const val = cursor.value;
+          const key = String(cursor.key);
+          const ttl = key.startsWith('ch_cache') ? CHANNEL_TTL : VOD_TTL;
+          if (val && val.ts && (now - val.ts) > ttl) {
+            cursor.delete();
+          }
+          cursor.continue();
+        };
+        req.onerror = () => resolve(false);
+      });
+    } catch {
+      return false;
+    }
+  };
+
   return {
     getChannelCache: (list) => _getFromDB(_cacheKey('ch_cache', list), CHANNEL_TTL),
     setChannelCache: (list, data) => _setToDB(_cacheKey('ch_cache', list), data),
@@ -119,5 +145,6 @@ export function createCacheStorage() {
     getSeriesCache: (list) => _getFromDB(_cacheKey('series_cache_v4', list), VOD_TTL),
     setSeriesCache: (list, data) => _setToDB(_cacheKey('series_cache_v4', list), data),
     clearSeriesCache: (list) => (typeof list === 'string' ? _clearByPrefix(`series_cache_v4_${list}`) : _delFromDB(_cacheKey('series_cache_v4', list))),
+    cleanExpiredCache: () => _cleanExpired(),
   };
 }
