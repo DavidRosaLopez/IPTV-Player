@@ -578,7 +578,9 @@ export const ViewChannels = (() => {
       return;
     }
     _lastChannelsRenderInput = channelsInput;
-    setChannelHeader({ currentGroup: ctx.currentGroup, currentTab: ctx.currentTab, count: items.length });
+    const curGroupObj = (Store.get('groups') || []).find(g => g.id === ctx.currentGroup);
+    const groupName = curGroupObj ? _getGroupLabel(curGroupObj) : null;
+    setChannelHeader({ currentGroup: ctx.currentGroup, groupName, currentTab: ctx.currentTab, count: items.length });
 
     if (preserveFocus && _focusZone !== 'channels') {
       VirtualList.setFocusVisible(false);

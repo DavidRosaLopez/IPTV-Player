@@ -1,4 +1,4 @@
-﻿function _getGroupIcon(g) {
+function _getGroupIcon(g) {
   if (g?.icon) return g.icon;
   const match = String(g?.name || '').match(/<span[^>]*material-symbols-rounded[^>]*>([^<]+)<\/span>/);
   return match ? match[1].trim() : null;
@@ -116,17 +116,21 @@ export function renderGroupList({
   }
 }
 
-export function setChannelHeader({ currentGroup, currentTab, count }) {
+export function setChannelHeader({ currentGroup, groupName, currentTab, count }) {
   const groupNameEl = document.getElementById('current-group-name');
   if (groupNameEl) {
     if (!currentGroup) {
       groupNameEl.textContent = currentTab === 'tv' ? 'TV' : (currentTab === 'vod' ? 'Películas' : 'Series');
     } else if (currentGroup === '__all__') {
-      groupNameEl.textContent = currentTab === 'tv' ? 'Canales' : (currentTab === 'vod' ? 'Películas' : 'Series');
+      groupNameEl.textContent = currentTab === 'tv' ? 'Todos los canales' : (currentTab === 'vod' ? 'Todas las películas' : 'Todas las series');
     } else if (currentGroup === '__favs__') {
       groupNameEl.textContent = 'Favoritos';
+    } else if (currentGroup === '__watching__') {
+      groupNameEl.textContent = 'Continuar viendo';
+    } else if (groupName) {
+      groupNameEl.textContent = groupName;
     } else {
-      groupNameEl.textContent = 'Canales';
+      groupNameEl.textContent = currentGroup;
     }
   }
 
