@@ -1,4 +1,4 @@
-﻿/**
+/**
  * player.js — AVPlay wrapper optimized for RAW/HD/UHD/4K/8K
  * Samsung 83" SF93 OLED
  *
@@ -454,14 +454,16 @@ export const Player = (() => {
 
       if (_retryCount < maxRetries) {
         _retryCount++;
-        // En canales en directo reconectamos de inmediato al directo (500ms) sin esperar 2s
-        const reconnectDelayMs = isLive ? 500 : 1500;
+        // Backoff progresivo (500ms, 1s, 2s, 3s...) para no saturar la red ni el servidor IPTV
+        const reconnectDelayMs = isLive
+          ? Math.min(500 * Math.pow(1.5, _retryCount - 1), 3500)
+          : Math.min(1000 * Math.pow(1.5, _retryCount - 1), 4000);
         if (typeof Router !== 'undefined' && Router.showToast && _retryCount > 1) {
-          Router.showToast(`Reconectando al directo (${_retryCount}/${maxRetries})...`, 'info');
+          Router.showToast(`Reconectando (${_retryCount}/${maxRetries})...`, 'info');
         }
         _setTimer('retry', () => {
           if (_isActive() && _current) play(_current);
-        }, reconnectDelayMs);
+        }, Math.round(reconnectDelayMs));
         return;
       }
     }
