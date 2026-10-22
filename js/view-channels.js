@@ -17,7 +17,7 @@ import { getGroupCounts, invalidateGroupCounts } from './services/group-counts.j
 import { createFocusController } from './services/focus-controller.js';
 import { createTabViewController } from './services/tab-view-controller.js';
 import { createChannelsInputController } from './services/channels-input-controller.js';
-import { renderCountryItems, renderGroupList, setChannelHeader } from './services/view-renderer.js';
+import { renderCountryItems, renderGroupList, setChannelHeader, getGroupLabel, getGroupIcon } from './services/view-renderer.js';
 import { createViewState } from './services/view-state.js';
 
 
@@ -333,43 +333,6 @@ export const ViewChannels = (() => {
     _cacheRestorePending = Boolean(enabled);
   }
 
-  function _getGroupIcon(g) {
-    if (g?.icon) return g.icon;
-    const match = String(g?.name || '').match(/<span[^>]*material-symbols-rounded[^>]*>([^<]+)<\/span>/);
-    return match ? match[1].trim() : null;
-  }
-
-  function _getGroupLabel(g) {
-    return String(g?.name || '').replace(/<span[^>]*>.*?<\/span>\s*/g, '');
-  }
-
-  function _setGroupContent(li, g, count = null, folderExpanded = null) {
-    li.replaceChildren();
-
-    const label = document.createElement('span');
-    const icon = _getGroupIcon(g);
-    if (icon) {
-      const iconEl = document.createElement('span');
-      iconEl.className = 'material-symbols-rounded';
-      iconEl.textContent = icon;
-      label.appendChild(iconEl);
-      label.appendChild(document.createTextNode(' '));
-    }
-    label.appendChild(document.createTextNode(_getGroupLabel(g)));
-    li.appendChild(label);
-
-    if (folderExpanded !== null) {
-      const folderIcon = document.createElement('span');
-      folderIcon.className = 'material-symbols-rounded folder-icon';
-      folderIcon.textContent = folderExpanded ? 'expand_less' : 'expand_more';
-      li.appendChild(folderIcon);
-    } else if (count !== null) {
-      const countEl = document.createElement('span');
-      countEl.className = 'group-count';
-      countEl.textContent = count;
-      li.appendChild(countEl);
-    }
-  }
 
 
 
@@ -579,7 +542,7 @@ export const ViewChannels = (() => {
     }
     _lastChannelsRenderInput = channelsInput;
     const curGroupObj = (Store.get('groups') || []).find(g => g.id === ctx.currentGroup);
-    const groupName = curGroupObj ? _getGroupLabel(curGroupObj) : null;
+    const groupName = curGroupObj ? getGroupLabel(curGroupObj) : null;
     setChannelHeader({ currentGroup: ctx.currentGroup, groupName, currentTab: ctx.currentTab, count: items.length });
 
     if (preserveFocus && _focusZone !== 'channels') {

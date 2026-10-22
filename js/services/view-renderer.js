@@ -1,10 +1,10 @@
-function _getGroupIcon(g) {
+export function getGroupIcon(g) {
   if (g?.icon) return g.icon;
   const match = String(g?.name || '').match(/<span[^>]*material-symbols-rounded[^>]*>([^<]+)<\/span>/);
   return match ? match[1].trim() : null;
 }
 
-function _getGroupLabel(g) {
+export function getGroupLabel(g) {
   return String(g?.name || '').replace(/<span[^>]*>.*?<\/span>\s*/g, '');
 }
 

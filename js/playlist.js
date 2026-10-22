@@ -280,13 +280,14 @@ export const Playlist = (() => {
     return groups;
   }
 
+  let _filterCacheByChannels = new WeakMap();
+
   function clearGroupCache() {
     _groupCache = new WeakMap();
     _visibleCache = new WeakMap();
+    _filterCacheByChannels = new WeakMap();
     invalidateIndex();
   }
-
-  const _filterCacheByChannels = new WeakMap();
 
   function filterByGroup(channels, groupId, favIds, countryCode = 'ALL') {
     _buildGroupIndex(channels);
