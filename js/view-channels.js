@@ -254,14 +254,15 @@ export const ViewChannels = (() => {
     _tabs.hideLoading();
     initKeys();
 
+    if (fromView !== 'player') {
+      _updateCountriesList();
+      renderCountries();
+    }
+
     if (fromView !== 'player' && _cacheRestorePending) {
       _suspendViewStateSave = true;
       _setFocusZone('groups');
       return;
-    }
-
-    if (fromView !== 'player') {
-      _updateCountriesList();
     }
     
     // Si volvemos del reproductor, sincronizamos la vista (país, categoría y canal)
