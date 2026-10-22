@@ -11,7 +11,7 @@ export function getGroupLabel(g) {
 function _setGroupContent(li, g, count = null, folderExpanded = null) {
   li.replaceChildren();
   const label = document.createElement('span');
-  const icon = _getGroupIcon(g);
+  const icon = getGroupIcon(g);
   if (icon) {
     const iconEl = document.createElement('span');
     iconEl.className = 'material-symbols-rounded';
@@ -19,7 +19,7 @@ function _setGroupContent(li, g, count = null, folderExpanded = null) {
     label.appendChild(iconEl);
     label.appendChild(document.createTextNode(' '));
   }
-  label.appendChild(document.createTextNode(_getGroupLabel(g)));
+  label.appendChild(document.createTextNode(getGroupLabel(g)));
   li.appendChild(label);
 
   if (folderExpanded !== null) {
