@@ -78,12 +78,17 @@ export const Player = (() => {
     const mode = _getStreamMode(ch);
     const limits = DeviceProfile.player.liveMaxBitrate;
     const maxBr = mode.is8K ? limits.uhd8k : mode.is4K ? limits.uhd : mode.isHD ? limits.hd : limits.raw;
-    const adaptiveBase = pipMode
-      ? DeviceProfile.player.pipAdaptiveInfo
-      : (mode.isLive ? (DeviceProfile.player.liveAdaptiveInfo || 'STARTBITRATE=AVERAGE') : DeviceProfile.player.defaultAdaptiveInfo);
-    const adaptive = `${adaptiveBase}|MAXBITRATE=${maxBr}`;
+    const isTsStream = typeof ch?.url === 'string' && (ch.url.includes('.ts') || !ch.url.includes('.m3u8'));
 
-    try { webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', adaptive); } catch (e) { }
+    // Streams MPEG-TS directos no admiten ADAPTIVE_INFO (hace fallar o congelar el demuxer de Tizen)
+    if (!isTsStream || pipMode) {
+      const adaptiveBase = pipMode
+        ? DeviceProfile.player.pipAdaptiveInfo
+        : (mode.isLive ? (DeviceProfile.player.liveAdaptiveInfo || 'STARTBITRATE=AVERAGE') : DeviceProfile.player.defaultAdaptiveInfo);
+      const adaptive = `${adaptiveBase}|MAXBITRATE=${maxBr}`;
+      try { webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', adaptive); } catch (e) { }
+    }
+
     try { webapis.avplay.setStreamingProperty('USER_AGENT', 'Mozilla/5.0 (SMART-TV; Linux; Tizen 7.0) AppleWebKit/537.36'); } catch (e) { }
     if (mode.isLive) {
       try { webapis.avplay.setStreamingProperty('IS_LIVE', 'true'); } catch (e) { }
@@ -266,7 +271,14 @@ export const Player = (() => {
     const vl = _videoLayerEl || document.getElementById('video-layer');
     const rect = getDisplayRect(_mode);
     if (_mode === 'FULLSCREEN') {
-      if (vl) { vl.style.left = rect.x + 'px'; vl.style.top = rect.y + 'px'; vl.style.width = rect.width + 'px'; vl.style.height = rect.height + 'px'; }
+      if (vl) {
+        vl.style.left = rect.x + 'px';
+        vl.style.top = rect.y + 'px';
+        vl.style.width = rect.width + 'px';
+        vl.style.height = rect.height + 'px';
+        vl.style.visibility = 'visible';
+        vl.style.opacity = '1';
+      }
       const mode = _getStreamMode();
       const _isUHD = mode.is4K || mode.is8K || mode.isHEVC || mode.isRaw;
       const _isLive = mode.isLive;
@@ -274,7 +286,14 @@ export const Player = (() => {
       try { webapis.avplay.setDisplayMethod(_dispMethod); } catch (e) { }
       try { webapis.avplay.setDisplayRect(rect.x, rect.y, rect.width, rect.height); } catch (e) { }
     } else if (_mode === 'PIP') {
-      if (vl) { vl.style.left = rect.x + 'px'; vl.style.top = rect.y + 'px'; vl.style.width = rect.width + 'px'; vl.style.height = rect.height + 'px'; }
+      if (vl) {
+        vl.style.left = rect.x + 'px';
+        vl.style.top = rect.y + 'px';
+        vl.style.width = rect.width + 'px';
+        vl.style.height = rect.height + 'px';
+        vl.style.visibility = 'visible';
+        vl.style.opacity = '1';
+      }
       try { webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN'); } catch (e) { }
       try { webapis.avplay.setDisplayRect(rect.x, rect.y, rect.width, rect.height); } catch (e) { }
     }
