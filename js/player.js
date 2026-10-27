@@ -78,7 +78,10 @@ export const Player = (() => {
     const mode = _getStreamMode(ch);
     const limits = DeviceProfile.player.liveMaxBitrate;
     const maxBr = mode.is8K ? limits.uhd8k : mode.is4K ? limits.uhd : mode.isHD ? limits.hd : limits.raw;
-    const adaptive = pipMode ? DeviceProfile.player.pipAdaptiveInfo : `${DeviceProfile.player.defaultAdaptiveInfo}|MAXBITRATE=${maxBr}`;
+    const adaptiveBase = pipMode
+      ? DeviceProfile.player.pipAdaptiveInfo
+      : (mode.isLive ? (DeviceProfile.player.liveAdaptiveInfo || 'STARTBITRATE=AVERAGE') : DeviceProfile.player.defaultAdaptiveInfo);
+    const adaptive = `${adaptiveBase}|MAXBITRATE=${maxBr}`;
 
     try { webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', adaptive); } catch (e) { }
     try { webapis.avplay.setStreamingProperty('USER_AGENT', 'Mozilla/5.0 (SMART-TV; Linux; Tizen 7.0) AppleWebKit/537.36'); } catch (e) { }
@@ -203,6 +206,7 @@ export const Player = (() => {
           onbufferingcomplete: () => _onBufferingComplete(),
           oncurrentplaytime: () => {
             if (_state === 'BUFFERING') {
+              _clearTimer('bufferStall');
               _setState('PLAYING');
               _retryCount = 0;
               if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
@@ -212,6 +216,7 @@ export const Player = (() => {
             if (type === 'PLAYER_MSG_END_OF_STREAM') handleStreamEnd();
             if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
               if (_state === 'BUFFERING') {
+                _clearTimer('bufferStall');
                 _setState('PLAYING');
                 if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
               }
@@ -229,6 +234,10 @@ export const Player = (() => {
             if (playSeq !== _playSeq) return;
             try {
               webapis.avplay.play();
+              // Mostrar la capa de vídeo al arrancar el stream para evitar pantalla negra
+              // si el stream no emite eventos de buffering convencionales (común en directos MPEG-TS)
+              if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
+
               if (_current && (_current.type === 'vod' || _current.type === 'series')) {
                 // Buscar progreso: primero en Storage (persiste entre reinicios), luego en Store (sesión actual)
                 const saved = Storage.getEpisodeProgress(_current.id) || Store.get('progress_' + _current.id);
@@ -413,7 +422,7 @@ export const Player = (() => {
 
   // ——— SAFE STOP ————————————————————————————————————————
   function _safeStop() {
-    _clearTimers(['retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek']);
+    _clearTimers(['retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek', 'bufferStall']);
     try {
       const vl = _videoLayerEl || document.getElementById('video-layer');
       if (vl) {
@@ -431,8 +440,20 @@ export const Player = (() => {
   }
 
   // Section: AVPlay Event Listeners
-  function _onBufferingStart() { _setState('BUFFERING'); }
+  function _onBufferingStart() {
+    _setState('BUFFERING');
+    // Watchdog: si el stream queda atascado en buffering más de 7 segundos sin eventos de red
+    _clearTimer('bufferStall');
+    _setTimer('bufferStall', () => {
+      if (_state === 'BUFFERING' && _isActive() && _current) {
+        console.warn('Buffer stall detectado, forzando recuperación...', _current?.name);
+        _handleError('BUFFER_STALL');
+      }
+    }, 7000);
+  }
+
   function _onBufferingComplete() {
+    _clearTimer('bufferStall');
     _setState('PLAYING');
     _retryCount = 0;
     if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
