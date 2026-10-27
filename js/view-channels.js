@@ -312,21 +312,27 @@ export const ViewChannels = (() => {
     if (!listId) return;
 
     const tab = _currentTab || 'tv';
-    Storage.setLastViewState({
-      tab,
+    const previous = Storage.getLastViewState(listId) || {};
+    const focusedId = extra.channelId || VirtualList.getCurrentItem?.()?.id || null;
+    const tabState = {
       currentCountry: tab === 'tv' ? _getCurrentCountry() : 'ALL',
       currentGroup: _getCurrentGroup() || '__all__',
-      channelId: tab === 'tv'
-        ? (extra.channelId || Storage.getLastChannel(listId) || null)
-        : null,
-      updatedAt: Date.now(),
+      channelId: focusedId || (tab === 'tv' ? Storage.getLastChannel(listId) : null)
+    };
+    Storage.setLastViewState({
+      activeTab: tab,
+      tabs: { ...(previous.tabs || {}), [tab]: tabState },
+      updatedAt: Date.now()
     }, listId);
   }
 
   function _getSavedViewState() {
     const listId = _getCurrentListId();
     if (!listId) return null;
-    return Storage.getLastViewState(listId);
+    const saved = Storage.getLastViewState(listId);
+    if (!saved) return null;
+    const tab = saved.activeTab || saved.tab || 'tv';
+    return { ...saved, ...(saved.tabs?.[tab] || {}), tab };
   }
 
   function prepareCacheRestore(enabled) {
@@ -557,6 +563,7 @@ export const ViewChannels = (() => {
         items,
         layout:       layout,
         onSelect:     ch => _playChannel(ch),
+        onFocusChange: ch => _saveCurrentViewState({ channelId: ch?.id }),
         getFavBadge:  id => Favorites.isFav(id)
       });
     } else {
@@ -569,6 +576,7 @@ export const ViewChannels = (() => {
     }
 
     _updateGroupCounts();
+    _saveCurrentViewState({ channelId: VirtualList.getCurrentItem?.()?.id });
   }
 
   function _playChannel(ch) {
@@ -667,6 +675,7 @@ export const ViewChannels = (() => {
   
   async function _switchTab(tabId) {
     if (_currentTab === tabId) return;
+    _saveCurrentViewState();
     _tabs.abortPendingLoad();
     _tabFocusIdx = Math.max(0, TABS.indexOf(tabId));
 
@@ -817,7 +826,16 @@ export const ViewChannels = (() => {
       _sidebarFocusIdx = (Store.get('groupIdx') || 0) + 2;
       renderGroups();
       renderChannels();
-      _setFocusZone('groups');
+      const channelId = saved.channelId;
+      const channelIdx = channelId && typeof VirtualList !== 'undefined'
+        ? VirtualList.getItems().findIndex(ch => ch.id === channelId)
+        : -1;
+      if (channelIdx >= 0) {
+        VirtualList.setFocused(channelIdx);
+        _setFocusZone('channels');
+      } else {
+        _setFocusZone('groups');
+      }
       return true;
     } finally {
       _suspendViewStateSave = false;

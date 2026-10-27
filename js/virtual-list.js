@@ -16,6 +16,7 @@ export const VirtualList = (() => {
   let _container   = null;
   let _items       = [];
   let _onSelect    = null;
+  let _onFocusChange = null;
   let _getFavBadge = null;
   let _focusedIdx  = 0;
   let _selectedIdx = -1;
@@ -110,7 +111,7 @@ export const VirtualList = (() => {
     };
   })();
 
-  function init({ containerId, items, onSelect, getFavBadge, layout = 'tv' }) {
+  function init({ containerId, items, onSelect, onFocusChange, getFavBadge, layout = 'tv' }) {
     _layout = layout;
     if (_layout === 'poster') {
       COLS = 5;
@@ -126,6 +127,7 @@ export const VirtualList = (() => {
     if (_container) _container.innerHTML = ''; // FIX OVERLAPPING
     _items       = items;
     _onSelect    = onSelect;
+    _onFocusChange = onFocusChange;
     _getFavBadge = getFavBadge;
     _focusedIdx  = 0;
     _scrollTop   = 0;
@@ -205,6 +207,7 @@ export const VirtualList = (() => {
     _focusedIdx = Math.max(0, Math.min(_items.length - 1, idx));
     _focus(_focusedIdx);
     _scrollToVisible(_focusedIdx);
+    if (_onFocusChange) _onFocusChange(_items[_focusedIdx]);
   }
 
   function getFocused() { return _focusedIdx; }

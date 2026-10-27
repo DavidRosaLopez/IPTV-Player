@@ -50,8 +50,9 @@ export const App = (() => {
       }
     }
 
-    let defaultListId = Storage.getDefaultList();
-    if (!defaultListId && lists.length > 0) {
+    const lastListId = Storage.getLastList();
+    let defaultListId = lists.some(list => list.id === lastListId) ? lastListId : Storage.getDefaultList();
+    if (!lists.some(list => list.id === defaultListId) && lists.length > 0) {
       defaultListId = lists[0].id;
       Storage.setDefaultList(defaultListId);
     }
