@@ -16,6 +16,7 @@ import { VodOSD } from './vod-osd.js';
 import { Watching } from './watching.js';
 import { eventBus } from './eventBus.js';
 import { DeviceProfile, getDisplayRect } from './device-profile.js';
+import { PlaybackDiagnostics } from './services/playback-diagnostics.js';
 
 export const Player = (() => {
   let _current = null;
@@ -152,6 +153,7 @@ export const Player = (() => {
   // ——— PLAY (pantalla completa) ————————————————————————————
   function play(ch) {
     if (!ch || !ch.url) return;
+    PlaybackDiagnostics.add('ABRIENDO', ch, _mode);
     if (_current && _current.id !== ch.id) _retryCount = 0;
     _clearTimer('preview');
     _safeStop();
@@ -191,6 +193,7 @@ export const Player = (() => {
         _applyPlaybackTuning(_current, false);
 
         const handleStreamEnd = () => {
+          PlaybackDiagnostics.add('FIN DE STREAM', _current);
           if (_current && _current.type === 'series') {
             stop();
             if (typeof Router !== 'undefined') Router.showView('channels');
@@ -207,8 +210,8 @@ export const Player = (() => {
         };
 
         webapis.avplay.setListener({
-          onbufferingstart: () => { if (playSeq === _playSeq) _onBufferingStart(); },
-          onbufferingcomplete: () => { if (playSeq === _playSeq) _onBufferingComplete(); },
+          onbufferingstart: () => { if (playSeq === _playSeq) { PlaybackDiagnostics.add('BUFFERING', _current); _onBufferingStart(); } },
+          onbufferingcomplete: () => { if (playSeq === _playSeq) { PlaybackDiagnostics.add('REPRODUCIENDO', _current); _onBufferingComplete(); } },
           oncurrentplaytime: () => {
             if (playSeq === _playSeq && _state === 'BUFFERING') {
               _clearTimer('bufferStall');
@@ -231,6 +234,7 @@ export const Player = (() => {
             }
           },
           onerror: (err) => { if (playSeq === _playSeq) _onError(err); },
+          onerrormsg: (err, message) => { if (playSeq === _playSeq) _onError(`${err}: ${message}`); },
           ondrmevent: () => { },
           onstreamcompleted: () => { if (playSeq === _playSeq) handleStreamEnd(); },
         });
@@ -240,6 +244,7 @@ export const Player = (() => {
             if (playSeq !== _playSeq) return;
             try {
               webapis.avplay.play();
+              PlaybackDiagnostics.add('PLAY', _current);
               // Mostrar la capa de vídeo al arrancar el stream para evitar pantalla negra
               // si el stream no emite eventos de buffering convencionales (común en directos MPEG-TS)
               if (_mode === 'FULLSCREEN') _showVideoLayerAfterLayout();
@@ -484,6 +489,7 @@ export const Player = (() => {
   function _onError(err) {
     const errStr = (err && typeof err === 'object') ? (err.message || err.name || JSON.stringify(err)) : String(err || 'UNKNOWN');
     console.error('AVPlay error:', errStr, 'Channel:', _current?.name);
+    PlaybackDiagnostics.add('ERROR', _current, errStr);
     _handleError(errStr);
   }
 
@@ -497,6 +503,7 @@ export const Player = (() => {
 
       if (_retryCount < maxRetries) {
         _retryCount++;
+        PlaybackDiagnostics.add('REINTENTO', _current, `${_retryCount}/${maxRetries}: ${reason}`);
         // Backoff progresivo (500ms, 1s, 2s, 3s...) para no saturar la red ni el servidor IPTV
         const reconnectDelayMs = isLive
           ? Math.min(500 * Math.pow(1.5, _retryCount - 1), 3500)
@@ -719,6 +726,7 @@ export const Player = (() => {
 
   // ——— UTILS ————————————————————————————————————————————
   function stop() {
+    if (_current) PlaybackDiagnostics.add('DETENIDO', _current, _state);
     if (_current && (_current.type === 'vod' || _current.type === 'series')) {
       const ms = getCurrentTime();
       if (ms > 10000) {

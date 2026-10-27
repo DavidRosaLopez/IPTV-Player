@@ -5,6 +5,7 @@ import { Router } from './router.js';
 import { Playlist } from './playlist.js';
 import { eventBus } from './eventBus.js';
 import { getCountryInfo, sortCountryCodes } from './countries.js';
+import { PlaybackDiagnostics } from './services/playback-diagnostics.js';
 
 
 export const ViewSetup = (() => {
@@ -472,9 +473,19 @@ export const ViewSetup = (() => {
     });
   }
 
+  function _renderPlaybackDiagnostics() {
+    const container = document.getElementById('playback-diagnostics');
+    if (!container) return;
+    const events = PlaybackDiagnostics.getAll();
+    container.textContent = events.length
+      ? events.map(e => `${e.time}  ${e.type.padEnd(14)} ${e.channel}${e.detail ? ` — ${e.detail}` : ''}`).join('\n')
+      : 'Sin eventos todavía.';
+  }
+
   function onShow() {
     _renderSavedLists();
     _renderCountrySettings();
+    _renderPlaybackDiagnostics();
 
     const tabs = Array.from(_getSetupTabs());
     const lists = Storage.getLists();
@@ -515,6 +526,7 @@ export const ViewSetup = (() => {
         _switchTab(btn.dataset.tab);
         if (btn.dataset.tab === 'settings') {
           _renderCountrySettings();
+          _renderPlaybackDiagnostics();
         }
         _updateSetupFocus();
       })
@@ -523,6 +535,10 @@ export const ViewSetup = (() => {
 
     document.getElementById('btn-add-xtream')?.addEventListener('click', () => _addXtream());
     document.getElementById('btn-test-xtream')?.addEventListener('click', () => _testXtream());
+    document.getElementById('btn-clear-playback-diagnostics')?.addEventListener('click', () => {
+      PlaybackDiagnostics.clear();
+      _renderPlaybackDiagnostics();
+    });
     KeyHandler.on('RIGHT', () => _handleSetupDirection('right'));
     KeyHandler.on('LEFT', () => _handleSetupDirection('left'));
     KeyHandler.on('DOWN', () => _handleSetupDirection('down'));
