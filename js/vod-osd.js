@@ -7,7 +7,7 @@ export const VodOSD = (() => {
   let _progressTimer = null;
   let _isVisible = false;
   let _focusState = 'default'; // 'default' | 'btn-audio' | 'audio-menu' | 'subs-menu'
-  let _btnIdx = 0; // 0=audio, 1=subs, 2=restart, 3=next
+  let _btnIdx = 0; // audio, subtítulos, siguiente capítulo
   let _visibleBtns = [];
   let _audioTracks = [];
   let _audioIdx = 0;
@@ -38,7 +38,6 @@ export const VodOSD = (() => {
     
     const btnAudio = document.getElementById('btn-vod-audio');
     const btnSubs = document.getElementById('btn-vod-subs');
-    const btnRestart = document.getElementById('btn-vod-restart');
     const btnNext = document.getElementById('btn-vod-next');
     
     _visibleBtns = ['btn-vod-audio'];
@@ -48,11 +47,6 @@ export const VodOSD = (() => {
        btnSubs.classList.remove('focused');
        btnSubs.classList.remove('hidden');
        _visibleBtns.push('btn-vod-subs');
-    }
-    if (btnRestart) {
-       btnRestart.classList.remove('focused');
-       btnRestart.classList.remove('hidden');
-       _visibleBtns.push('btn-vod-restart');
     }
     if (btnNext) {
        btnNext.classList.remove('focused');
@@ -222,9 +216,6 @@ export const VodOSD = (() => {
            _openAudioMenu();
         } else if (activeId === 'btn-vod-subs') {
            _openSubsMenu();
-        } else if (activeId === 'btn-vod-restart') {
-           if (_player) _player.seekTo(0);
-           hide();
         } else if (activeId === 'btn-vod-next') {
            if (typeof InfoPopup !== 'undefined') InfoPopup.playNextEpisode();
            hide();

@@ -29,8 +29,7 @@ export const Player = (() => {
     playDelay: null,
     pipDelay: null,
     liveRestart: null,
-    resumeSeek: null,
-    seek: null
+    resumeSeek: null
   };
   let _wasPlayingOnHide = false;
   let _retryCount = 0;      // declarado explícitamente (evita fuga al scope global)
@@ -554,15 +553,9 @@ export const Player = (() => {
       if (_isActive()) {
         if (_current && (_current.type === 'vod' || _current.type === 'series')) {
           if (typeof VodOSD !== 'undefined') {
-            if (VodOSD.isVisible()) {
-              if (!VodOSD.handleKey('LEFT')) _handleSeek('left');
-            } else {
-              VodOSD.show(_current);
-              _handleSeek('left');
-            }
+            if (VodOSD.isVisible()) VodOSD.handleKey('LEFT');
+            else VodOSD.show(_current);
           }
-        } else {
-          _handleSeek('left');
         }
         return true;
       }
@@ -572,15 +565,9 @@ export const Player = (() => {
       if (_isActive()) {
         if (_current && (_current.type === 'vod' || _current.type === 'series')) {
           if (typeof VodOSD !== 'undefined') {
-            if (VodOSD.isVisible()) {
-              if (!VodOSD.handleKey('RIGHT')) _handleSeek('right');
-            } else {
-              VodOSD.show(_current);
-              _handleSeek('right');
-            }
+            if (VodOSD.isVisible()) VodOSD.handleKey('RIGHT');
+            else VodOSD.show(_current);
           }
-        } else {
-          _handleSeek('right');
         }
         return true;
       }
@@ -594,7 +581,7 @@ export const Player = (() => {
             else VodOSD.show(_current);
           }
         } else {
-          _onChannelChange?.('next');
+          _onChannelChange?.('prev');
         }
         return true;
       }
@@ -608,7 +595,7 @@ export const Player = (() => {
             else VodOSD.show(_current);
           }
         } else {
-          _onChannelChange?.('prev');
+          _onChannelChange?.('next');
         }
         return true;
       }
@@ -623,12 +610,6 @@ export const Player = (() => {
     });
     KeyHandler.on('PAUSE', () => {
       if (_isActive() && _state === 'PLAYING') { togglePlayPause(); return true; }
-    });
-    KeyHandler.on('REWIND', () => {
-      if (_isActive()) { _handleSeek('left'); return true; }
-    });
-    KeyHandler.on('FAST_FWD', () => {
-      if (_isActive()) { _handleSeek('right'); return true; }
     });
     KeyHandler.on('STOP', () => {
       if (_isActive() && _current) { stop(); Router.showView('channels'); return true; }
@@ -750,8 +731,6 @@ export const Player = (() => {
     _current = null;
     _mode = 'IDLE';
     _hidePip();
-    _clearTimer('seek');
-    _resetSeekFeedback();
     const errEl = document.getElementById('player-error');
     if (errEl) errEl.classList.add('hidden');
     const spinner = document.getElementById('buffer-spinner');
@@ -792,13 +771,6 @@ export const Player = (() => {
     } else if (_state === 'PAUSED') {
       try { webapis.avplay.play(); _setState('PLAYING'); } catch (e) { }
     }
-  }
-  function seek(seconds) {
-    try {
-      const ms = seconds * 1000;
-      if (ms > 0) webapis.avplay.jumpForward(ms);
-      else webapis.avplay.jumpBackward(Math.abs(ms));
-    } catch (e) { }
   }
   function seekTo(ms) {
     try { webapis.avplay.seekTo(ms); } catch (e) { }
@@ -861,6 +833,6 @@ export const Player = (() => {
   function reapplyPip() { if (_mode === 'PIP') _applyDisplayRect(); }
   function _isActive() { return document.getElementById('view-player')?.classList.contains('active'); }
 
-  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seek, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack, getSubtitleTracks, setSubtitleTrack, getCurrentSubtitleTrack };
+  return { init, play, stop, getCurrent, getState, getMode, reapplyPip, shrinkToPip, expandToFullscreen, schedulePreview, cancelPreview, getCurrentTime, getDuration, togglePlayPause, seekTo, getAudioTracks, setAudioTrack, getCurrentAudioTrack, getSubtitleTracks, setSubtitleTrack, getCurrentSubtitleTrack };
 })();
 
