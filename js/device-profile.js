@@ -25,17 +25,17 @@ const BASE = {
       uhd: 100000000,
       uhd8k: 150000000
     },
-    pipAdaptiveInfo: 'STARTBITRATE=LOWEST|MAXBITRATE=3000000',
+    pipAdaptiveInfo: 'STARTBITRATE=LOWEST',
     defaultAdaptiveInfo: 'STARTBITRATE=HIGHEST',
     liveAdaptiveInfo: 'STARTBITRATE=AVERAGE',
     lowBufferSeconds: 3,
     lowResumeBufferSeconds: 4,
     highBufferSeconds: 5,
     highResumeBufferSeconds: 6,
-    pipBufferSeconds: 2,
-    bufferingTimeoutMs: 10000,
-    heavyBufferingTimeoutMs: 12000,
-    resolutionMarker: '4k',
+    // AVPlay expresa estos valores en segundos, no milisegundos.
+    pipBufferSeconds: 4,
+    bufferingTimeoutSeconds: 10,
+    heavyBufferingTimeoutSeconds: 12,
     pipPreviewDelayMs: 900
   },
   virtualList: {

@@ -78,14 +78,14 @@ export const Player = (() => {
     const mode = _getStreamMode(ch);
     const limits = DeviceProfile.player.liveMaxBitrate;
     const maxBr = mode.is8K ? limits.uhd8k : mode.is4K ? limits.uhd : mode.isHD ? limits.hd : limits.raw;
-    const isTsStream = typeof ch?.url === 'string' && (ch.url.includes('.ts') || !ch.url.includes('.m3u8'));
+    const isHlsStream = /\.m3u8(?:$|[?#])/i.test(String(ch?.url || ''));
 
-    // Streams MPEG-TS directos no admiten ADAPTIVE_INFO (hace fallar o congelar el demuxer de Tizen)
-    if (!isTsStream || pipMode) {
+    // ADAPTIVE_INFO solo se aplica a HLS. AVPlay usa BITRATES en kbps, no MAXBITRATE.
+    if (isHlsStream) {
       const adaptiveBase = pipMode
         ? DeviceProfile.player.pipAdaptiveInfo
         : (mode.isLive ? (DeviceProfile.player.liveAdaptiveInfo || 'STARTBITRATE=AVERAGE') : DeviceProfile.player.defaultAdaptiveInfo);
-      const adaptive = `${adaptiveBase}|MAXBITRATE=${maxBr}`;
+      const adaptive = `${adaptiveBase}|BITRATES=1~${Math.round(maxBr / 1000)}`;
       try { webapis.avplay.setStreamingProperty('ADAPTIVE_INFO', adaptive); } catch (e) { }
     }
 
@@ -94,17 +94,19 @@ export const Player = (() => {
       try { webapis.avplay.setStreamingProperty('IS_LIVE', 'true'); } catch (e) { }
     }
     if (pipMode) {
-      const pipBuf = DeviceProfile.player.pipBufferSeconds || 2;
-      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutMs); } catch (e) { }
+      const pipBuf = DeviceProfile.player.pipBufferSeconds || 4;
+      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutSeconds); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', pipBuf); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', pipBuf); } catch (e) { }
     } else if (mode.is4K || mode.is8K || mode.isHEVC || mode.isRaw) {
-      try { webapis.avplay.setStreamingProperty('SET_MIX_RESOLUTION', DeviceProfile.player.resolutionMarker); } catch (e) { }
-      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.heavyBufferingTimeoutMs); } catch (e) { }
+      if (mode.is4K || mode.is8K) {
+        try { webapis.avplay.setStreamingProperty('SET_MODE_4K', 'TRUE'); } catch (e) { }
+      }
+      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.heavyBufferingTimeoutSeconds); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highBufferSeconds); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.highResumeBufferSeconds || DeviceProfile.player.highBufferSeconds); } catch (e) { }
     } else {
-      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutMs); } catch (e) { }
+      try { webapis.avplay.setTimeoutForBuffering(DeviceProfile.player.bufferingTimeoutSeconds); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowBufferSeconds); } catch (e) { }
       try { webapis.avplay.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', DeviceProfile.player.lowResumeBufferSeconds || DeviceProfile.player.lowBufferSeconds); } catch (e) { }
     }
@@ -153,9 +155,8 @@ export const Player = (() => {
     if (!ch || !ch.url) return;
     if (_current && _current.id !== ch.id) _retryCount = 0;
     _clearTimer('preview');
-    const playSeq = ++_playSeq;
-
     _safeStop();
+    const playSeq = ++_playSeq;
     _current = ch;
     _mode = 'FULLSCREEN';
     _setState('BUFFERING');
@@ -207,10 +208,10 @@ export const Player = (() => {
         };
 
         webapis.avplay.setListener({
-          onbufferingstart: () => _onBufferingStart(),
-          onbufferingcomplete: () => _onBufferingComplete(),
+          onbufferingstart: () => { if (playSeq === _playSeq) _onBufferingStart(); },
+          onbufferingcomplete: () => { if (playSeq === _playSeq) _onBufferingComplete(); },
           oncurrentplaytime: () => {
-            if (_state === 'BUFFERING') {
+            if (playSeq === _playSeq && _state === 'BUFFERING') {
               _clearTimer('bufferStall');
               _setState('PLAYING');
               _retryCount = 0;
@@ -218,6 +219,7 @@ export const Player = (() => {
             }
           },
           onevent: (type) => {
+            if (playSeq !== _playSeq) return;
             if (type === 'PLAYER_MSG_END_OF_STREAM') handleStreamEnd();
             if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
               if (_state === 'BUFFERING') {
@@ -229,9 +231,9 @@ export const Player = (() => {
               if (type === 'PLAYER_MSG_RESOLUTION_CHANGED') _applyDisplayRect();
             }
           },
-          onerror: (err) => _onError(err),
+          onerror: (err) => { if (playSeq === _playSeq) _onError(err); },
           ondrmevent: () => { },
-          onstreamcompleted: () => handleStreamEnd(),
+          onstreamcompleted: () => { if (playSeq === _playSeq) handleStreamEnd(); },
         });
 
         webapis.avplay.prepareAsync(
@@ -257,7 +259,7 @@ export const Player = (() => {
               }
             } catch (e) { _onError(e); }
           },
-          (err) => _onError(err)
+          (err) => { if (playSeq === _playSeq) _onError(err); }
         );
 
       } catch (e) {
@@ -367,11 +369,10 @@ export const Player = (() => {
     if (typeof Router !== 'undefined' && !Router.isView('channels')) return;
     if (_mode === 'FULLSCREEN') return; // no interrumpir reproductor
     if (_current && _current.id === ch.id && _mode === 'PIP') return;
-    const pipSeq = ++_pipSeq;
-
     _retryCount = 0;
     _setVideoLayerVisible(false);
     _safeStop();
+    const pipSeq = ++_pipSeq;
     _current = ch;
     _mode = 'PIP';
     _setState('BUFFERING');
@@ -441,6 +442,9 @@ export const Player = (() => {
 
   // ——— SAFE STOP ————————————————————————————————————————
   function _safeStop() {
+    // Invalida callbacks pendientes de prepareAsync/listeners de la sesión anterior.
+    _playSeq++;
+    _pipSeq++;
     _clearTimers(['retry', 'error', 'playDelay', 'pipDelay', 'liveRestart', 'resumeSeek', 'bufferStall']);
     try {
       const vl = _videoLayerEl || document.getElementById('video-layer');
