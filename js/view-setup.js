@@ -526,6 +526,7 @@ export const ViewSetup = (() => {
         _switchTab(btn.dataset.tab);
         if (btn.dataset.tab === 'settings') {
           _renderCountrySettings();
+        } else if (btn.dataset.tab === 'diagnostics') {
           _renderPlaybackDiagnostics();
         }
         _updateSetupFocus();
