@@ -256,6 +256,7 @@ export const ViewChannels = (() => {
       }
     }
     _syncPipSidePanel();
+    refreshGridLayout();
     _tabs.activate(_currentTab);
     _tabs.hideLoading();
     initKeys();
@@ -656,7 +657,10 @@ export const ViewChannels = (() => {
   }
 
   function refreshGridLayout() {
-    requestAnimationFrame(() => VirtualList.refreshLayout());
+    if (!Router.isView('channels')) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (Router.isView('channels')) VirtualList.refreshLayout();
+    }));
   }
 
   function initKeys() {
