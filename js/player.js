@@ -16,6 +16,7 @@ import { VodOSD } from './vod-osd.js';
 import { Watching } from './watching.js';
 import { eventBus } from './eventBus.js';
 import { DeviceProfile, getDisplayRect } from './device-profile.js';
+import { EPG } from './epg.js';
 
 export const Player = (() => {
   let _current = null;
