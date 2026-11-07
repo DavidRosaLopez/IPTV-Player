@@ -261,7 +261,7 @@
 }
 
 /* ── PiP (Picture-in-Picture) ───────────────────────── */
-/* Posición: esquina inferior-derecha de view-channels */
+/* Posición: Superior derecha integrado (estilo Tivimate) */
 /* El recuadro del video nativo (video-layer) se coloca 
    exactamente sobre este elemento usando setDisplayRect */
 .pip-box {
@@ -270,12 +270,12 @@
   top: var(--pip-y);
   width: var(--pip-w);
   height: var(--pip-h);
-  border-radius: 0;  /* el vídeo nativo de AVPlay ignora border-radius */
-  border: 2px solid rgba(255,255,255,0.3);
-  overflow: visible;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(108, 99, 255, 0.3);
   z-index: 60;
-  background: transparent;
+  background: #000;
   transition: opacity 0.25s ease, transform 0.25s ease;
   pointer-events: none;
 }
@@ -290,17 +290,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 14px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  background: linear-gradient(transparent, rgba(9, 11, 20, 0.92) 80%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 2;
 }
 .pip-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: calc(var(--pip-w) - 40px);
+  max-width: calc(var(--pip-w) - 30px);
+  letter-spacing: -0.2px;
 }
 
 /* Animación de entrada del PiP */
