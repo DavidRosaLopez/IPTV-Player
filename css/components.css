@@ -3,7 +3,8 @@
 /* Channel card number badge */
 .ch-badge {
   position: absolute;
-  top: 6px; left: 10px;
+  top: 6px;
+  left: 10px;
   font-size: 11px;
   color: var(--text-dim);
   font-weight: 600;
@@ -11,26 +12,47 @@
 
 /* Favorite star animation */
 @keyframes starPop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.6); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.6);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
-.fav-pop { animation: starPop 0.3s ease; }
+
+.fav-pop {
+  animation: starPop 0.3s ease;
+}
 
 /* Group item icon */
-.group-icon { font-size: 18px; }
+.group-icon {
+  font-size: 18px;
+}
 
 /* Scrollable channel grid smooth scroll */
 /* Eliminado: scroll-behavior smooth rompe el cálculo matemático del Virtual List en alta velocidad */
 
 /* EPG now-playing highlight */
-.epg-prog.now-prog .epg-prog-title { color: var(--green); }
+.epg-prog.now-prog .epg-prog-title {
+  color: var(--green);
+}
 
 /* Skeleton loading shimmer */
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
 }
+
 .skeleton {
   background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
   background-size: 800px 100%;
@@ -40,24 +62,42 @@
 
 /* Volume/Error overlay */
 .error-overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   gap: 20px;
   z-index: 200;
 }
-.error-overlay.hidden { display: none; }
-.error-icon { font-size: 72px; }
-.error-msg { font-size: 26px; color: var(--accent2); font-weight: 600; }
-.error-sub  { font-size: 18px; color: var(--text-sec); }
+
+.error-overlay.hidden {
+  display: none;
+}
+
+.error-icon {
+  font-size: 72px;
+}
+
+.error-msg {
+  font-size: 26px;
+  color: var(--accent2);
+  font-weight: 600;
+}
+
+.error-sub {
+  font-size: 18px;
+  color: var(--text-sec);
+}
 
 /* Player OSD (Ubicado arriba, estilo TV Premium) */
 .player-osd {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 260px;
   background: linear-gradient(to bottom, rgba(9, 11, 20, 0.98) 0%, rgba(9, 11, 20, 0.8) 60%, transparent 100%);
   z-index: 100;
@@ -67,20 +107,31 @@
   transition: opacity 0.4s ease, transform 0.4s ease;
   transform: translateY(0);
 }
+
 .player-osd.hidden {
   opacity: 0;
   transform: translateY(-20px);
   pointer-events: none;
 }
+
 .osd-left {
-  width: 130px; height: 130px;
-  background: rgba(255,255,255,0.05);
+  width: 130px;
+  height: 130px;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   align-self: center;
 }
-.osd-logo { max-width: 90px; max-height: 90px; object-fit: contain; }
+
+.osd-logo {
+  max-width: 90px;
+  max-height: 90px;
+  object-fit: contain;
+}
+
 .osd-content {
   flex: 1;
   display: flex;
@@ -88,7 +139,15 @@
   justify-content: center;
   gap: 12px;
 }
-.osd-channel { font-size: 36px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 15px; }
+
+.osd-channel {
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
 
 
 /* EPG OSD Styles (Premium TV Layout) */
@@ -213,51 +272,91 @@
   font-weight: 600;
 }
 
-#osd-fav-icon.hidden { display: none; }
-.osd-clock { position: absolute; top: 25px; right: 40px; font-size: 28px; font-weight: 600; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
-.osd-now { font-size: 26px; color: var(--text); margin-bottom: 5px; }
-.osd-next { font-size: 20px; color: var(--text-sec); }
+#osd-fav-icon.hidden {
+  display: none;
+}
+
+.osd-clock {
+  position: absolute;
+  top: 25px;
+  right: 40px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.osd-now {
+  font-size: 26px;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.osd-next {
+  font-size: 20px;
+  color: var(--text-sec);
+}
 
 /* Exit Popup */
 .exit-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 300;
 }
-.exit-overlay.hidden { display: none; }
+
+.exit-overlay.hidden {
+  display: none;
+}
+
 .exit-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 40px 50px;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
-.exit-title { font-size: 32px; font-weight: 600; margin-bottom: 40px; }
-.exit-actions { display: flex; gap: 20px; justify-content: center; }
+
+.exit-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 40px;
+}
+
+.exit-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
 .exit-btn {
   padding: 16px 40px;
   font-size: 22px;
   border-radius: var(--radius-md);
   border: 2px solid transparent;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text);
   transition: all 0.2s;
 }
+
 .exit-btn.focused {
   background: var(--focus-bg);
   border-color: var(--focus-border);
   color: #fff;
-  transform: scale(1.05) translate3d(0,0,0);
+  transform: scale(1.05) translate3d(0, 0, 0);
   box-shadow: var(--focus-glow);
 }
+
 .exit-btn.exit-danger.focused {
   background: #ff3c3c;
   border-color: #FFFFFF;
   color: #fff;
-  transform: scale(1.06) translate3d(0,0,0);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px #FFFFFF, 0 0 22px rgba(255,60,60,0.75);
+  transform: scale(1.06) translate3d(0, 0, 0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 2px #FFFFFF, 0 0 22px rgba(255, 60, 60, 0.75);
 }
 
 /* ── PiP Side Panel (Estilo Tivimate) ─────────────────── */
@@ -325,7 +424,8 @@
   gap: 16px;
 }
 
-.pip-side-epg-now, .pip-side-epg-next {
+.pip-side-epg-now,
+.pip-side-epg-next {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -400,18 +500,26 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(108, 99, 255, 0.3);
-  z-index: 60;
-  background: #000;
+  z-index: 75;
+  background: transparent;
   transition: opacity 0.25s ease, transform 0.25s ease;
   pointer-events: none;
 }
-.pip-box.hidden { display: none; }
-.pip-box.pip-loading { opacity: 0.6; }
+
+.pip-box.hidden {
+  display: none;
+}
+
+.pip-box.pip-loading {
+  opacity: 0.6;
+}
 
 /* Barra de info en la parte inferior del PiP */
 .pip-info {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -420,6 +528,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 2;
 }
+
 .pip-name {
   font-size: 14px;
   font-weight: 600;
@@ -433,9 +542,17 @@
 
 /* Animación de entrada del PiP */
 @keyframes pipIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
+
 .pip-box:not(.hidden) {
   animation: pipIn 0.3s ease forwards;
 }
