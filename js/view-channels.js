@@ -242,6 +242,10 @@ export const ViewChannels = (() => {
     return _focusZone;
   }
 
+  function _syncPipSidePanel() {
+    document.querySelector('.channel-content-body')?.classList.toggle('pip-side-hidden', _currentTab !== 'tv');
+  }
+
   function onShow(fromView) {
     if (fromView !== 'player') {
       // Si hay restauración pendiente de VOD/Series, no forzar TV ahora
@@ -250,6 +254,7 @@ export const ViewChannels = (() => {
         _currentTab = 'tv';
       }
     }
+    _syncPipSidePanel();
     _tabs.activate(_currentTab);
     _tabs.hideLoading();
     initKeys();
@@ -666,6 +671,7 @@ export const ViewChannels = (() => {
     
     _currentTab = tabId;
     Store.set('currentTab', _currentTab);
+    _syncPipSidePanel();
     
     // Si pasamos a VOD o Series, ocultamos el PIP
     if ((tabId === 'vod' || tabId === 'series') && typeof Player !== 'undefined') {

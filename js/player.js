@@ -422,6 +422,7 @@ export const Player = (() => {
     const pipSeq = ++_pipSeq;
     _current = ch;
     _mode = 'PIP';
+    const isActivePip = () => pipSeq === _pipSeq && _mode === 'PIP' && _current?.id === ch.id;
     _setState('BUFFERING');
     _showPip(ch);
 
@@ -429,7 +430,7 @@ export const Player = (() => {
     if (box) box.classList.add('pip-loading');
 
     _setTimer('pipDelay', () => {
-      if (pipSeq !== _pipSeq || _mode !== 'PIP' || !_current || _current.id !== ch.id) return;
+      if (!isActivePip()) return;
       try {
         let url = ch.url;
         if (url.includes('|')) url = url.split('|')[0];
@@ -437,8 +438,9 @@ export const Player = (() => {
         _applyDisplayRect();
         _applyPlaybackTuning(ch, true);
         webapis.avplay.setListener({
-          onbufferingstart: () => _setState('BUFFERING'),
+          onbufferingstart: () => { if (isActivePip()) _setState('BUFFERING'); },
           onbufferingcomplete: () => {
+            if (!isActivePip()) return;
             _setState('PLAYING');
             _retryCount = 0;
             _applyDisplayRect(); // reconfirmar posici?n despu?s de buffering
@@ -446,6 +448,7 @@ export const Player = (() => {
             document.getElementById('pip-box')?.classList.remove('pip-loading');
           },
           oncurrentplaytime: () => {
+            if (!isActivePip()) return;
             if (_state === 'BUFFERING') {
               _setState('PLAYING');
               _retryCount = 0;
@@ -454,6 +457,7 @@ export const Player = (() => {
             }
           },
           onevent: (type) => {
+            if (!isActivePip()) return;
             if (type === 'PLAYER_MSG_BITRATE_CHANGE' || type === 'PLAYER_MSG_RESOLUTION_CHANGED') {
               if (_state === 'BUFFERING') {
                 _setState('PLAYING');
@@ -463,6 +467,7 @@ export const Player = (() => {
             }
           },
           onerror: () => {
+            if (!isActivePip()) return;
             _showVideoLayerAfterLayout();
             _hidePip();
           },
@@ -470,13 +475,15 @@ export const Player = (() => {
           onstreamcompleted: () => { },
         });
         webapis.avplay.prepareAsync(
-          () => { if (pipSeq === _pipSeq) { try { webapis.avplay.play(); } catch (e) { } } },
+          () => { if (isActivePip()) { try { webapis.avplay.play(); } catch (e) { } } },
           () => {
+            if (!isActivePip()) return;
             _showVideoLayerAfterLayout();
             _hidePip();
           }
         );
       } catch (e) {
+        if (!isActivePip()) return;
         _showVideoLayerAfterLayout();
         _hidePip();
       }
