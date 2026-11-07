@@ -5,7 +5,6 @@ import { Store } from './store.js';
 import { KeyHandler } from './keyHandler.js';
 import { Playlist } from './playlist.js';
 import { VirtualList } from './virtual-list.js';
-import { Player } from './player.js';
 import { InfoPopup } from './info-popup.js';
 
 
@@ -70,7 +69,6 @@ export const Search = (() => {
     KeyHandler.on('BACK', _onBack);
 
     if (typeof VirtualList !== 'undefined') VirtualList.setFocused(-1);
-    if (typeof Player !== 'undefined' && Player.getMode() === 'PIP') Player.stop();
   }
 
   function close() {
@@ -141,9 +139,6 @@ export const Search = (() => {
         if (input) input.focus();
         if (typeof VirtualList !== 'undefined') {
           VirtualList.setFocused(-1); // Quitar el foco del canal
-        }
-        if (typeof Player !== 'undefined' && Player.getMode() === 'PIP') {
-          Player.stop(); // Cerrar el mini-reproductor
         }
       }
       return true;
