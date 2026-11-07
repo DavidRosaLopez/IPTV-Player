@@ -37,10 +37,10 @@
   --font:       'Inter', sans-serif;
   --screen-w:   1920px;
   --screen-h:   1080px;
-  --pip-x:      1570px;
-  --pip-y:      40px;
-  --pip-w:      320px;
-  --pip-h:      180px;
+  --pip-x:      1400px;
+  --pip-y:      770px;
+  --pip-w:      480px;
+  --pip-h:      270px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
