@@ -55,7 +55,6 @@ export const ViewSetup = (() => {
       const t = _getSetupTabs();
       if (t[_setupTabIdx]) {
         t[_setupTabIdx].classList.add('focused');
-        t[_setupTabIdx].scrollIntoView({ block: 'nearest' });
       }
     } else {
       const c = _getSetupContent();
@@ -129,10 +128,14 @@ export const ViewSetup = (() => {
     }
     if (_setupZone === 'tabs') {
       if (dir === 'right') {
-        _setupTabIdx = Math.min(_getSetupTabs().length - 1, _setupTabIdx + 1);
+        const nextIdx = Math.min(_getSetupTabs().length - 1, _setupTabIdx + 1);
+        if (nextIdx === _setupTabIdx) return true;
+        _setupTabIdx = nextIdx;
         _getSetupTabs()[_setupTabIdx]?.click();
       } else if (dir === 'left') {
-        _setupTabIdx = Math.max(0, _setupTabIdx - 1);
+        const nextIdx = Math.max(0, _setupTabIdx - 1);
+        if (nextIdx === _setupTabIdx) return true;
+        _setupTabIdx = nextIdx;
         _getSetupTabs()[_setupTabIdx]?.click();
       } else if (dir === 'down') {
         _setupZone = 'content';
