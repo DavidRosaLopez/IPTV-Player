@@ -675,7 +675,15 @@ export const VirtualList = (() => {
     if (!_container) return;
     _colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
     _vH = _container.offsetHeight || 900;
-    _render();
+    const rowCount = Math.ceil(_items.length / COLS);
+    if (_sentinel) _sentinel.style.height = (rowCount * (ITEM_H + ITEM_GAP) + PADDING * 2) + 'px';
+    for (const key in _domCache) {
+      const i = parseInt(key);
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const el = _domCache[key];
+      el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${PADDING + col * (_colW + ITEM_GAP)}px,${PADDING + row * (ITEM_H + ITEM_GAP)}px,0);width:${_colW}px;height:${ITEM_H}px;`;
+    }
   }
 
   return { init, update, setFocused, setSelected, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, getSelectedElement, refreshVisible, refreshFavoriteBadges, setFocusVisible, refreshLayout };
