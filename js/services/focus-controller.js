@@ -78,12 +78,8 @@
           setZone('tabs');
         }
       } else if (dir === 'down') {
-        if (deps.isVodOrSeries()) {
-          sidebarFocusIdx = 2;
-          setZone('groups');
-        } else {
-          setZone('countries');
-        }
+        sidebarFocusIdx = 2;
+        setZone('groups');
       } else if (dir === 'up') {
         sidebarFocusIdx = 0;
         setZone('groups', false);
@@ -118,8 +114,7 @@
         else { setZone('channels'); return; }
       } else if (dir === 'up') {
         if (sidebarFocusIdx === 2) {
-          if (deps.isVodOrSeries()) setZone('tabs');
-          else setZone('countries');
+          setZone('tabs');
           return;
         } else if (sidebarFocusIdx > 2) {
           sidebarFocusIdx--;

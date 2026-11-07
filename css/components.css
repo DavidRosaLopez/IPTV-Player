@@ -376,12 +376,6 @@
   display: none;
 }
 
-.channel-content-body.pip-side-hidden .channel-grid {
-  flex: 0 0 100%;
-  width: 100%;
-  max-width: 100%;
-}
-
 .pip-container-anchor {
   width: var(--pip-w);
   height: var(--pip-h);

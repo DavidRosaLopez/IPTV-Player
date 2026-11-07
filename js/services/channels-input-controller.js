@@ -164,7 +164,7 @@ export function createChannelsInputController(deps) {
 
     const targetZone = (() => {
       if (domZone === 'channels') return 'groups';
-      if (domZone === 'groups') return currentTab === 'tv' ? 'countries' : 'tabs';
+      if (domZone === 'groups') return 'tabs';
       if (domZone === 'countries') return 'tabs';
       if (domZone === 'tabs') return null;
       return null;
@@ -195,16 +195,12 @@ export function createChannelsInputController(deps) {
 
   function activateTab(tabId) {
     if (tabId === deps.getCurrentTab()) {
-      if (tabId === 'tv') {
-        deps.setFocusZone('countries');
-      } else {
-        deps.setSidebarFocusIdx(2);
-        deps.setFocusZone('groups');
-      }
+      deps.setSidebarFocusIdx(2);
+      deps.setFocusZone('groups');
       return;
     }
 
-    deps.setPendingFocusAfterRender(tabId === 'tv' ? 'countries' : 'groups');
+    deps.setPendingFocusAfterRender('groups');
     deps.switchTab(tabId);
   }
 

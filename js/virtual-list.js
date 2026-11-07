@@ -114,7 +114,7 @@ export const VirtualList = (() => {
   function init({ containerId, items, onSelect, onFocusChange, getFavBadge, layout = 'tv' }) {
     _layout = layout;
     if (_layout === 'poster') {
-      COLS = 3;
+      COLS = 5;
       ITEM_H = 460;
       ITEM_GAP = 20;
     } else {

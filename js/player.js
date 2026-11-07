@@ -603,10 +603,7 @@ export const Player = (() => {
     KeyHandler.on('LEFT', () => {
       if (_isActive()) {
         if (_current && (_current.type === 'vod' || _current.type === 'series')) {
-          if (typeof VodOSD !== 'undefined') {
-            if (VodOSD.isVisible()) VodOSD.handleKey('LEFT');
-            else VodOSD.show(_current);
-          }
+          _handleVodSeek('left');
         }
         return true;
       }
@@ -615,10 +612,7 @@ export const Player = (() => {
     KeyHandler.on('RIGHT', () => {
       if (_isActive()) {
         if (_current && (_current.type === 'vod' || _current.type === 'series')) {
-          if (typeof VodOSD !== 'undefined') {
-            if (VodOSD.isVisible()) VodOSD.handleKey('RIGHT');
-            else VodOSD.show(_current);
-          }
+          _handleVodSeek('right');
         }
         return true;
       }
@@ -661,6 +655,18 @@ export const Player = (() => {
     });
     KeyHandler.on('PAUSE', () => {
       if (_isActive() && _state === 'PLAYING') { togglePlayPause(); return true; }
+    });
+    KeyHandler.on('REWIND', () => {
+      if (_isActive() && (_current?.type === 'vod' || _current?.type === 'series')) {
+        _handleVodSeek('left');
+        return true;
+      }
+    });
+    KeyHandler.on('FAST_FWD', () => {
+      if (_isActive() && (_current?.type === 'vod' || _current?.type === 'series')) {
+        _handleVodSeek('right');
+        return true;
+      }
     });
     KeyHandler.on('STOP', () => {
       if (_isActive() && _current) { stop(); Router.showView('channels'); return true; }
@@ -766,6 +772,12 @@ export const Player = (() => {
     }
 
     _setTimer('seek', _resetSeekFeedback, 600);
+  }
+
+  function _handleVodSeek(dir) {
+    if (typeof VodOSD !== 'undefined' && VodOSD.isVisible() && VodOSD.handleKey(dir.toUpperCase())) return;
+    _handleSeek(dir);
+    if (typeof VodOSD !== 'undefined') VodOSD.show(_current);
   }
 
   // ——— UTILS ————————————————————————————————————————————
