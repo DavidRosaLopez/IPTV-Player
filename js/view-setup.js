@@ -61,7 +61,7 @@ export const ViewSetup = (() => {
       const c = _getSetupContent();
       if (c[_setupContentIdx]) {
         c[_setupContentIdx].classList.add('focused');
-        c[_setupContentIdx].scrollIntoView({ block: 'nearest' });
+        c[_setupContentIdx].scrollIntoView({ block: 'nearest', inline: 'nearest' });
       } else {
         _setupZone = 'tabs';
         _updateSetupFocus();

@@ -240,11 +240,14 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
   transition: transform 0.15s, opacity 0.15s, background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 .saved-item.focused { border-color: var(--accent); background: var(--accent-dim); box-shadow: var(--focus-ring); }
 .saved-item-icon { font-size: 24px; }
-.saved-item-info { flex: 1; }
+.saved-item-info { flex: 1; min-width: 0; }
+.saved-item-name, .saved-item-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .saved-item-name { font-size: 19px; font-weight: 600; }
 .saved-item-type { font-size: 14px; color: var(--text-sec); }
 .saved-item-default {
