@@ -321,8 +321,6 @@ export const Player = (() => {
 
   function _showPip(ch) {
     const box = document.getElementById('pip-box');
-    const nameEl = document.getElementById('pip-name');
-    if (nameEl) nameEl.textContent = ch?.name || '';
     if (box) box.classList.remove('hidden');
 
     // Actualizar metadata del panel lateral estilo Tivimate

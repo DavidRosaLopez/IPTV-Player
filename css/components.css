@@ -522,32 +522,6 @@
   opacity: 0.6;
 }
 
-/* Barra de info en la parte inferior del PiP */
-.pip-info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  background: linear-gradient(transparent, rgba(9, 11, 20, 0.92) 80%);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  z-index: 2;
-}
-
-.pip-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: calc(var(--pip-w) - 30px);
-  letter-spacing: -0.2px;
-}
-
 /* Animación de entrada del PiP */
 @keyframes pipIn {
   from {
