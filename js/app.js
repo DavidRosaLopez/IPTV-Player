@@ -82,6 +82,7 @@ export const App = (() => {
     eventBus.on('player:stop-requested', () => Player.stop());
     eventBus.on('channels:refresh-requested', () => ViewChannels.refreshUI());
     eventBus.on('channels:render-groups-requested', () => ViewChannels.renderGroups());
+    eventBus.on('player:pip-panel-changed', () => ViewChannels.refreshGridLayout());
     eventBus.on('view:shown', ({ name, fromView }) => {
       if (name === 'channels') {
         ViewChannels.onShow(fromView);

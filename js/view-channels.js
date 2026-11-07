@@ -243,7 +243,8 @@ export const ViewChannels = (() => {
   }
 
   function _syncPipSidePanel() {
-    document.querySelector('.channel-content-body')?.classList.toggle('pip-side-hidden', _currentTab !== 'tv');
+    const showPipPanel = _currentTab === 'tv' && Player.getMode() === 'PIP' && Player.getCurrent();
+    document.querySelector('.channel-content-body')?.classList.toggle('pip-side-hidden', !showPipPanel);
   }
 
   function onShow(fromView) {
@@ -654,6 +655,10 @@ export const ViewChannels = (() => {
     }
   }
 
+  function refreshGridLayout() {
+    requestAnimationFrame(() => VirtualList.refreshLayout());
+  }
+
   function initKeys() {
     _input.init();
   }
@@ -864,5 +869,5 @@ export const ViewChannels = (() => {
 
   Search.configure({ getCurrentTab, renderChannels, focusSearchResults, setSidebarFocusToSearch });
 
-  return { onShow, renderGroups, renderChannels, refreshUI, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch, focusSearchResults, restoreFromCache, prepareCacheRestore };
+  return { onShow, renderGroups, renderChannels, refreshUI, refreshGridLayout, playChannelRelative, syncWithChannel, getCurrentTab, setSidebarFocusToSearch, focusSearchResults, restoreFromCache, prepareCacheRestore };
 })();

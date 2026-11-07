@@ -322,6 +322,7 @@ export const Player = (() => {
   function _showPip(ch) {
     const box = document.getElementById('pip-box');
     if (box) box.classList.remove('hidden');
+    _setPipPanelVisible(true);
 
     // Actualizar metadata del panel lateral estilo Tivimate
     const sideNumEl = document.getElementById('pip-side-channel-num');
@@ -361,10 +362,20 @@ export const Player = (() => {
 
   function _hidePip() {
     document.getElementById('pip-box')?.classList.add('hidden');
+    _setPipPanelVisible(false);
     const sideNowTitle = document.getElementById('pip-side-now-title');
     if (sideNowTitle) sideNowTitle.textContent = 'Selecciona un canal para reproducir';
     const sideProgress = document.getElementById('pip-side-progress-fill');
     if (sideProgress) sideProgress.style.width = '0%';
+  }
+
+  function _setPipPanelVisible(visible) {
+    const body = document.querySelector('.channel-content-body');
+    if (!body) return;
+    const shouldShow = visible && Store.peek('currentTab') === 'tv';
+    const wasHidden = body.classList.contains('pip-side-hidden');
+    body.classList.toggle('pip-side-hidden', !shouldShow);
+    if (wasHidden !== !shouldShow) eventBus.emit('player:pip-panel-changed');
   }
 
   // ——— MODO PIP (volver desde pantalla completa a lista) —

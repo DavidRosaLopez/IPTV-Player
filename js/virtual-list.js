@@ -671,5 +671,12 @@ export const VirtualList = (() => {
     return /^(https?:|data:image\/)/i.test(url) ? url : '';
   }
 
-  return { init, update, setFocused, setSelected, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, getSelectedElement, refreshVisible, refreshFavoriteBadges, setFocusVisible };
+  function refreshLayout() {
+    if (!_container) return;
+    _colW = (_container.offsetWidth - PADDING * 2 - ITEM_GAP * (COLS - 1)) / COLS;
+    _vH = _container.offsetHeight || 900;
+    _render();
+  }
+
+  return { init, update, setFocused, setSelected, getFocused, move, getItem, getItems, getCurrentItem, getFocusedElement, getSelectedElement, refreshVisible, refreshFavoriteBadges, setFocusVisible, refreshLayout };
 })();
