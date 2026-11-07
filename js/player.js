@@ -329,8 +329,6 @@ export const Player = (() => {
     const sideNowTitle = document.getElementById('pip-side-now-title');
     const sideNowTime = document.getElementById('pip-side-now-time');
     const sideProgress = document.getElementById('pip-side-progress-fill');
-    const sideNextTitle = document.getElementById('pip-side-next-title');
-    const sideNextTime = document.getElementById('pip-side-next-time');
 
     if (sideNameEl) sideNameEl.textContent = ch?.name || 'Sin reproducción';
     if (sideNumEl) {
@@ -340,8 +338,6 @@ export const Player = (() => {
     if (sideNowTitle) sideNowTitle.textContent = 'Cargando programación...';
     if (sideNowTime) sideNowTime.textContent = '';
     if (sideProgress) sideProgress.style.width = '0%';
-    if (sideNextTitle) sideNextTitle.textContent = '-';
-    if (sideNextTime) sideNextTime.textContent = '';
 
     if (ch && typeof EPG !== 'undefined') {
       const targetChId = ch.id;
@@ -353,10 +349,6 @@ export const Player = (() => {
             if (sideNowTitle && epgData.current) sideNowTitle.textContent = epgData.current.title;
             if (sideNowTime && epgData.current) sideNowTime.textContent = `${fmt(epgData.current.start)} - ${fmt(epgData.current.end)}`;
             if (sideProgress && epgData.current) sideProgress.style.width = `${epgData.current.progress}%`;
-            if (epgData.next) {
-              if (sideNextTitle) sideNextTitle.textContent = epgData.next.title;
-              if (sideNextTime) sideNextTime.textContent = `${fmt(epgData.next.start)} - ${fmt(epgData.next.end)}`;
-            }
           } else {
             if (sideNowTitle) sideNowTitle.textContent = ch.name || 'Emisión en directo';
           }
