@@ -39,7 +39,7 @@
   --screen-w:   1920px;
   --screen-h:   1080px;
   --pip-x:      1485px;
-  --pip-y:      24px;
+  --pip-y:      100px;
   --pip-w:      410px;
   --pip-h:      231px;
 }
@@ -597,6 +597,14 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.channel-content-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
 }
 .panel-header {
   padding: 24px 30px 10px 30px;

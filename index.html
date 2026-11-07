@@ -118,45 +118,48 @@
               </div>
             </div>
           </div>
-          <!-- VirtualList renders here -->
-          <div id="tab-loader" class="app-loader hidden">
-            <div class="spinner"></div>
-            <div id="tab-loader-msg">Cargando...</div>
-          </div>
-          <div class="channel-grid" id="channel-grid"></div>
-        </main>
 
-        <!-- Columna lateral derecha estilo Tivimate -->
-        <aside class="pip-side-panel">
-          <div id="pip-container-anchor" class="pip-container-anchor">
-            <!-- Hueco exacto para el vídeo PiP (1485, 24, 410, 231) -->
-          </div>
-          <div class="pip-meta-panel">
-            <div class="pip-current-info">
-              <span id="pip-side-channel-num" class="pip-side-channel-num"></span>
-              <h3 id="pip-side-channel-name" class="pip-side-channel-name">Sin reproducción</h3>
+          <div class="channel-content-body">
+            <!-- VirtualList renders here -->
+            <div id="tab-loader" class="app-loader hidden">
+              <div class="spinner"></div>
+              <div id="tab-loader-msg">Cargando...</div>
             </div>
-            <div id="pip-side-epg" class="pip-side-epg">
-              <div class="pip-side-epg-now">
-                <div class="pip-side-epg-header">
-                  <span class="pip-side-tag">AHORA</span>
-                  <span id="pip-side-now-time" class="pip-side-time"></span>
+            <div class="channel-grid" id="channel-grid"></div>
+
+            <!-- Columna lateral derecha estilo Tivimate (debajo de la cabecera) -->
+            <aside class="pip-side-panel">
+              <div id="pip-container-anchor" class="pip-container-anchor">
+                <!-- Hueco exacto para el vídeo PiP (1485, 100, 410, 231) -->
+              </div>
+              <div class="pip-meta-panel">
+                <div class="pip-current-info">
+                  <span id="pip-side-channel-num" class="pip-side-channel-num"></span>
+                  <h3 id="pip-side-channel-name" class="pip-side-channel-name">Sin reproducción</h3>
                 </div>
-                <div id="pip-side-now-title" class="pip-side-title">Selecciona un canal para reproducir</div>
-                <div class="pip-side-progress-bar">
-                  <div id="pip-side-progress-fill" class="pip-side-progress-fill" style="width: 0%;"></div>
+                <div id="pip-side-epg" class="pip-side-epg">
+                  <div class="pip-side-epg-now">
+                    <div class="pip-side-epg-header">
+                      <span class="pip-side-tag">AHORA</span>
+                      <span id="pip-side-now-time" class="pip-side-time"></span>
+                    </div>
+                    <div id="pip-side-now-title" class="pip-side-title">Selecciona un canal para reproducir</div>
+                    <div class="pip-side-progress-bar">
+                      <div id="pip-side-progress-fill" class="pip-side-progress-fill" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                  <div class="pip-side-epg-next">
+                    <div class="pip-side-epg-header">
+                      <span class="pip-side-tag muted">LUEGO</span>
+                      <span id="pip-side-next-time" class="pip-side-time"></span>
+                    </div>
+                    <div id="pip-side-next-title" class="pip-side-title">-</div>
+                  </div>
                 </div>
               </div>
-              <div class="pip-side-epg-next">
-                <div class="pip-side-epg-header">
-                  <span class="pip-side-tag muted">LUEGO</span>
-                  <span id="pip-side-next-time" class="pip-side-time"></span>
-                </div>
-                <div id="pip-side-next-title" class="pip-side-title">-</div>
-              </div>
-            </div>
+            </aside>
           </div>
-        </aside>
+        </main>
       </div>
 
     <!-- PiP overlay: contenedor del video miniatura en vista canales -->
