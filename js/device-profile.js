@@ -12,7 +12,7 @@ const BASE = {
   layoutResolution: { width: 1920, height: 1080 },
   panelResolution: { width: 3840, height: 2160 },
   safeArea: { x: 0, y: 0, width: 1920, height: 1080 },
-  pip: { x: 1400, y: 770, width: 480, height: 270 },
+  pip: { x: 1570, y: 40, width: 320, height: 180 },
   panelScale: { x: 2, y: 2 },
   key: {
     navThrottleMs: 90,
