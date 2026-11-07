@@ -33,8 +33,6 @@
           <div class="tab-bar">
             <button class="tab-btn active" data-tab="xtream"><span class="material-symbols-rounded">key</span> Xtream Codes</button>
             <button class="tab-btn" data-tab="saved"><span class="material-symbols-rounded">folder</span> Listas Guardadas</button>
-            <button class="tab-btn" data-tab="settings"><span class="material-symbols-rounded">settings</span> Ajustes</button>
-            <button class="tab-btn" data-tab="diagnostics"><span class="material-symbols-rounded">monitor_heart</span> Diagnóstico</button>
           </div>
 
           <!-- Xtream -->
@@ -69,24 +67,11 @@
             </div>
           </div>
 
-          <!-- Settings -->
-          <div id="tab-content-settings" class="tab-content">
-            <h2 class="form-title">Filtro de Países</h2>
-            <p class="sync-desc" style="color:var(--text-sec); margin-bottom: 20px;">
-              Selecciona qué países deseas mostrar en la barra horizontal de filtros del listado.
-            </p>
-            <div id="country-settings-list" class="country-settings-list">
-              <!-- Cargado dinámicamente -->
-            </div>
-          </div>
+          <!-- Settings (vacío, se mantiene para compatibilidad) -->
+          <div id="tab-content-settings" class="tab-content"></div>
 
-          <!-- Diagnóstico -->
-          <div id="tab-content-diagnostics" class="tab-content">
-            <h2 class="form-title playback-diagnostics-title">Diagnóstico de reproducción</h2>
-            <p class="sync-desc playback-diagnostics-desc">Últimos eventos del reproductor.</p>
-            <div id="playback-diagnostics" class="playback-diagnostics">Sin eventos todavía.</div>
-            <button id="btn-clear-playback-diagnostics" class="btn-secondary">Borrar historial</button>
-          </div>
+          <!-- Diagnóstico (vacío, se mantiene para compatibilidad) -->
+          <div id="tab-content-diagnostics" class="tab-content"></div>
         </div>
 
       </div>
@@ -112,7 +97,6 @@
             <button class="sidebar-tab-btn" data-type="vod"><span class="material-symbols-rounded">movie</span> Películas</button>
             <button class="sidebar-tab-btn" data-type="series"><span class="material-symbols-rounded">live_tv</span> Series</button>
           </div>
-          <div id="country-filter" class="country-filter"></div>
           <ul class="group-list" id="group-list"></ul>
         </aside>
 

@@ -349,26 +349,7 @@ export const ViewChannels = (() => {
 
   function renderCountries() {
     const container = document.getElementById('country-filter');
-    if (!container) return;
-    if (_currentTab === 'vod' || _currentTab === 'series') {
-      container.style.display = 'none';
-      return;
-    }
-    container.style.display = '';
-    const codes = Store.get('countries') || ['ALL'];
-    const _currentCountry = _getCurrentCountry();
-    renderCountryItems({
-      container,
-      codes: codes.map(code => code === 'ALL' ? { code: 'ALL', emoji: '🌎', name: 'Todos' } : { code, ...getCountryInfo(code) }),
-      currentCountry: _currentCountry,
-      focusedIdx: _countryFocusIdx,
-      onSelect: _selectCountry
-    });
-    const targetIdx = _focusZone === 'countries'
-      ? _countryFocusIdx
-      : Math.max(0, codes.indexOf(_currentCountry));
-    _centerCountryItem(targetIdx);
-    _updateCountryClasses();
+    if (container) container.style.display = 'none';
   }
 
   function _centerCountryItem(idx) {

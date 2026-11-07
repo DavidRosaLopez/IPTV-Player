@@ -4,8 +4,6 @@ import { KeyHandler } from './keyHandler.js';
 import { Router } from './router.js';
 import { Playlist } from './playlist.js';
 import { eventBus } from './eventBus.js';
-import { getCountryInfo, sortCountryCodes } from './countries.js';
-import { PlaybackDiagnostics } from './services/playback-diagnostics.js';
 
 
 export const ViewSetup = (() => {
@@ -372,120 +370,8 @@ export const ViewSetup = (() => {
   }
 
 
-  function _getAllCountryCodes() {
-    let codes = Store.get('allCountries') || [];
-    if (codes.length) return codes;
-    const channels = Store.peek('channels') || [];
-    const codesSet = new Set();
-    for (const c of channels) {
-      if (c.countryCode) codesSet.add(c.countryCode);
-    }
-    codes = sortCountryCodes(codesSet);
-    Store.set('allCountries', codes);
-    return codes;
-  }
-
-  function _syncCountrySettingChecks(container, codes, visibleCountries) {
-    const items = container.querySelectorAll('.country-setting-item');
-    if (!items.length) return false;
-    const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
-    items.forEach(item => {
-      const code = item.dataset.code;
-      const checked = code === 'ALL'
-        ? allChecked
-        : (visibleCountries === null || visibleCountries.includes(code));
-      item.classList.toggle('checked', checked);
-    });
-    return true;
-  }
-
-  function _createCountrySettingItem(code, label, checked, onClick) {
-    const item = document.createElement('div');
-    item.className = 'country-setting-item focusable' + (checked ? ' checked' : '');
-    item.dataset.code = code;
-
-    const box = document.createElement('div');
-    box.className = 'checkbox-box';
-    const check = document.createElement('span');
-    check.className = 'material-symbols-rounded';
-    check.textContent = 'check';
-    box.appendChild(check);
-
-    const labelEl = document.createElement('span');
-    labelEl.className = 'country-setting-label';
-    labelEl.textContent = label;
-
-    item.append(box, labelEl);
-    item.addEventListener('click', onClick);
-    return item;
-  }
-
-  function _setEmptyMessage(container, text) {
-    container.replaceChildren();
-    const p = document.createElement('p');
-    p.className = 'empty-msg';
-    p.textContent = text;
-    container.appendChild(p);
-  }
-
-  function _toggleCountryVisibility(code) {
-    const codes = _getAllCountryCodes();
-    let visibleCountries = Storage.getVisibleCountries();
-
-    if (visibleCountries === null) {
-      visibleCountries = codes.filter(c => c !== code);
-    } else if (visibleCountries.includes(code)) {
-      visibleCountries = visibleCountries.filter(c => c !== code);
-    } else {
-      visibleCountries.push(code);
-    }
-
-    Storage.setVisibleCountries(visibleCountries);
-    _renderCountrySettings();
-  }
-
-  function _renderCountrySettings() {
-    const container = document.getElementById('country-settings-list');
-    if (!container) return;
-    const codes = _getAllCountryCodes();
-    if (!codes.length) {
-      _setEmptyMessage(container, 'Carga una lista de canales para ver los ajustes de país');
-      return;
-    }
-
-    const visibleCountries = Storage.getVisibleCountries();
-    if (_syncCountrySettingChecks(container, codes, visibleCountries)) return;
-
-    container.replaceChildren();
-    const allChecked = visibleCountries === null || visibleCountries.length === codes.length;
-    const allItem = _createCountrySettingItem('ALL', 'Seleccionar todos', allChecked, () => {
-      const currentlyChecked = allItem.classList.contains('checked');
-      Storage.setVisibleCountries(currentlyChecked ? [] : null);
-      _renderCountrySettings();
-    });
-    allItem.querySelector('.country-setting-label').style.fontWeight = '700';
-    container.appendChild(allItem);
-
-    codes.forEach(code => {
-      const info = getCountryInfo(code);
-      const checked = visibleCountries === null || visibleCountries.includes(code);
-      container.appendChild(_createCountrySettingItem(code, `${info.emoji} ${info.name}`, checked, () => _toggleCountryVisibility(code)));
-    });
-  }
-
-  function _renderPlaybackDiagnostics() {
-    const container = document.getElementById('playback-diagnostics');
-    if (!container) return;
-    const events = PlaybackDiagnostics.getAll();
-    container.textContent = events.length
-      ? events.map(e => `${e.time}  ${e.type.padEnd(14)} ${e.channel}${e.detail ? ` — ${e.detail}` : ''}`).join('\n')
-      : 'Sin eventos todavía.';
-  }
-
   function onShow() {
     _renderSavedLists();
-    _renderCountrySettings();
-    _renderPlaybackDiagnostics();
 
     const tabs = Array.from(_getSetupTabs());
     const lists = Storage.getLists();
@@ -524,11 +410,6 @@ export const ViewSetup = (() => {
         _setupZone = 'tabs';
         _setupTabIdx = idx;
         _switchTab(btn.dataset.tab);
-        if (btn.dataset.tab === 'settings') {
-          _renderCountrySettings();
-        } else if (btn.dataset.tab === 'diagnostics') {
-          _renderPlaybackDiagnostics();
-        }
         _updateSetupFocus();
       })
     );
@@ -536,10 +417,6 @@ export const ViewSetup = (() => {
 
     document.getElementById('btn-add-xtream')?.addEventListener('click', () => _addXtream());
     document.getElementById('btn-test-xtream')?.addEventListener('click', () => _testXtream());
-    document.getElementById('btn-clear-playback-diagnostics')?.addEventListener('click', () => {
-      PlaybackDiagnostics.clear();
-      _renderPlaybackDiagnostics();
-    });
     KeyHandler.on('RIGHT', () => _handleSetupDirection('right'));
     KeyHandler.on('LEFT', () => _handleSetupDirection('left'));
     KeyHandler.on('DOWN', () => _handleSetupDirection('down'));

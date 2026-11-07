@@ -116,16 +116,7 @@ export const Playlist = (() => {
   }
 
   function getVisibleChannels(channels, countryCode = 'ALL') {
-    if (countryCode === 'ALL') return channels;
-    let cache = _visibleCache.get(channels);
-    if (!cache) {
-      cache = new Map();
-      _visibleCache.set(channels, cache);
-    }
-    if (cache.has(countryCode)) return cache.get(countryCode);
-    const list = channels.filter(c => isItemVisibleInCountry(c, countryCode));
-    cache.set(countryCode, list);
-    return list;
+    return channels;
   }
 
   function search(channels, query) {
@@ -327,7 +318,7 @@ export const Playlist = (() => {
     }
 
     const groupChannels = _groupIndex.get(groupId) || [];
-    result = countryCode === 'ALL' ? groupChannels : groupChannels.filter(c => isItemVisibleInCountry(c, countryCode));
+    result = groupChannels;
     cache.set(cacheKey, result);
     return result;
   }
