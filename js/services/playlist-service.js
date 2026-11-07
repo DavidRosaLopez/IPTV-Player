@@ -263,39 +263,20 @@ export async function loadXtream(server, user, pass, onProgress, signal) {
 export async function loadVod(server, user, pass, onProgress, signal) {
   const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
   if (onProgress) onProgress(10);
-  const [streams, cats] = await Promise.all([
-    _fetchJson(`${base}&action=get_vod_streams`, signal, false),
-    _fetchJson(`${base}&action=get_vod_categories`, signal, false)
-  ]);
+  const streams = await _fetchJson(`${base}&action=get_vod_streams`, signal, false);
   if (onProgress) onProgress(80);
-  const catMap = {};
-  _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
-  const streamsWithKeys = _toArray(streams).filter(s => _isSpanishTitle(s.name || s.title)).map(s => {
-    let addedNum = parseInt(s.added, 10) || 0;
-    let yr = _extractYear(s);
-    if (yr === 0 && addedNum > 0) {
-      const ms = addedNum < 100000000000 ? addedNum * 1000 : addedNum;
-      yr = new Date(ms).getFullYear();
-    }
-    return { ...s, _year: yr, _added: addedNum };
-  });
-  streamsWithKeys.sort(_sortByGroupThenRecency);
-  const movies = streamsWithKeys.map(s => {
-    const meta = _detectStreamMeta(s.name, catMap[s.category_id], s.container_extension, s.stream_type);
-    const rawGroup = _cleanVodCategoryName(catMap[s.category_id]);
-    const group = _is4kName(s.name) ? '💎 4K / UHD' : rawGroup;
+  const movies = _toArray(streams).map(s => {
+    const meta = _detectStreamMeta(s.name, s.container_extension, s.stream_type);
     return {
       id: `vod_${s.stream_id}`,
       name: s.name?.trim() || '',
       _search: _normalize(s.name),
       logo: _normalizeMediaUrl(server, s.stream_icon),
-      group,
-      countryCode: detectCountry(s.name, catMap[s.category_id]),
+      group: '__all__',
+      countryCode: 'ALL',
       url: `${server}/movie/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.${s.container_extension || 'mp4'}`,
       streamId: s.stream_id,
       type: 'vod',
-      _year: s._year,
-      _added: s._added,
       streamMeta: meta
     };
   });
@@ -306,38 +287,20 @@ export async function loadVod(server, user, pass, onProgress, signal) {
 export async function loadSeries(server, user, pass, onProgress, signal) {
   const base = `${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
   if (onProgress) onProgress(10);
-  const [seriesList, cats] = await Promise.all([
-    _fetchJson(`${base}&action=get_series`, signal, false),
-    _fetchJson(`${base}&action=get_series_categories`, signal, false)
-  ]);
+  const seriesList = await _fetchJson(`${base}&action=get_series`, signal, false);
   if (onProgress) onProgress(80);
-  const catMap = {};
-  _toArray(cats).forEach(c => { catMap[c.category_id] = c.category_name; });
-  const seriesWithKeys = _toArray(seriesList).filter(s => _isSpanishTitle(s.name || s.title)).map(s => {
-    let addedNum = parseInt(s.added || s.last_modified, 10) || 0;
-    let yr = _extractYear(s);
-    if (yr === 0 && addedNum > 0) {
-      const ms = addedNum < 100000000000 ? addedNum * 1000 : addedNum;
-      yr = new Date(ms).getFullYear();
-    }
-    return { ...s, _year: yr, _added: addedNum };
-  });
-  seriesWithKeys.sort(_sortByGroupThenRecency);
-  const series = seriesWithKeys.map(s => {
-    const meta2 = _detectStreamMeta(s.name, catMap[s.category_id]);
-    const rawGroup2 = _cleanSeriesCategoryName(catMap[s.category_id]);
-    const group2 = _is4kName(s.name) ? '💎 4K / UHD' : rawGroup2;
+  const series = _toArray(seriesList).map(s => {
+    const meta2 = _detectStreamMeta(s.name, s.container_extension, s.stream_type);
     return {
       id: `series_${s.series_id}`,
       name: s.name?.trim() || '',
       _search: _normalize(s.name),
       logo: _normalizeMediaUrl(server, s.cover || s.stream_icon),
-      group: group2,
-      countryCode: detectCountry(s.name, catMap[s.category_id]),
+      group: '__all__',
+      countryCode: 'ALL',
       streamId: s.series_id,
       type: 'series',
-      _year: s._year,
-      _added: s._added
+      streamMeta: meta2
     };
   });
   if (onProgress) onProgress(100);

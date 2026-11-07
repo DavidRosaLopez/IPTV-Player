@@ -147,6 +147,9 @@ export const Playlist = (() => {
 
     if (tabId === 'vod' || tabId === 'series') {
       const staticGroups = _groupsForTab(tabId);
+      cache.set(cacheKey, staticGroups);
+      return staticGroups;
+
       const list = getVisibleChannels(channels, countryCode);
       const seen = new Map();
       for (const ch of list) {
