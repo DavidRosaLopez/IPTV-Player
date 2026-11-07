@@ -33,14 +33,15 @@
 
   /* Sizing */
   --sidebar-w:  440px;
+  --pip-panel-w: 460px;
   --info-w:     340px;
   --font:       'Inter', sans-serif;
   --screen-w:   1920px;
   --screen-h:   1080px;
-  --pip-x:      1560px;
-  --pip-y:      30px;
-  --pip-w:      330px;
-  --pip-h:      186px;
+  --pip-x:      1485px;
+  --pip-y:      24px;
+  --pip-w:      410px;
+  --pip-h:      231px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -631,7 +632,7 @@ html, body {
   overflow-y: auto;
   padding: 16px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   align-content: start;
 }

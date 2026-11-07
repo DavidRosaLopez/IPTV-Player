@@ -112,7 +112,7 @@
                 <span id="search-count" class="search-count"></span>
               </div>
 
-              <div id="channels-clock" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; margin-top: -6px; margin-right: 360px;">
+              <div id="channels-clock" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; margin-top: -6px;">
                 <span id="channels-time" style="font-size: 28px; color: var(--text); font-weight: 600; letter-spacing: 0.5px;"></span>
                 <span id="channels-date" style="font-size: 16px; color: var(--text-sec); text-transform: capitalize;"></span>
               </div>
@@ -125,6 +125,38 @@
           </div>
           <div class="channel-grid" id="channel-grid"></div>
         </main>
+
+        <!-- Columna lateral derecha estilo Tivimate -->
+        <aside class="pip-side-panel">
+          <div id="pip-container-anchor" class="pip-container-anchor">
+            <!-- Hueco exacto para el vídeo PiP (1485, 24, 410, 231) -->
+          </div>
+          <div class="pip-meta-panel">
+            <div class="pip-current-info">
+              <span id="pip-side-channel-num" class="pip-side-channel-num"></span>
+              <h3 id="pip-side-channel-name" class="pip-side-channel-name">Sin reproducción</h3>
+            </div>
+            <div id="pip-side-epg" class="pip-side-epg">
+              <div class="pip-side-epg-now">
+                <div class="pip-side-epg-header">
+                  <span class="pip-side-tag">AHORA</span>
+                  <span id="pip-side-now-time" class="pip-side-time"></span>
+                </div>
+                <div id="pip-side-now-title" class="pip-side-title">Selecciona un canal para reproducir</div>
+                <div class="pip-side-progress-bar">
+                  <div id="pip-side-progress-fill" class="pip-side-progress-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+              <div class="pip-side-epg-next">
+                <div class="pip-side-epg-header">
+                  <span class="pip-side-tag muted">LUEGO</span>
+                  <span id="pip-side-next-time" class="pip-side-time"></span>
+                </div>
+                <div id="pip-side-next-title" class="pip-side-title">-</div>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
 
     <!-- PiP overlay: contenedor del video miniatura en vista canales -->

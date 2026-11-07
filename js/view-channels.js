@@ -81,7 +81,7 @@ export const ViewChannels = (() => {
     },
     currentChannelColStart: () => {
       const curIdx = VirtualList.getFocused();
-      const cols = _currentTab === 'tv' ? 3 : 5;
+      const cols = _currentTab === 'tv' ? 2 : 3;
       return curIdx % cols === 0;
     },
     getFocusedChannelEl: () => VirtualList.getFocusedElement?.() || null,

@@ -6,7 +6,7 @@
 import { DeviceProfile } from './device-profile.js';
 
 export const VirtualList = (() => {
-  let COLS        = 3;
+  let COLS        = 2;
   let ITEM_H      = 74;   // px — card height + gap
   let ITEM_GAP    = 12;
   let PADDING     = 16;
@@ -114,11 +114,11 @@ export const VirtualList = (() => {
   function init({ containerId, items, onSelect, onFocusChange, getFavBadge, layout = 'tv' }) {
     _layout = layout;
     if (_layout === 'poster') {
-      COLS = 5;
+      COLS = 3;
       ITEM_H = 460;
       ITEM_GAP = 20;
     } else {
-      COLS = 3;
+      COLS = 2;
       ITEM_H = 74;
       ITEM_GAP = 12;
     }
